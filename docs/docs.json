@@ -20,9 +20,9 @@
   },
   "favicon": "/assets/oni-logo-text.png",
   "colors": {
-    "primary": "#6C5CE7",
-    "dark": "#A29BFE",
-    "light": "#FF8A6B"
+    "primary": "#C4A882",
+    "dark": "#D4B896",
+    "light": "#A68B6B"
   },
   "styling": {
     "codeblocks": {
