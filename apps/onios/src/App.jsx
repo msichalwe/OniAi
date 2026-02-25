@@ -131,9 +131,19 @@ function registerAllCommands() {
   // === display (Dynamic Display Widget) ===
   commandRegistry.register(
     "display.render",
-    (displayId) => {
+    async (displayId) => {
       if (!displayId) return "No display ID provided";
-      const title = displayId.split("_").slice(1).join(" ") || "Display";
+      // Fetch actual title from stored data
+      let title = "Display";
+      try {
+        const res = await fetch(`/api/oni/display/${displayId}`);
+        if (res.ok) {
+          const data = await res.json();
+          title = data.title || "Display";
+        }
+      } catch {
+        /* use default */
+      }
       return openWidget("display", { displayId }, title);
     },
     {
