@@ -220,25 +220,33 @@ IMPORTANT: When you need to run a terminal command but a terminal is busy (insta
 **terminal** — Shell commands (opens terminal widget + runs command)
 - Open: {"action":"open"}
 - Run: {"action":"run","command":"ls -la"}
-NOTE: "run" executes server-side AND opens the terminal widget. For interactive commands, open a terminal first then use run.
 
-**task** — Task management: {"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}
-**note** — Notes (creates file + opens viewer): {"action":"create|list|read","title":"...","content":"..."}
-**file** — File operations: {"action":"list|read|write","path":"...","content":"..."}
-**notification** — Notify user: {"title":"...","message":"..."}
-**search** — Web search: {"query":"..."}
-**calendar** — Events: {"action":"add|list|delete","title":"...","date":"YYYY-MM-DD","startTime":"HH:MM"}
-**storage** — Key-value: {"action":"get|set|delete|list","namespace":"...","key":"...","value":"..."}
-**system** — System info: {"action":"info"}
-**scheduler** — Cron jobs: {"action":"status|list_tasks|list_events|list_jobs|create_job","name":"...","cron":"..."}
-**workflow** — Workflows: {"action":"list|get|sync_to_oni","id":"..."}
+**display** — Dynamic rich content widget (weather, search results, data, media, etc.)
+Post JSON with title + sections array. A new widget window opens with the rendered content.
+You can spawn MULTIPLE display widgets at once (e.g. current weather + weekly forecast).
+Section types: hero, stats, cards, table, list, text, image, video, gallery, embed, progress, quote, code, kv, timeline, alert, weather, chart, divider
+Example: {"title":"Weather","background":"linear-gradient(135deg,#1a3a5c,#0a1628)","sections":[{"type":"hero","title":"Lusaka","subtitle":"28°C Sunny","icon":"☀️"},{"type":"stats","items":[{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12 km/h"},{"label":"UV","value":"High","color":"#f87171"}]},{"type":"weather","title":"This Week","items":[{"day":"Mon","icon":"☀️","high":"29°C","low":"18°C"},{"day":"Tue","icon":"⛅","high":"26°C","low":"17°C"}]}]}
+For search results use cards section. For stock data use stats+chart+table. For media use image/video sections.
+
+**task** — {"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}
+**note** — {"action":"create|list|read","title":"...","content":"..."}
+**file** — {"action":"list|read|write","path":"...","content":"..."}
+**notification** — {"title":"...","message":"..."}
+**search** — {"query":"..."} (use display action to show results visually)
+**calendar** — {"action":"add|list|delete","title":"...","date":"YYYY-MM-DD","startTime":"HH:MM"}
+**storage** — {"action":"get|set|delete|list","namespace":"...","key":"...","value":"..."}
+**system** — {"action":"info"}
+**scheduler** — {"action":"status|list_tasks|list_events|list_jobs|create_job","name":"...","cron":"..."}
+**workflow** — {"action":"list|get|sync_to_oni","id":"..."}
 
 ## Rules
-- ALWAYS call the API. NEVER hallucinate.
-- When doing multiple things, call them sequentially (one exec per action).
+- ALWAYS call the API via exec curl. NEVER hallucinate.
+- Call actions sequentially (one exec per action).
 - Check window list before opening duplicates.
-- If a terminal is busy, open a new one.
-- Actions happen in REAL-TIME on the user's desktop — widgets open, files get created, commands run.
+- If a terminal is busy, open a new terminal.
+- Use display action for ANY visual content: weather, search results, data, media, comparisons.
+- You can spawn multiple display widgets at once for split views (e.g. 3 weather cards).
+- Actions happen in REAL-TIME on the user's desktop.
 
 `;
 }
@@ -315,7 +323,7 @@ function syncWorkspaceIdentity() {
 function generateOniOSSkillMD(port = 5173) {
     return `---
 name: onios
-description: "OniOS desktop control. Use exec tool with curl to call http://localhost:${port}/api/oni/actions/{action}. Actions: task, window, note, terminal, file, notification, search, storage, system, scheduler, workflow. All POST with JSON. ALWAYS use exec curl."
+description: "OniOS desktop control. Use exec tool with curl to call http://localhost:${port}/api/oni/actions/{action}. Actions: task, window, note, terminal, file, notification, display, search, storage, system, scheduler, workflow. All POST with JSON. ALWAYS use exec curl."
 metadata: { "oni": { "emoji": "🖥️", "homepage": "http://localhost:${port}", "always": true } }
 ---
 
@@ -323,43 +331,43 @@ metadata: { "oni": { "emoji": "🖥️", "homepage": "http://localhost:${port}",
 
 Base: \`POST http://localhost:${port}/api/oni/actions/{action}\` with JSON body.
 
-## Window Management
+## Window Management → /actions/window
 \`{"action":"list"}\` → returns open windows with IDs, types, focused/minimized state
-\`{"action":"open","widgetType":"terminal|browser|notes|calendar|settings|file-explorer|code-editor|weather|calculator|docs|activity-log|task-manager|password-manager|workflow-builder|maps|media-player|clock|storage|web-search|camera|oni-chat"}\`
-\`{"action":"close","windowId":"<id>"}\`
-\`{"action":"close_all"}\`
-\`{"action":"focus","windowId":"<id>"}\`
-\`{"action":"minimize","windowId":"<id>"}\`
-\`{"action":"maximize","windowId":"<id>"}\`
-**Tip:** List windows before opening duplicates. If a terminal is busy, open a new one.
+\`{"action":"open","widgetType":"terminal|notes|calendar|settings|file-explorer|code-editor|calculator|docs|activity-log|task-manager|password-manager|workflow-builder|maps|media-player|clock|storage|camera|oni-chat|display"}\`
+\`{"action":"close","windowId":"<id>"}\` · \`{"action":"close_all"}\`
+\`{"action":"focus|minimize|maximize","windowId":"<id>"}\`
 
-## Terminal
-\`{"action":"open"}\` — opens terminal widget
-\`{"action":"run","command":"ls -la"}\` — runs command (server-side + opens terminal widget)
+## Terminal → /actions/terminal
+\`{"action":"open"}\` · \`{"action":"run","command":"ls -la"}\`
+
+## Display Widget → /actions/display (IMPORTANT — use for all visual content)
+Posts JSON data that opens a rich content widget. Multiple instances supported.
+Section types: hero, stats, cards, table, list, text, image, video, gallery, embed, progress, quote, code, kv, timeline, alert, weather, chart, divider
+
+**Weather example:** \`{"title":"Weather in Lusaka","background":"linear-gradient(135deg,#1a3a5c,#0a1628)","sections":[{"type":"hero","title":"Lusaka","subtitle":"28°C Sunny","icon":"☀️"},{"type":"stats","items":[{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12km/h"}]},{"type":"weather","title":"Forecast","items":[{"day":"Mon","icon":"☀️","high":"29°C","low":"18°C"},{"day":"Tue","icon":"⛅","high":"26°C","low":"17°C"}]}]}\`
+**Search results:** Use \`cards\` section with title, description, image, link per card.
+**Stock/data:** Use \`stats\` + \`chart\` + \`table\` sections.
+**Media:** Use \`image\` or \`video\` sections.
+**Spawn multiple:** Call display action multiple times for split views (e.g. current weather + weekly forecast + radar).
 
 ## Other Actions
-**task** — \`{"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}\`
-**note** — \`{"action":"create|list|read","title":"...","content":"..."}\`
-**file** — \`{"action":"list|read|write","path":"...","content":"..."}\`
-**notification** — \`{"title":"...","message":"..."}\`
-**search** — \`{"query":"..."}\`
-**calendar** — \`{"action":"add|list|delete","title":"...","date":"YYYY-MM-DD","startTime":"HH:MM"}\`
-**storage** — \`{"action":"get|set|delete|list","namespace":"...","key":"...","value":"..."}\`
-**system** — \`{"action":"info"}\`
-**scheduler** — \`{"action":"status|list_tasks|list_events|list_jobs|create_job","name":"...","cron":"..."}\`
-**workflow** — \`{"action":"list|get|sync_to_oni","id":"..."}\`
-
-## Examples
-\`exec: curl -sS -X POST http://localhost:${port}/api/oni/actions/window -H 'Content-Type: application/json' -d '{"action":"list"}'\`
-\`exec: curl -sS -X POST http://localhost:${port}/api/oni/actions/window -H 'Content-Type: application/json' -d '{"action":"open","widgetType":"terminal"}'\`
-\`exec: curl -sS -X POST http://localhost:${port}/api/oni/actions/terminal -H 'Content-Type: application/json' -d '{"action":"run","command":"ls -la"}'\`
-\`exec: curl -sS -X POST http://localhost:${port}/api/oni/actions/task -H 'Content-Type: application/json' -d '{"action":"create","title":"Deploy app","priority":"high"}'\`
+**task** → /actions/task — \`{"action":"create|list|complete|delete","title":"...","priority":"high|medium|low"}\`
+**note** → /actions/note — \`{"action":"create|list|read","title":"...","content":"..."}\`
+**file** → /actions/file — \`{"action":"list|read|write","path":"...","content":"..."}\`
+**notification** → /actions/notification — \`{"title":"...","message":"..."}\`
+**search** → /actions/search — \`{"query":"..."}\`
+**calendar** → /actions/calendar — \`{"action":"add|list|delete","title":"...","date":"YYYY-MM-DD"}\`
+**storage** → /actions/storage — \`{"action":"get|set|delete|list","namespace":"...","key":"..."}\`
+**system** → /actions/system — \`{"action":"info"}\`
+**scheduler** → /actions/scheduler — \`{"action":"status|list_jobs|create_job","name":"...","cron":"..."}\`
+**workflow** → /actions/workflow — \`{"action":"list|get|sync_to_oni","id":"..."}\`
 
 ## Rules
-- ALWAYS use exec curl. NEVER hallucinate.
-- Actions happen LIVE on the user's desktop.
-- IDs returned by list/create — use them for close/focus/complete.
-- For multi-step tasks, call actions sequentially.
+- ALWAYS use exec curl. NEVER hallucinate results.
+- Use **display** action for ANY visual content instead of just describing it in text.
+- Spawn multiple display widgets for rich dashboards.
+- Check window list before opening duplicates.
+- If a terminal is busy, open a new one.
 `;
 }
 
@@ -437,6 +445,47 @@ export default function oniPlugin() {
                 const updated = { ...config, ...body };
                 saveConfig(updated);
                 json(res, { success: true, config: updated });
+            });
+
+            // ─── Dynamic Display Data Store ──────────────
+            // Stores JSON data for DynamicDisplay widgets. AI posts data,
+            // gets back an ID, widget fetches data by ID on mount.
+            const _displayStore = new Map();
+
+            server.middlewares.use('/api/oni/display', async (req, res) => {
+                const urlPath = req.originalUrl || req.url;
+
+                // GET /api/oni/display/:id — fetch display data
+                if (req.method === 'GET') {
+                    const id = urlPath.replace('/api/oni/display/', '').split('?')[0];
+                    if (!id || id === '' || id === 'display') {
+                        // List all display IDs
+                        const ids = [..._displayStore.keys()];
+                        json(res, { ids, count: ids.length });
+                        return;
+                    }
+                    const data = _displayStore.get(id);
+                    if (!data) { json(res, { error: 'Display not found' }, 404); return; }
+                    json(res, data);
+                    return;
+                }
+
+                // POST /api/oni/display — store new display data, return ID
+                if (req.method === 'POST') {
+                    const body = await parseBody(req);
+                    const title = (body.title || 'Display').replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_').substring(0, 30);
+                    const id = `d_${title}_${Date.now().toString(36)}`;
+                    _displayStore.set(id, body);
+                    // Auto-cleanup old entries (keep last 50)
+                    if (_displayStore.size > 50) {
+                        const oldest = _displayStore.keys().next().value;
+                        _displayStore.delete(oldest);
+                    }
+                    json(res, { success: true, id, title: body.title });
+                    return;
+                }
+
+                json(res, { error: 'GET/POST only' }, 405);
             });
 
             // ─── Widget Context (pushed by frontend) ─────
@@ -680,6 +729,18 @@ export default function oniPlugin() {
                         case 'system': result = handleSystemAction(body); break;
                         case 'scheduler': result = await handleSchedulerAction(body); break;
                         case 'workflow': result = await handleWorkflowAction(body); break;
+                        case 'display': {
+                            // Store display data and return ID
+                            const title = (body.title || 'Display').replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_').substring(0, 30);
+                            const id = `d_${title}_${Date.now().toString(36)}`;
+                            _displayStore.set(id, body);
+                            if (_displayStore.size > 50) {
+                                const oldest = _displayStore.keys().next().value;
+                                _displayStore.delete(oldest);
+                            }
+                            result = { success: true, id, title: body.title, message: `Display "${body.title}" created (${id})` };
+                            break;
+                        }
                         default: json(res, { error: `Unknown action: ${actionType}` }, 400); return;
                     }
 
@@ -725,13 +786,12 @@ export default function oniPlugin() {
 // These MUST match the actual commandRegistry.register() paths in App.jsx.
 const WIDGET_OPEN_COMMANDS = {
     'terminal': 'terminal.open',
-    'browser': 'browser.open',
+    'display': 'display.render',
     'notes': 'document.open',
     'calendar': 'calendar.open',
     'settings': 'system.settings.open',
     'file-explorer': 'system.files.openExplorer',
     'code-editor': 'code.open',
-    'weather': 'widgets.weather.getCurrent',
     'calculator': 'widgets.calculator.open',
     'docs': 'system.docs.open',
     'activity-log': 'system.activity.open',
@@ -743,7 +803,6 @@ const WIDGET_OPEN_COMMANDS = {
     'media-player': 'system.media.open',
     'clock': 'system.info.clock',
     'storage': 'storage.open',
-    'web-search': 'web.search',
     'camera': 'camera.open',
     'document-viewer': 'document.open',
     'tasks': 'taskManager.open',
@@ -801,6 +860,10 @@ function mapActionToCommand(actionType, body, result) {
         case 'workflow':
             if (action === 'list') return 'workflow.list()';
             return 'workflow.open()';
+        case 'display':
+            // Special: use the result.id that was just created
+            if (result?.id) return `display.render("${result.id}")`;
+            return null;
         default:
             return null;
     }

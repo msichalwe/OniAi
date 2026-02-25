@@ -128,46 +128,17 @@ function registerAllCommands() {
     { description: "Open terminal and suggest a command" },
   );
 
-  // === widgets.weather ===
+  // === display (Dynamic Display Widget) ===
   commandRegistry.register(
-    "widgets.weather.getCurrent",
-    () => openWidget("weather", { mode: "current" }),
-    {
-      description: "Show current weather",
-      widget: "weather",
+    "display.render",
+    (displayId) => {
+      if (!displayId) return "No display ID provided";
+      const title = displayId.split("_").slice(1).join(" ") || "Display";
+      return openWidget("display", { displayId }, title);
     },
-  );
-  commandRegistry.register(
-    "widgets.weather.getWeekly",
-    () => openWidget("weather", { mode: "weekly" }),
     {
-      description: "Show weekly weather forecast",
-      widget: "weather",
-    },
-  );
-
-  // === browser ===
-  commandRegistry.register("browser.open", () => openWidget("browser"), {
-    description: "Open the browser",
-    widget: "browser",
-  });
-  commandRegistry.register(
-    "browser.openUrl",
-    (url) => openWidget("browser", { initialUrl: url }),
-    {
-      description: "Open a URL in the browser",
-      widget: "browser",
-    },
-  );
-  commandRegistry.register(
-    "browser.searchGoogle",
-    (query) =>
-      openWidget("browser", {
-        initialUrl: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
-      }),
-    {
-      description: "Search Google",
-      widget: "browser",
+      description: "Open a dynamic display widget with structured JSON content",
+      widget: "display",
     },
   );
 
@@ -267,16 +238,6 @@ function registerAllCommands() {
     {
       description: "View system architecture",
       widget: "docs",
-    },
-  );
-
-  // === web-search ===
-  commandRegistry.register(
-    "web.search",
-    (query) => openWidget("web-search", { query }),
-    {
-      description: "Search the web using Brave Search",
-      widget: "web-search",
     },
   );
 
