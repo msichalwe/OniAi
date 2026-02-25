@@ -45,6 +45,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-bounce-gentle',
         glow: 'rgba(255,200,50,0.15)',
         blinkRate: 4000,
+        bubble: '😊',
     },
     excited: {
         leftEye: { rx: 22, ry: 26, offsetY: -2 },
@@ -55,6 +56,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-bounce-excited',
         glow: 'rgba(255,220,0,0.25)',
         blinkRate: 2500,
+        bubble: '🎉',
     },
     proud: {
         leftEye: { rx: 16, ry: 12, offsetY: 2 },
@@ -65,6 +67,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-puff-chest',
         glow: 'rgba(255,180,0,0.12)',
         blinkRate: 5000,
+        bubble: '💪',
     },
     love: {
         leftEye: { rx: 20, ry: 24, offsetY: 0 },
@@ -76,6 +79,7 @@ export const EMOTIONS = {
         glow: 'rgba(255,100,150,0.2)',
         blinkRate: 3500,
         special: 'hearts',
+        bubble: '❤️',
     },
     grateful: {
         leftEye: { rx: 16, ry: 14, offsetY: 2 },
@@ -86,6 +90,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-nod',
         glow: 'rgba(200,255,200,0.12)',
         blinkRate: 4500,
+        bubble: '🙏',
     },
     playful: {
         leftEye: { rx: 20, ry: 22, offsetY: -1 },
@@ -96,6 +101,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-wiggle',
         glow: 'rgba(150,220,255,0.15)',
         blinkRate: 3000,
+        bubble: '😜',
     },
     laughing: {
         leftEye: { rx: 18, ry: 8, offsetY: 2 },
@@ -106,6 +112,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-laugh-shake',
         glow: 'rgba(255,255,100,0.2)',
         blinkRate: 2000,
+        bubble: '😂',
     },
     relieved: {
         leftEye: { rx: 16, ry: 14, offsetY: 3 },
@@ -159,6 +166,7 @@ export const EMOTIONS = {
         glow: 'rgba(100,180,255,0.12)',
         blinkRate: 5000,
         special: 'thought-bubble',
+        bubble: '🤔',
     },
     focused: {
         leftEye: { rx: 16, ry: 18, offsetY: 1 },
@@ -169,6 +177,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-focus-steady',
         glow: 'rgba(100,150,255,0.1)',
         blinkRate: 6000,
+        bubble: '💡',
     },
     curious: {
         leftEye: { rx: 20, ry: 24, offsetY: 0 },
@@ -179,6 +188,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-tilt-head',
         glow: null,
         blinkRate: 3000,
+        bubble: '🧐',
     },
     determined: {
         leftEye: { rx: 16, ry: 16, offsetY: 2 },
@@ -189,6 +199,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-power-up',
         glow: 'rgba(255,150,50,0.15)',
         blinkRate: 7000,
+        bubble: '⚡',
     },
     serious: {
         leftEye: { rx: 16, ry: 14, offsetY: 2 },
@@ -221,6 +232,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-droop',
         glow: 'rgba(100,100,200,0.1)',
         blinkRate: 5000,
+        bubble: '😢',
     },
     angry: {
         leftEye: { rx: 18, ry: 14, offsetY: 2 },
@@ -241,6 +253,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-huff',
         glow: 'rgba(255,100,50,0.1)',
         blinkRate: 3000,
+        bubble: '😤',
     },
     confused: {
         leftEye: { rx: 22, ry: 24, offsetY: 0 },
@@ -252,6 +265,7 @@ export const EMOTIONS = {
         glow: null,
         blinkRate: 3500,
         special: 'question-mark',
+        bubble: '❓',
     },
     scared: {
         leftEye: { rx: 24, ry: 28, offsetY: -3 },
@@ -337,6 +351,7 @@ export const EMOTIONS = {
         glow: 'rgba(0,255,150,0.2)',
         blinkRate: 2000,
         special: 'sparkles',
+        bubble: '⚡',
     },
     surprised: {
         leftEye: { rx: 24, ry: 28, offsetY: -3 },
@@ -347,6 +362,7 @@ export const EMOTIONS = {
         bodyAnim: 'oni-gasp',
         glow: 'rgba(255,255,200,0.2)',
         blinkRate: 8000,
+        bubble: '😮',
     },
     mischievous: {
         leftEye: { rx: 16, ry: 14, offsetY: 1 },

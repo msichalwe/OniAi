@@ -15,6 +15,67 @@
   overflow: visible;
 }
 
+.oni-avatar-mini {
+  flex-shrink: 0;
+}
+
+/* ─── Emotion Bubble ─── */
+.oni-emotion-bubble {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(30, 30, 42, 0.85);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: oni-bubble-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  z-index: 10;
+}
+.oni-bubble-content {
+  font-size: 13px;
+  line-height: 1;
+}
+@keyframes oni-bubble-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ─── Mouth speaking animation ─── */
+.oni-mouth-speaking {
+  animation: oni-mouth-talk 0.25s ease-in-out infinite alternate;
+  transform-origin: center;
+}
+@keyframes oni-mouth-talk {
+  0% {
+    transform: scaleY(0.8) scaleX(0.9);
+  }
+  100% {
+    transform: scaleY(1.3) scaleX(1.1);
+  }
+}
+
+/* ─── Body shadow ─── */
+.oni-shadow {
+  transition: all 0.4s ease;
+}
+
 /* ─── Global transitions for smooth emotion morphing ─── */
 .oni-eye,
 .oni-pupil,
@@ -35,38 +96,16 @@
   transition: all 0.15s ease-in;
 }
 
-/* ─── Speaking mouth animation ─── */
-.oni-mouth-speak-anim {
-  animation: oni-speak-mouth 0.3s ease-in-out infinite alternate;
-}
-
-@keyframes oni-speak-mouth {
-  0% {
-    ry: 2px;
-    rx: 5px;
-  }
-  50% {
-    ry: 5px;
-    rx: 7px;
-  }
-  100% {
-    ry: 3px;
-    rx: 4px;
-  }
-}
-
+/* ─── Speaking mouth animation (on wrapper) ─── */
 .oni-speaking .oni-mouth {
-  animation: oni-mouth-wiggle 0.25s ease-in-out infinite alternate;
+  animation: oni-mouth-speak-bounce 0.3s ease-in-out infinite alternate;
 }
-
-@keyframes oni-mouth-wiggle {
+@keyframes oni-mouth-speak-bounce {
   0% {
-    transform: translate(var(--mx, 60px), var(--my, 86px)) scale(var(--ms, 1))
-      scaleY(0.8);
+    transform: scaleY(0.7);
   }
   100% {
-    transform: translate(var(--mx, 60px), var(--my, 86px)) scale(var(--ms, 1))
-      scaleY(1.2);
+    transform: scaleY(1.3);
   }
 }
 

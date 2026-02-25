@@ -22,6 +22,7 @@ import {
   Zap,
   MessageSquarePlus,
 } from "lucide-react";
+import OniAvatar from "./OniAvatar";
 import "./OniChat.css";
 
 function formatTime(ts) {
@@ -37,6 +38,8 @@ export default function OniChat({
   streamingText = "",
   onStop,
   onNewChat,
+  emotion = "neutral",
+  action = "idle",
 }) {
   const [input, setInput] = useState("");
   const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -103,7 +106,9 @@ export default function OniChat({
       >
         {messages.length === 0 && !isStreaming && (
           <div className="oni-chat-empty">
-            <div className="oni-chat-empty-emoji">🪁</div>
+            <div className="oni-chat-empty-avatar">
+              <OniAvatar size={80} emotion="happy" />
+            </div>
             <p>
               Hey! I'm <strong>Hailey</strong> — your AI sidekick.
               <br />
@@ -168,6 +173,11 @@ export default function OniChat({
               key={msg.id}
               className={`oni-chat-msg oni-chat-msg-${msg.role}`}
             >
+              {msg.role === "assistant" && (
+                <div className="oni-chat-msg-avatar">
+                  <OniAvatar size={28} emotion={msg.mood || "happy"} mini />
+                </div>
+              )}
               <div className="oni-chat-msg-content">
                 {msg.role === "assistant" && msg.toolCalls?.length > 0 && (
                   <div className="oni-chat-tool-calls">
@@ -209,6 +219,15 @@ export default function OniChat({
         {/* Streaming message */}
         {isStreaming && streamingText && (
           <div className="oni-chat-msg oni-chat-msg-assistant oni-chat-msg-streaming">
+            <div className="oni-chat-msg-avatar">
+              <OniAvatar
+                size={28}
+                emotion={emotion}
+                action={action}
+                speaking
+                mini
+              />
+            </div>
             <div className="oni-chat-msg-content">
               <div className="oni-chat-msg-text">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -222,6 +241,15 @@ export default function OniChat({
         {/* Typing indicator */}
         {isStreaming && !streamingText && (
           <div className="oni-chat-msg oni-chat-msg-assistant oni-chat-typing">
+            <div className="oni-chat-msg-avatar">
+              <OniAvatar
+                size={28}
+                emotion={emotion}
+                action={action}
+                speaking={false}
+                mini
+              />
+            </div>
             <div className="oni-chat-msg-content">
               <div className="oni-typing-dots">
                 <span />

@@ -139,6 +139,14 @@
 
 .oni-chat-msg-assistant {
   align-self: flex-start;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.oni-chat-msg-avatar {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .oni-chat-msg-content {
@@ -409,6 +417,9 @@
 }
 
 /* ─── Empty state ─── */
+.oni-chat-empty-avatar {
+  margin-bottom: 8px;
+}
 .oni-chat-empty-emoji {
   font-size: 36px;
   animation: oni-emoji-float 3s ease-in-out infinite;

@@ -361,6 +361,8 @@ export default function OniChatWidget() {
         streamingText={streamingText}
         onStop={handleStop}
         onNewChat={handleNewChat}
+        emotion={emotion}
+        action={action}
       />
     </div>
   );
