@@ -340,15 +340,28 @@ Base: \`POST http://localhost:${port}/api/oni/actions/{action}\` with JSON body.
 ## Terminal → /actions/terminal
 \`{"action":"open"}\` · \`{"action":"run","command":"ls -la"}\`
 
-## Display Widget → /actions/display (IMPORTANT — use for all visual content)
-Posts JSON data that opens a rich content widget. Multiple instances supported.
+## Display Widget → /actions/display (USE FOR ALL VISUAL CONTENT)
+Posts JSON \`{"title":"...","sections":[...]}\` → opens a rich content widget. Multiple simultaneous widgets supported.
 Section types: hero, stats, cards, table, list, text, image, video, gallery, embed, progress, quote, code, kv, timeline, alert, weather, chart, divider
 
-**Weather example:** \`{"title":"Weather in Lusaka","background":"linear-gradient(135deg,#1a3a5c,#0a1628)","sections":[{"type":"hero","title":"Lusaka","subtitle":"28°C Sunny","icon":"☀️"},{"type":"stats","items":[{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12km/h"}]},{"type":"weather","title":"Forecast","items":[{"day":"Mon","icon":"☀️","high":"29°C","low":"18°C"},{"day":"Tue","icon":"⛅","high":"26°C","low":"17°C"}]}]}\`
-**Search results:** Use \`cards\` section with title, description, image, link per card.
-**Stock/data:** Use \`stats\` + \`chart\` + \`table\` sections.
-**Media:** Use \`image\` or \`video\` sections.
-**Spawn multiple:** Call display action multiple times for split views (e.g. current weather + weekly forecast + radar).
+**DESIGN RULES:**
+- Hero section is OPTIONAL. Only use it when a prominent title/banner makes sense (e.g. weather, profiles). Skip it for image grids, search results, data tables.
+- Never use random emojis as hero icons. Only use relevant, meaningful icons sparingly.
+- Cards with \`image\` field are clickable — user can tap to see detail overlay. Add \`description\`, \`details\` (object), \`price\`, \`link\` for the expanded view.
+- List items with \`details\` (object) are also clickable for expanded view.
+- Gallery images are clickable for full preview. Use \`gallery\` for image-heavy results (shoes, products, photos).
+- For ordered instructions (recipes, directions), use \`list\` with \`"ordered":true\`.
+- Prefer \`gallery\` (columns:2 or 3) for product/image searches over cards.
+- Use \`embed\` with a URL to preview websites inside the widget.
+- Use \`code\` section to show generated code/websites with \`language\` field.
+
+**Examples:**
+- Weather: \`{"title":"Lusaka Weather","sections":[{"type":"stats","items":[{"label":"Now","value":"28°C","icon":"☀️"},{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12km/h"}]},{"type":"weather","title":"This Week","items":[{"day":"Mon","icon":"☀️","high":"29°C","low":"18°C"}]}]}\`
+- Image search: \`{"title":"Nike Shoes","sections":[{"type":"gallery","columns":2,"images":[{"src":"url","caption":"Air Max 90","title":"Air Max 90","price":"$120","description":"Classic runner","link":"url"}]}]}\`
+- Recipe: \`{"title":"Pasta Carbonara","sections":[{"type":"list","title":"Ingredients","items":[{"title":"Spaghetti","value":"400g"}]},{"type":"list","title":"Steps","ordered":true,"items":[{"title":"Boil pasta","description":"Cook until al dente"}]}]}\`
+- Data: \`{"title":"Stock Overview","sections":[{"type":"stats","items":[{"label":"AAPL","value":"$178","change":"+2.3%"}]},{"type":"table","headers":["Stock","Price","Change"],"rows":[["AAPL","$178","+2.3%"]]}]}\`
+- Website preview: \`{"title":"My Site","sections":[{"type":"code","title":"index.html","language":"html","code":"<h1>Hello</h1>"},{"type":"embed","url":"https://example.com","height":400}]}\`
+**Spawn multiple:** Call display action multiple times for dashboards (e.g. separate widgets for current conditions + weekly forecast).
 
 ## Other Actions
 **task** → /actions/task — \`{"action":"create|list|complete|delete","title":"...","priority":"high|medium|low"}\`
@@ -447,19 +460,29 @@ export default function oniPlugin() {
                 json(res, { success: true, config: updated });
             });
 
-            // ─── Dynamic Display Data Store ──────────────
-            // Stores JSON data for DynamicDisplay widgets. AI posts data,
-            // gets back an ID, widget fetches data by ID on mount.
-            const _displayStore = new Map();
+            // ─── Dynamic Display Data Store (disk-backed) ──
+            // Persists JSON data so widgets survive server restarts.
+            const _displayFile = path.join(ONIOS_DIR, 'display-store.json');
+            let _displayStore = new Map();
+            try {
+                if (fs.existsSync(_displayFile)) {
+                    const raw = JSON.parse(fs.readFileSync(_displayFile, 'utf8'));
+                    _displayStore = new Map(Object.entries(raw));
+                }
+            } catch { /* start fresh */ }
+            function _saveDisplayStore() {
+                try {
+                    const obj = Object.fromEntries(_displayStore);
+                    fs.writeFileSync(_displayFile, JSON.stringify(obj), 'utf8');
+                } catch { /* ignore write errors */ }
+            }
 
             server.middlewares.use('/api/oni/display', async (req, res) => {
                 const urlPath = req.originalUrl || req.url;
 
-                // GET /api/oni/display/:id — fetch display data
                 if (req.method === 'GET') {
                     const id = urlPath.replace('/api/oni/display/', '').split('?')[0];
                     if (!id || id === '' || id === 'display') {
-                        // List all display IDs
                         const ids = [..._displayStore.keys()];
                         json(res, { ids, count: ids.length });
                         return;
@@ -470,17 +493,16 @@ export default function oniPlugin() {
                     return;
                 }
 
-                // POST /api/oni/display — store new display data, return ID
                 if (req.method === 'POST') {
                     const body = await parseBody(req);
                     const title = (body.title || 'Display').replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_').substring(0, 30);
                     const id = `d_${title}_${Date.now().toString(36)}`;
                     _displayStore.set(id, body);
-                    // Auto-cleanup old entries (keep last 50)
                     if (_displayStore.size > 50) {
                         const oldest = _displayStore.keys().next().value;
                         _displayStore.delete(oldest);
                     }
+                    _saveDisplayStore();
                     json(res, { success: true, id, title: body.title });
                     return;
                 }
@@ -730,7 +752,6 @@ export default function oniPlugin() {
                         case 'scheduler': result = await handleSchedulerAction(body); break;
                         case 'workflow': result = await handleWorkflowAction(body); break;
                         case 'display': {
-                            // Store display data and return ID
                             const title = (body.title || 'Display').replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_').substring(0, 30);
                             const id = `d_${title}_${Date.now().toString(36)}`;
                             _displayStore.set(id, body);
@@ -738,6 +759,7 @@ export default function oniPlugin() {
                                 const oldest = _displayStore.keys().next().value;
                                 _displayStore.delete(oldest);
                             }
+                            _saveDisplayStore();
                             result = { success: true, id, title: body.title, message: `Display "${body.title}" created (${id})` };
                             break;
                         }

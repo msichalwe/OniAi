@@ -1,20 +1,80 @@
 /**
  * DynamicDisplay — Universal JSON renderer widget.
  *
- * Takes structured JSON data and renders it as rich content:
+ * Renders structured JSON as rich, interactive content:
  * hero banners, stat cards, card grids, tables, lists, images,
  * videos, galleries, embeds, markdown text, progress bars, quotes,
- * code blocks, key-value pairs, timelines, and more.
+ * code blocks, key-value pairs, timelines, alerts, weather, charts.
  *
- * The AI sends JSON to /api/oni/actions/display → server stores it
- * with an ID → this widget opens and fetches the data by ID.
- *
- * Multiple instances can be open simultaneously with different data.
+ * Features:
+ * - Clickable cards/gallery items with expanded detail overlay
+ * - Image loading states with graceful fallbacks
+ * - Frosted glass OS-native design
+ * - Multiple instances can be open simultaneously
  */
 
-import React, { useState, useEffect, useRef } from "react";
-import { Loader2, ExternalLink, RefreshCw } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Loader2, ExternalLink, RefreshCw, X, ChevronRight, ImageOff } from "lucide-react";
 import "./DynamicDisplay.css";
+
+// ─── Helpers ──────────────────────────────────────────
+
+function Img({ src, alt, className, style, onClick }) {
+  const [status, setStatus] = useState("loading");
+  return (
+    <div className={`dd-img-wrap ${className || ""}`} style={style} onClick={onClick}>
+      {status === "loading" && <div className="dd-img-placeholder"><Loader2 size={16} className="dd-spin" /></div>}
+      {status === "error" && <div className="dd-img-placeholder"><ImageOff size={18} strokeWidth={1.5} /><span>No image</span></div>}
+      <img
+        src={src}
+        alt={alt || ""}
+        className={status === "loading" ? "dd-img-hidden" : "dd-img-visible"}
+        onLoad={() => setStatus("loaded")}
+        onError={() => setStatus("error")}
+        draggable={false}
+      />
+    </div>
+  );
+}
+
+// ─── Detail Overlay ───────────────────────────────────
+
+function DetailOverlay({ item, onClose }) {
+  if (!item) return null;
+  return (
+    <div className="dd-overlay" onClick={onClose}>
+      <div className="dd-detail" onClick={(e) => e.stopPropagation()}>
+        <button className="dd-detail-close" onClick={onClose}><X size={16} /></button>
+        {item.image && <Img src={item.image} alt={item.title} className="dd-detail-img" />}
+        <div className="dd-detail-body">
+          {item.title && <h2 className="dd-detail-title">{item.title}</h2>}
+          {item.subtitle && <p className="dd-detail-subtitle">{item.subtitle}</p>}
+          {item.price && <div className="dd-detail-price">{item.price}</div>}
+          {item.value && !item.price && <div className="dd-detail-price">{item.value}</div>}
+          {item.description && <p className="dd-detail-desc">{item.description}</p>}
+          {item.tags && (
+            <div className="dd-card-tags">{item.tags.map((t, j) => <span key={j} className="dd-tag">{t}</span>)}</div>
+          )}
+          {item.details && (
+            <div className="dd-detail-extra">
+              {Object.entries(item.details).map(([k, v]) => (
+                <div key={k} className="dd-kv-row">
+                  <span className="dd-kv-key">{k}</span>
+                  <span className="dd-kv-value">{String(v)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {item.link && (
+            <a className="dd-detail-link" href={item.link} target="_blank" rel="noopener noreferrer">
+              Open Link <ExternalLink size={12} />
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── Section Renderers ────────────────────────────────
 
@@ -26,7 +86,7 @@ function HeroSection({ data }) {
       : data.background;
   }
   if (data.image && !data.background) {
-    style.background = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), url(${data.image}) center/cover`;
+    style.background = `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.65)), url(${data.image}) center/cover`;
   }
   return (
     <div className="dd-hero" style={style}>
@@ -43,7 +103,7 @@ function StatsSection({ data }) {
   return (
     <div className="dd-stats">
       {items.map((item, i) => (
-        <div key={i} className="dd-stat" style={item.color ? { borderColor: item.color } : undefined}>
+        <div key={i} className="dd-stat">
           {item.icon && <span className="dd-stat-icon">{item.icon}</span>}
           <div className="dd-stat-value" style={item.color ? { color: item.color } : undefined}>
             {item.value}
@@ -60,18 +120,18 @@ function StatsSection({ data }) {
   );
 }
 
-function CardsSection({ data }) {
+function CardsSection({ data, onSelect }) {
   const items = data.items || [];
-  const cols = data.columns || 3;
+  const cols = data.columns || (items.length <= 2 ? items.length : items.length <= 4 ? 2 : 3);
   return (
     <div className="dd-cards" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
       {items.map((card, i) => (
-        <div key={i} className="dd-card" style={card.background ? { background: card.background } : undefined}>
-          {card.image && (
-            <div className="dd-card-img" style={{ backgroundImage: `url(${card.image})` }}>
-              {card.badge && <span className="dd-card-badge">{card.badge}</span>}
-            </div>
-          )}
+        <div
+          key={i}
+          className={`dd-card ${card.image || card.description || card.details ? "dd-card-clickable" : ""}`}
+          onClick={() => (card.image || card.description || card.details) && onSelect(card)}
+        >
+          {card.image && <Img src={card.image} alt={card.title} className="dd-card-img" />}
           <div className="dd-card-body">
             {card.icon && <span className="dd-card-icon">{card.icon}</span>}
             {card.title && <div className="dd-card-title">{card.title}</div>}
@@ -83,8 +143,9 @@ function CardsSection({ data }) {
               </div>
             )}
             {card.value && <div className="dd-card-value">{card.value}</div>}
-            {card.link && (
-              <a className="dd-card-link" href={card.link} target="_blank" rel="noopener noreferrer">
+            {card.price && <div className="dd-card-price">{card.price}</div>}
+            {card.link && !card.details && (
+              <a className="dd-card-link" href={card.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
                 View <ExternalLink size={10} />
               </a>
             )}
@@ -103,9 +164,7 @@ function TableSection({ data }) {
       {data.title && <div className="dd-section-title">{data.title}</div>}
       <table className="dd-table">
         {headers.length > 0 && (
-          <thead>
-            <tr>{headers.map((h, i) => <th key={i}>{h}</th>)}</tr>
-          </thead>
+          <thead><tr>{headers.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
         )}
         <tbody>
           {rows.map((row, i) => (
@@ -121,15 +180,21 @@ function TableSection({ data }) {
   );
 }
 
-function ListSection({ data }) {
+function ListSection({ data, onSelect }) {
   const items = data.items || [];
+  const ordered = data.ordered;
   return (
     <div className="dd-list">
       {data.title && <div className="dd-section-title">{data.title}</div>}
       {items.map((item, i) => (
-        <div key={i} className="dd-list-item">
-          {item.icon && <span className="dd-list-icon">{item.icon}</span>}
-          {item.image && <img className="dd-list-img" src={item.image} alt="" />}
+        <div
+          key={i}
+          className={`dd-list-item ${item.details ? "dd-list-clickable" : ""}`}
+          onClick={() => item.details && onSelect(item)}
+        >
+          {ordered && <span className="dd-list-num">{i + 1}</span>}
+          {item.icon && !ordered && <span className="dd-list-icon">{item.icon}</span>}
+          {item.image && <Img src={item.image} alt={item.title} className="dd-list-img" />}
           <div className="dd-list-content">
             {item.title && <div className="dd-list-title">{item.title}</div>}
             {item.description && <div className="dd-list-desc">{item.description}</div>}
@@ -137,6 +202,7 @@ function ListSection({ data }) {
           </div>
           {item.value && <div className="dd-list-value">{item.value}</div>}
           {item.badge && <span className="dd-list-badge">{item.badge}</span>}
+          {item.details && <ChevronRight size={14} className="dd-list-chevron" />}
         </div>
       ))}
     </div>
@@ -144,7 +210,6 @@ function ListSection({ data }) {
 }
 
 function TextSection({ data }) {
-  // Simple markdown-ish rendering
   const html = (data.content || "")
     .replace(/^### (.+)$/gm, "<h4>$1</h4>")
     .replace(/^## (.+)$/gm, "<h3>$1</h3>")
@@ -161,40 +226,50 @@ function TextSection({ data }) {
   );
 }
 
-function ImageSection({ data }) {
+function ImageSection({ data, onSelect }) {
   return (
-    <div className="dd-image">
-      <img src={data.src} alt={data.caption || ""} style={data.width ? { width: data.width } : undefined} />
+    <div className="dd-image" onClick={() => onSelect && onSelect({ image: data.src, title: data.caption })}>
+      <Img src={data.src} alt={data.caption} style={data.width ? { maxWidth: data.width } : undefined} />
       {data.caption && <div className="dd-image-caption">{data.caption}</div>}
     </div>
   );
 }
 
 function VideoSection({ data }) {
+  if (data.youtube || (data.src && data.src.includes("youtube"))) {
+    const vid = data.youtube || data.src;
+    const embedUrl = vid.includes("embed") ? vid : `https://www.youtube.com/embed/${vid.split("v=").pop().split("&")[0]}`;
+    return (
+      <div className="dd-video">
+        <iframe src={embedUrl} title={data.caption || "Video"} style={{ width: "100%", height: 220, border: "none", borderRadius: 10 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+        {data.caption && <div className="dd-video-caption">{data.caption}</div>}
+      </div>
+    );
+  }
   return (
     <div className="dd-video">
-      <video
-        src={data.src}
-        poster={data.poster}
-        controls
-        style={data.width ? { width: data.width } : undefined}
-      />
+      <video src={data.src} poster={data.poster} controls style={data.width ? { width: data.width } : undefined} />
       {data.caption && <div className="dd-video-caption">{data.caption}</div>}
     </div>
   );
 }
 
-function GallerySection({ data }) {
-  const images = data.images || [];
-  const cols = data.columns || 3;
+function GallerySection({ data, onSelect }) {
+  const images = data.images || data.items || [];
+  const cols = data.columns || (images.length <= 2 ? images.length : images.length <= 4 ? 2 : 3);
   return (
     <div className="dd-gallery" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-      {images.map((img, i) => (
-        <div key={i} className="dd-gallery-item">
-          <img src={typeof img === "string" ? img : img.src} alt={img.caption || ""} />
-          {img.caption && <div className="dd-gallery-caption">{img.caption}</div>}
-        </div>
-      ))}
+      {images.map((img, i) => {
+        const src = typeof img === "string" ? img : img.src || img.url || img.image;
+        const caption = typeof img === "string" ? null : img.caption || img.title;
+        const item = typeof img === "string" ? { image: img } : { ...img, image: src };
+        return (
+          <div key={i} className="dd-gallery-item" onClick={() => onSelect(item)}>
+            <Img src={src} alt={caption} />
+            {caption && <div className="dd-gallery-caption">{caption}</div>}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -202,11 +277,12 @@ function GallerySection({ data }) {
 function EmbedSection({ data }) {
   return (
     <div className="dd-embed">
+      {data.title && <div className="dd-section-title">{data.title}</div>}
       <iframe
-        src={data.url}
+        src={data.url || data.src}
         title={data.title || "Embed"}
-        style={{ width: "100%", height: data.height || 400, border: "none", borderRadius: 8 }}
-        sandbox="allow-scripts allow-same-origin allow-popups"
+        style={{ width: "100%", height: data.height || 400, border: "none", borderRadius: 10 }}
+        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
       />
     </div>
   );
@@ -247,7 +323,12 @@ function QuoteSection({ data }) {
 function CodeSection({ data }) {
   return (
     <div className="dd-code">
-      {data.title && <div className="dd-code-header">{data.title}{data.language && <span className="dd-code-lang">{data.language}</span>}</div>}
+      {(data.title || data.language) && (
+        <div className="dd-code-header">
+          <span>{data.title || data.language}</span>
+          {data.title && data.language && <span className="dd-code-lang">{data.language}</span>}
+        </div>
+      )}
       <pre className="dd-code-block"><code>{data.code || data.content}</code></pre>
     </div>
   );
@@ -261,7 +342,7 @@ function KeyValueSection({ data }) {
       {items.map((item, i) => (
         <div key={i} className="dd-kv-row">
           <span className="dd-kv-key">{item.key || item.label}</span>
-          <span className="dd-kv-value">{item.value}</span>
+          <span className="dd-kv-value" style={item.color ? { color: item.color } : undefined}>{item.value}</span>
         </div>
       ))}
     </div>
@@ -288,7 +369,7 @@ function TimelineSection({ data }) {
 }
 
 function AlertSection({ data }) {
-  const typeClass = data.variant || data.type || "info"; // info, warning, error, success
+  const typeClass = data.variant || data.level || "info";
   return (
     <div className={`dd-alert dd-alert-${typeClass}`}>
       {data.icon && <span className="dd-alert-icon">{data.icon}</span>}
@@ -301,7 +382,6 @@ function AlertSection({ data }) {
 }
 
 function WeatherSection({ data }) {
-  // Specialized weather rendering with dynamic backgrounds
   const items = data.items || data.days || [];
   return (
     <div className="dd-weather">
@@ -309,8 +389,10 @@ function WeatherSection({ data }) {
       {data.current && (
         <div className="dd-weather-current">
           <span className="dd-weather-icon">{data.current.icon || "🌤"}</span>
-          <span className="dd-weather-temp">{data.current.temp}</span>
-          <span className="dd-weather-desc">{data.current.description}</span>
+          <div className="dd-weather-info">
+            <span className="dd-weather-temp">{data.current.temp}</span>
+            <span className="dd-weather-desc">{data.current.description}</span>
+          </div>
         </div>
       )}
       {items.length > 0 && (
@@ -330,7 +412,6 @@ function WeatherSection({ data }) {
 }
 
 function ChartSection({ data }) {
-  // Simple bar chart using CSS
   const items = data.items || [];
   const maxVal = Math.max(...items.map((i) => Number(i.value) || 0), 1);
   return (
@@ -339,6 +420,7 @@ function ChartSection({ data }) {
       <div className="dd-chart-bars">
         {items.map((item, i) => (
           <div key={i} className="dd-chart-bar-group">
+            <div className="dd-chart-value">{item.value}</div>
             <div className="dd-chart-bar-wrap">
               <div
                 className="dd-chart-bar"
@@ -349,7 +431,6 @@ function ChartSection({ data }) {
               />
             </div>
             <div className="dd-chart-label">{item.label}</div>
-            <div className="dd-chart-value">{item.value}</div>
           </div>
         ))}
       </div>
@@ -357,23 +438,23 @@ function ChartSection({ data }) {
   );
 }
 
-function DividerSection() {
-  return <hr className="dd-divider" />;
+function DividerSection({ data }) {
+  return <hr className="dd-divider" style={data?.label ? undefined : undefined} />;
 }
 
 // ─── Section Router ───────────────────────────────────
 
-function RenderSection({ section }) {
+function RenderSection({ section, onSelect }) {
   switch (section.type) {
     case "hero": return <HeroSection data={section} />;
     case "stats": return <StatsSection data={section} />;
-    case "cards": return <CardsSection data={section} />;
+    case "cards": return <CardsSection data={section} onSelect={onSelect} />;
     case "table": return <TableSection data={section} />;
-    case "list": return <ListSection data={section} />;
+    case "list": return <ListSection data={section} onSelect={onSelect} />;
     case "text": return <TextSection data={section} />;
-    case "image": return <ImageSection data={section} />;
+    case "image": return <ImageSection data={section} onSelect={onSelect} />;
     case "video": return <VideoSection data={section} />;
-    case "gallery": return <GallerySection data={section} />;
+    case "gallery": return <GallerySection data={section} onSelect={onSelect} />;
     case "embed": return <EmbedSection data={section} />;
     case "progress": return <ProgressSection data={section} />;
     case "quote": return <QuoteSection data={section} />;
@@ -383,7 +464,7 @@ function RenderSection({ section }) {
     case "alert": return <AlertSection data={section} />;
     case "weather": return <WeatherSection data={section} />;
     case "chart": case "bar_chart": return <ChartSection data={section} />;
-    case "divider": return <DividerSection />;
+    case "divider": return <DividerSection data={section} />;
     default:
       return <div className="dd-unknown">Unknown section type: {section.type}</div>;
   }
@@ -395,6 +476,7 @@ export default function DynamicDisplay({ windowId, displayId }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selected, setSelected] = useState(null);
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -411,7 +493,7 @@ export default function DynamicDisplay({ windowId, displayId }) {
     setError(null);
     try {
       const res = await fetch(`/api/oni/display/${displayId}`);
-      if (!res.ok) {throw new Error(`Failed to load display data (${res.status})`);}
+      if (!res.ok) throw new Error(`Failed to load (${res.status})`);
       const json = await res.json();
       setData(json);
     } catch (err) {
@@ -420,11 +502,13 @@ export default function DynamicDisplay({ windowId, displayId }) {
     setLoading(false);
   };
 
+  const handleSelect = useCallback((item) => setSelected(item), []);
+  const handleClose = useCallback(() => setSelected(null), []);
+
   if (loading) {
     return (
       <div className="dd-widget dd-loading">
-        <Loader2 size={24} className="dd-spin" />
-        <span>Loading...</span>
+        <Loader2 size={20} className="dd-spin" />
       </div>
     );
   }
@@ -432,33 +516,27 @@ export default function DynamicDisplay({ windowId, displayId }) {
   if (error) {
     return (
       <div className="dd-widget dd-error">
-        <div className="dd-error-text">{error}</div>
+        <div style={{ fontSize: 13, marginBottom: 8 }}>{error}</div>
         <button className="dd-retry" onClick={loadData}>
-          <RefreshCw size={14} /> Retry
+          <RefreshCw size={13} /> Retry
         </button>
       </div>
     );
   }
 
   if (!data || !data.sections) {
-    return <div className="dd-widget dd-empty">No content to display</div>;
-  }
-
-  const widgetStyle = {};
-  if (data.background) {
-    widgetStyle.background = data.background.startsWith("http")
-      ? `url(${data.background}) center/cover`
-      : data.background;
+    return <div className="dd-widget dd-empty">No content</div>;
   }
 
   return (
-    <div className="dd-widget" style={widgetStyle} ref={containerRef}>
+    <div className="dd-widget" ref={containerRef}>
       <div className="dd-content">
         {data.sections.map((section, i) => (
-          <RenderSection key={i} section={section} />
+          <RenderSection key={i} section={section} onSelect={handleSelect} />
         ))}
       </div>
       {data.footer && <div className="dd-footer">{data.footer}</div>}
+      {selected && <DetailOverlay item={selected} onClose={handleClose} />}
     </div>
   );
 }
