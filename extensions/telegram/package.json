@@ -1,0 +1,12 @@
+{
+  "name": "@oni/telegram",
+  "version": "2026.2.25",
+  "private": true,
+  "description": "OniAI Telegram channel plugin",
+  "type": "module",
+  "oni": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@oni/memory-core",
+  "version": "2026.2.25",
+  "private": true,
+  "description": "OniAI core memory search plugin",
+  "type": "module",
+  "peerDependencies": {
+    "oni": ">=2026.1.26"
+  },
+  "oni": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

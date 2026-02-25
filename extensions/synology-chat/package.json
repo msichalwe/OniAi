@@ -1,0 +1,28 @@
+{
+  "name": "@oni/synology-chat",
+  "version": "2026.2.25",
+  "description": "Synology Chat channel plugin for OniAI",
+  "type": "module",
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "oni": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "channel": {
+      "id": "synology-chat",
+      "label": "Synology Chat",
+      "selectionLabel": "Synology Chat (Webhook)",
+      "docsPath": "/channels/synology-chat",
+      "docsLabel": "synology-chat",
+      "blurb": "Connect your Synology NAS Chat to OniAI with full agent capabilities.",
+      "order": 90
+    },
+    "install": {
+      "npmSpec": "@oni/synology-chat",
+      "localPath": "extensions/synology-chat",
+      "defaultChoice": "npm"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@oni/google-gemini-cli-auth",
+  "version": "2026.2.25",
+  "private": true,
+  "description": "OniAI Gemini CLI OAuth provider plugin",
+  "type": "module",
+  "oni": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

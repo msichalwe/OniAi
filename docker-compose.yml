@@ -1,0 +1,46 @@
+services:
+  oni-gateway:
+    image: ${ONI_IMAGE:-oni:local}
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      ONI_GATEWAY_TOKEN: ${ONI_GATEWAY_TOKEN}
+      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
+      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
+      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
+    volumes:
+      - ${ONI_CONFIG_DIR}:/home/node/.oni
+      - ${ONI_WORKSPACE_DIR}:/home/node/.oni/workspace
+    ports:
+      - "${ONI_GATEWAY_PORT:-19100}:19100"
+      - "${ONI_BRIDGE_PORT:-18790}:18790"
+    init: true
+    restart: unless-stopped
+    command:
+      [
+        "node",
+        "dist/index.js",
+        "gateway",
+        "--bind",
+        "${ONI_GATEWAY_BIND:-lan}",
+        "--port",
+        "19100",
+      ]
+
+  oni-cli:
+    image: ${ONI_IMAGE:-oni:local}
+    environment:
+      HOME: /home/node
+      TERM: xterm-256color
+      ONI_GATEWAY_TOKEN: ${ONI_GATEWAY_TOKEN}
+      BROWSER: echo
+      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
+      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
+      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
+    volumes:
+      - ${ONI_CONFIG_DIR}:/home/node/.oni
+      - ${ONI_WORKSPACE_DIR}:/home/node/.oni/workspace
+    stdin_open: true
+    tty: true
+    init: true
+    entrypoint: ["node", "dist/index.js"]

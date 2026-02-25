@@ -1,0 +1,12 @@
+{
+  "name": "@oni/imessage",
+  "version": "2026.2.25",
+  "private": true,
+  "description": "OniAI iMessage channel plugin",
+  "type": "module",
+  "oni": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

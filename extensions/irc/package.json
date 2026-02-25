@@ -1,0 +1,11 @@
+{
+  "name": "@oni/irc",
+  "version": "2026.2.25",
+  "description": "OniAI IRC channel plugin",
+  "type": "module",
+  "oni": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

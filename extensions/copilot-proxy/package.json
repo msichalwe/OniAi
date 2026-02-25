@@ -1,0 +1,12 @@
+{
+  "name": "@oni/copilot-proxy",
+  "version": "2026.2.25",
+  "private": true,
+  "description": "OniAI Copilot Proxy provider plugin",
+  "type": "module",
+  "oni": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
