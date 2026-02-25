@@ -70,7 +70,7 @@ export async function doctorCommand(
 ) {
   const prompter = createDoctorPrompter({ runtime, options });
   printWizardHeader(runtime);
-  intro("OniAI doctor");
+  intro("🦊 OniAI Doctor");
 
   const root = await resolveOniAIPackageRoot({
     moduleUrl: import.meta.url,

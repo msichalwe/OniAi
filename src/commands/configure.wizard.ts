@@ -213,7 +213,7 @@ export async function runConfigureWizard(
 ) {
   try {
     printWizardHeader(runtime);
-    intro(opts.command === "update" ? "OniAI update wizard" : "OniAI configure");
+    intro(opts.command === "update" ? "🦊 OniAI Update Wizard" : "🦊 OniAI Configure");
     const prompter = createClackPrompter();
 
     const snapshot = await readConfigFileSnapshot();

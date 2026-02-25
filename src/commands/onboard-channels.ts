@@ -191,7 +191,7 @@ async function noteChannelPrimer(
   );
   await prompter.note(
     [
-      "DM security: default is pairing; unknown DMs get a pairing code.",
+      "🔒 DM security: default is pairing — unknown DMs get a pairing code.",
       `Approve with: ${formatCliCommand("oni pairing approve <channel> <code>")}`,
       'Public DMs require dmPolicy="open" + allowFrom=["*"].',
       "Multi-user DMs: run: " +
@@ -201,7 +201,7 @@ async function noteChannelPrimer(
       "",
       ...channelLines,
     ].join("\n"),
-    "How channels work",
+    "📡 How Channels Work",
   );
 }
 
@@ -235,7 +235,7 @@ async function maybeConfigureDmPolicies(params: {
   }
 
   const wants = await prompter.confirm({
-    message: "Configure DM access policies now? (default: pairing)",
+    message: "🦊 Configure DM access policies now? (default: pairing)",
     initialValue: false,
   });
   if (!wants) {
@@ -312,7 +312,7 @@ export async function setupChannels(
   const shouldConfigure = options?.skipConfirm
     ? true
     : await prompter.confirm({
-        message: "Configure chat channels now?",
+        message: "📡 Configure chat channels now?",
         initialValue: true,
       });
   if (!shouldConfigure) {
@@ -628,7 +628,7 @@ export async function setupChannels(
   if (options?.quickstartDefaults) {
     const { entries } = getChannelEntries();
     const choice = (await prompter.select({
-      message: "Select channel (QuickStart)",
+      message: "🦊 Select channel (QuickStart)",
       options: [
         ...buildSelectionOptions(entries),
         {
@@ -648,7 +648,7 @@ export async function setupChannels(
     while (true) {
       const { entries } = getChannelEntries();
       const choice = (await prompter.select({
-        message: "Select a channel",
+        message: "📡 Select a channel",
         options: [
           ...buildSelectionOptions(entries),
           {
@@ -677,7 +677,7 @@ export async function setupChannels(
     .map((channel) => selectionNotes.get(channel))
     .filter((line): line is string => Boolean(line));
   if (selectedLines.length > 0) {
-    await prompter.note(selectedLines.join("\n"), "Selected channels");
+    await prompter.note(selectedLines.join("\n"), "✅ Selected Channels");
   }
 
   if (!options?.skipDmPolicyPrompt) {

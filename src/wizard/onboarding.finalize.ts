@@ -96,7 +96,7 @@ export async function finalizeOnboardingWizard(
     installDaemon = true;
   } else {
     installDaemon = await prompter.confirm({
-      message: "Install Gateway service (recommended)",
+      message: "⚡ Install Gateway service (recommended)",
       initialValue: true,
     });
   }
@@ -121,14 +121,14 @@ export async function finalizeOnboardingWizard(
     if (flow === "quickstart") {
       await prompter.note(
         "QuickStart uses Node for the Gateway service (stable + supported).",
-        "Gateway service runtime",
+        "⚡ Gateway service runtime",
       );
     }
     const service = resolveGatewayService();
     const loaded = await service.isLoaded({ env: process.env });
     if (loaded) {
       const action = await prompter.select({
-        message: "Gateway service already installed",
+        message: "⚡ Gateway service already installed",
         options: [
           { value: "restart", label: "Restart" },
           { value: "reinstall", label: "Reinstall" },
@@ -234,12 +234,12 @@ export async function finalizeOnboardingWizard(
 
   await prompter.note(
     [
-      "Add nodes for extra features:",
-      "- macOS app (system + notifications)",
-      "- iOS app (camera/canvas)",
-      "- Android app (camera/canvas)",
+      "Extend your fox with companion apps:",
+      "  🍎 macOS app — system integration + notifications",
+      "  📱 iOS app — camera, canvas, on the go",
+      "  🤖 Android app — camera, canvas, on the go",
     ].join("\n"),
-    "Optional apps",
+    "🦊 Optional Apps",
   );
 
   const controlUiBasePath =
@@ -296,34 +296,32 @@ export async function finalizeOnboardingWizard(
     if (hasBootstrap) {
       await prompter.note(
         [
-          "This is the defining action that makes your agent you.",
-          "Please take your time.",
-          "The more you tell it, the better the experience will be.",
-          'We will send: "Wake up, my friend!"',
+          "This is where your fox comes alive. 🦊",
+          "Take your time — the more you tell it, the smarter it gets.",
+          'We\'ll send: "Wake up, my friend!"',
         ].join("\n"),
-        "Start TUI (best option!)",
+        "🦊 Launch Your Agent",
       );
     }
 
     await prompter.note(
       [
-        "Gateway token: shared auth for the Gateway + Control UI.",
+        "🔑 Gateway token: shared auth for the Gateway + Dashboard.",
         "Stored in: ~/.oni/oni.json (gateway.auth.token) or ONI_GATEWAY_TOKEN.",
         `View token: ${formatCliCommand("oni config get gateway.auth.token")}`,
         `Generate token: ${formatCliCommand("oni doctor --generate-gateway-token")}`,
-        "Web UI stores a copy in this browser's localStorage (oni.control.settings.v1).",
         `Open the dashboard anytime: ${formatCliCommand("oni dashboard --no-open")}`,
-        "If prompted: paste the token into Control UI settings (or use the tokenized dashboard URL).",
+        "If prompted: paste the token into settings (or use the tokenized URL).",
       ].join("\n"),
-      "Token",
+      "🔑 Token",
     );
 
     hatchChoice = await prompter.select({
-      message: "How do you want to hatch your bot?",
+      message: "🦊 How do you want to launch your agent?",
       options: [
-        { value: "tui", label: "Hatch in TUI (recommended)" },
-        { value: "web", label: "Open the Web UI" },
-        { value: "later", label: "Do this later" },
+        { value: "tui", label: "🦊 Launch in TUI (recommended)" },
+        { value: "web", label: "🌐 Open the Web Dashboard" },
+        { value: "later", label: "⏳ Do this later" },
       ],
       initialValue: "tui",
     });
@@ -381,15 +379,15 @@ export async function finalizeOnboardingWizard(
 
   await prompter.note(
     [
-      "Back up your agent workspace.",
+      "💾 Back up your agent workspace regularly.",
       "Docs: https://docs.oni.ai/concepts/agent-workspace",
     ].join("\n"),
-    "Workspace backup",
+    "💾 Workspace Backup",
   );
 
   await prompter.note(
-    "Running agents on your computer is risky — harden your setup: https://docs.oni.ai/security",
-    "Security",
+    "🔐 Running agents on your machine is powerful — harden your setup: https://docs.oni.ai/security",
+    "🔐 Security Reminder",
   );
 
   await setupOnboardingShellCompletion({ flow, prompter });
@@ -461,16 +459,16 @@ export async function finalizeOnboardingWizard(
   );
 
   await prompter.note(
-    'What now: https://oni.ai/showcase ("What People Are Building").',
-    "What now",
+    "🦊 You're all set! Explore what others are building: https://oni.ai/showcase",
+    "🦊 What's Next",
   );
 
   await prompter.outro(
     controlUiOpened
-      ? "Onboarding complete. Dashboard opened; keep that tab to control OniAI."
+      ? "🦊 Setup complete! Dashboard opened — keep that tab to control your fox."
       : seededInBackground
-        ? "Onboarding complete. Web UI seeded in the background; open it anytime with the dashboard link above."
-        : "Onboarding complete. Use the dashboard link above to control OniAI.",
+        ? "🦊 Setup complete! Dashboard seeded in the background — open it anytime."
+        : "🦊 Setup complete! Use the dashboard link above to control your fox.",
   );
 
   return { launchedTui };

@@ -28,27 +28,27 @@ async function requireRiskAcknowledgement(params: {
 
   await params.prompter.note(
     [
-      "Important — please read before proceeding.",
+      "🦊 Heads up — read this before we get started.",
       "",
-      "OniAI is an AI gateway that can execute tools, read files,",
-      "and perform actions on your behalf. With great power comes",
-      "great responsibility.",
+      "OniAI gives your AI agent real power: file access,",
+      "tool execution, and actions on your behalf.",
+      "That power demands careful setup.",
       "",
-      "Before you begin:",
-      "- Enable pairing and allowlists for all channels.",
-      "- Use sandbox mode for tool execution when possible.",
-      "- Keep sensitive files outside the agent's workspace.",
-      "- Use strong models for bots exposed to untrusted input.",
+      "Recommended safeguards:",
+      "  🔒 Enable pairing + allowlists on every channel.",
+      "  🧪 Use sandbox mode for tool execution.",
+      "  📁 Keep sensitive files out of the agent workspace.",
+      "  🧠 Use strong models for untrusted input channels.",
       "",
-      "Maintain your setup:",
+      "Keep things healthy:",
       "  oni security audit --deep",
       "  oni doctor",
     ].join("\n"),
-    "Security",
+    "🔐 Security",
   );
 
   const ok = await params.prompter.confirm({
-    message: "I understand and accept responsibility. Continue?",
+    message: "🦊 I understand the risks. Let's go?",
     initialValue: false,
   });
   if (!ok) {
@@ -63,7 +63,7 @@ export async function runOnboardingWizard(
 ) {
   const onboardHelpers = await import("../commands/onboard-helpers.js");
   onboardHelpers.printWizardHeader(runtime);
-  await prompter.intro("OniAI onboarding");
+  await prompter.intro("🦊 OniAI Setup");
   await requireRiskAcknowledgement({ opts, prompter });
 
   const snapshot = await readConfigFileSnapshot();
@@ -110,8 +110,8 @@ export async function runOnboardingWizard(
     (await prompter.select({
       message: "Onboarding mode",
       options: [
-        { value: "quickstart", label: "QuickStart", hint: quickstartHint },
-        { value: "advanced", label: "Manual", hint: manualHint },
+        { value: "quickstart", label: "🦊 QuickStart", hint: quickstartHint },
+        { value: "advanced", label: "🔧 Manual", hint: manualHint },
       ],
       initialValue: "quickstart",
     }));
@@ -119,7 +119,7 @@ export async function runOnboardingWizard(
   if (opts.mode === "remote" && flow === "quickstart") {
     await prompter.note(
       "QuickStart only supports local gateways. Switching to Manual mode.",
-      "QuickStart",
+      "🦊 QuickStart",
     );
     flow = "advanced";
   }
@@ -262,7 +262,7 @@ export async function runOnboardingWizard(
           "Tailscale exposure: Off",
           "Direct to chat channels.",
         ];
-    await prompter.note(quickstartLines.join("\n"), "QuickStart");
+    await prompter.note(quickstartLines.join("\n"), "🦊 QuickStart");
   }
 
   const localPort = resolveGatewayPort(baseConfig);
@@ -285,7 +285,7 @@ export async function runOnboardingWizard(
     (flow === "quickstart"
       ? "local"
       : ((await prompter.select({
-          message: "What do you want to set up?",
+          message: "🦊 What do you want to set up?",
           options: [
             {
               value: "local",
@@ -322,7 +322,7 @@ export async function runOnboardingWizard(
     (flow === "quickstart"
       ? (baseConfig.agents?.defaults?.workspace ?? onboardHelpers.DEFAULT_WORKSPACE)
       : await prompter.text({
-          message: "Workspace directory",
+          message: "📁 Workspace directory",
           initialValue: baseConfig.agents?.defaults?.workspace ?? onboardHelpers.DEFAULT_WORKSPACE,
         }));
 
@@ -405,7 +405,7 @@ export async function runOnboardingWizard(
   const settings = gateway.settings;
 
   if (opts.skipChannels ?? opts.skipProviders) {
-    await prompter.note("Skipping channel setup.", "Channels");
+    await prompter.note("Skipping channel setup.", "📡 Channels");
   } else {
     const { listChannelPlugins } = await import("../channels/plugins/index.js");
     const { setupChannels } = await import("../commands/onboard-channels.js");
