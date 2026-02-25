@@ -1,0 +1,525 @@
+.code-editor {
+  display: flex;
+  height: 100%;
+}
+
+/* ─── Sidebar ─── */
+.ce-sidebar {
+  width: 220px;
+  border-right: 1px solid var(--glass-border-light);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.ce-sidebar-header {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--glass-border-light);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.ce-sidebar-header svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.ce-sidebar-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ce-sidebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.ce-sidebar-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.ce-search-box {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--glass-border-light);
+}
+
+.ce-search-input {
+  width: 100%;
+  padding: 4px 8px;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border-light);
+  border-radius: 4px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: var(--font-ui);
+}
+
+.ce-search-input:focus {
+  border-color: var(--accent-blue);
+}
+
+.ce-tree {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-xs) 0;
+}
+
+.ce-tree-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 3px var(--space-md);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-ui);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.ce-tree-item:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.ce-tree-item.active {
+  background: rgba(10, 132, 255, 0.12);
+  color: var(--accent-blue);
+}
+
+.ce-tree-item.directory {
+  font-weight: 500;
+}
+
+.ce-tree-icon {
+  font-size: 14px;
+  width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ce-tree-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Tabs ─── */
+.ce-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ce-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--glass-border-light);
+  overflow-x: auto;
+  background: rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+.ce-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.ce-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  border: none;
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-ui);
+  transition: all var(--transition-fast);
+}
+
+.ce-tab:hover {
+  color: var(--text-primary);
+  background: var(--surface-solid);
+}
+
+.ce-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-blue);
+  background: var(--surface-solid);
+}
+
+.ce-tab-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.ce-tab-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ce-tab-dirty {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+  flex-shrink: 0;
+}
+
+.ce-tab-close {
+  display: flex;
+  padding: 2px;
+  border-radius: 3px;
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  margin-left: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.ce-tab-close:hover {
+  background: var(--surface-active);
+  color: var(--text-primary);
+}
+
+.ce-tab-close svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* ─── Editor area (textarea + line numbers) ─── */
+.ce-editor {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.ce-line-numbers {
+  width: 48px;
+  flex-shrink: 0;
+  overflow: hidden;
+  padding: 8px 0;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--text-tertiary);
+  opacity: 0.5;
+  -webkit-user-select: none;
+  user-select: none;
+  background: rgba(0, 0, 0, 0.05);
+  border-right: 1px solid var(--glass-border-light);
+}
+
+.ce-gutter-line {
+  padding-right: 10px;
+  height: 19.2px;
+}
+
+.ce-textarea {
+  flex: 1;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  padding: 8px 12px;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+  word-wrap: off;
+}
+
+.ce-textarea::selection {
+  background: rgba(10, 132, 255, 0.25);
+}
+
+.ce-textarea::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ce-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ce-textarea::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.ce-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Empty state ─── */
+.ce-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
+.ce-empty-icon {
+  font-size: 36px;
+  opacity: 0.4;
+}
+
+.ce-empty-hint {
+  font-size: var(--text-xs);
+  opacity: 0.5;
+}
+
+/* ─── Status bar ─── */
+.ce-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px var(--space-md);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  border-top: 1px solid var(--glass-border-light);
+  background: rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  gap: var(--space-md);
+}
+
+.ce-statusbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+
+.ce-statusbar-left span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ce-status-dirty {
+  color: var(--accent-blue);
+  font-weight: 600;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.ce-status-saving {
+  color: var(--accent-green, #30d158);
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+.ce-statusbar-right {
+  display: flex;
+  gap: var(--space-lg);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.ce-save-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 8px;
+  font-size: 10px;
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+
+.ce-save-btn:hover {
+  opacity: 0.85;
+}
+
+/* ─── Folder Picker Overlay ─── */
+.ce-picker-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.ce-picker-dialog {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 20px;
+  width: 400px;
+  max-width: 90%;
+  max-height: 70%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.ce-picker-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ce-picker-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.ce-picker-path-input {
+  flex: 1;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  background: var(--surface-sunken);
+  border: 1px solid var(--glass-border-light);
+  border-radius: 6px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.ce-picker-path-input:focus {
+  border-color: var(--accent-blue);
+}
+
+.ce-picker-open-btn {
+  padding: 8px 16px;
+  font-size: 12px;
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.ce-picker-open-btn:hover {
+  opacity: 0.85;
+}
+
+.ce-picker-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 0 2px;
+}
+
+.ce-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.ce-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-ui);
+  width: 100%;
+}
+
+.ce-picker-item:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+/* ─── Open Project Button (empty state) ─── */
+.ce-open-project-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  background: var(--accent-blue);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.ce-open-project-btn:hover {
+  opacity: 0.85;
+}
+
+/* ─── Loading ─── */
+.ce-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  gap: var(--space-sm);
+}
+
+.ce-spinner {
+  animation: spin 1s linear infinite;
+}

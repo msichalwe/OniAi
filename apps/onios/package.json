@@ -4,61 +4,30 @@
   "description": "OniOS — AI-powered desktop operating system built on the Oni gateway",
   "private": true,
   "type": "module",
-  "main": "electron/main.ts",
   "scripts": {
     "dev": "vite",
-    "dev:electron": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
-    "build": "tsc && vite build",
-    "build:electron": "tsc && vite build && electron-builder",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/addon-web-links": "^0.12.0",
     "@xterm/xterm": "^6.0.0",
     "lucide-react": "^0.474.0",
+    "mammoth": "^1.11.0",
     "nanoid": "^5.1.3",
+    "node-pty": "^1.1.0",
+    "pdf-parse": "^2.4.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "ws": "^8.19.0",
+    "xlsx": "^0.18.5",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@types/ws": "^8.5.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "concurrently": "^9.0.0",
-    "electron": "^33.0.0",
-    "electron-builder": "^25.0.0",
-    "typescript": "^5.7.0",
-    "vite": "^6.1.0",
-    "wait-on": "^8.0.0"
-  },
-  "build": {
-    "appId": "ai.oni.onios",
-    "productName": "OniOS",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "electron/**/*"
-    ],
-    "mac": {
-      "target": "dmg",
-      "icon": "public/icon.icns"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "public/icon.png"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "public/icon.ico"
-    }
+    "vite": "^6.1.0"
   }
 }

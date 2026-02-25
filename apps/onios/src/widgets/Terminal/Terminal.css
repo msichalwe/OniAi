@@ -1,0 +1,148 @@
+.terminal-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: rgba(8, 8, 14, 0.97);
+  font-family: var(--font-mono);
+  position: relative;
+}
+
+/* xterm.js container */
+.terminal-xterm-container {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  overflow: hidden;
+}
+
+.terminal-xterm-container .xterm {
+  height: 100%;
+}
+
+.terminal-xterm-container .xterm-viewport {
+  background: transparent !important;
+}
+
+.terminal-xterm-container .xterm-screen {
+  min-height: 100%;
+}
+
+/* Scrollbar styling */
+.terminal-xterm-container .xterm-viewport::-webkit-scrollbar {
+  width: 6px;
+}
+
+.terminal-xterm-container .xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal-xterm-container .xterm-viewport::-webkit-scrollbar-thumb {
+  background: var(--surface-active);
+  border-radius: 3px;
+}
+
+.terminal-xterm-container .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Error banner */
+.terminal-error {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-xs) var(--space-md);
+  background: rgba(255, 69, 58, 0.15);
+  border-top: 1px solid rgba(255, 69, 58, 0.3);
+  color: #ff6b6b;
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+/* Connecting indicator */
+.terminal-connecting {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Legacy styles for fallback terminal */
+.terminal-output {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md) var(--space-lg);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+.terminal-line {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.terminal-line.command {
+  color: var(--accent-green);
+}
+
+.terminal-line.output {
+  color: var(--text-secondary);
+}
+
+.terminal-line.error {
+  color: var(--accent-red);
+}
+
+.terminal-line.info {
+  color: var(--accent-blue);
+}
+
+.terminal-line.system {
+  color: var(--accent-purple);
+}
+
+.terminal-input-line {
+  display: flex;
+  align-items: center;
+  padding: var(--space-sm) var(--space-lg);
+  border-top: 1px solid var(--glass-border-light);
+  gap: var(--space-sm);
+}
+
+.terminal-prompt {
+  color: var(--accent-green);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  flex-shrink: 0;
+}
+
+.terminal-prompt-path {
+  color: var(--accent-blue);
+  font-size: var(--text-sm);
+  flex-shrink: 0;
+}
+
+.terminal-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  caret-color: var(--accent-green);
+}

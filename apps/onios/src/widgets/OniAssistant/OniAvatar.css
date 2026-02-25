@@ -1,0 +1,653 @@
+/* ═══════════════════════════════════════════════
+   OniAvatar — SVG character animations
+   ═══════════════════════════════════════════════ */
+
+.oni-avatar-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.oni-avatar-svg {
+  overflow: visible;
+}
+
+/* ─── Global transitions for smooth emotion morphing ─── */
+.oni-eye,
+.oni-pupil,
+.oni-brow,
+.oni-mouth,
+.oni-body,
+.oni-glow-aura {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.oni-eye-highlight {
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.oni-transitioning .oni-eye,
+.oni-transitioning .oni-pupil {
+  transition: all 0.15s ease-in;
+}
+
+/* ─── Speaking mouth animation ─── */
+.oni-mouth-speak-anim {
+  animation: oni-speak-mouth 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes oni-speak-mouth {
+  0% {
+    ry: 2px;
+    rx: 5px;
+  }
+  50% {
+    ry: 5px;
+    rx: 7px;
+  }
+  100% {
+    ry: 3px;
+    rx: 4px;
+  }
+}
+
+.oni-speaking .oni-mouth {
+  animation: oni-mouth-wiggle 0.25s ease-in-out infinite alternate;
+}
+
+@keyframes oni-mouth-wiggle {
+  0% {
+    transform: translate(var(--mx, 60px), var(--my, 86px)) scale(var(--ms, 1))
+      scaleY(0.8);
+  }
+  100% {
+    transform: translate(var(--mx, 60px), var(--my, 86px)) scale(var(--ms, 1))
+      scaleY(1.2);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   BODY ANIMATIONS (applied via class on wrapper)
+   ═══════════════════════════════════════════════ */
+
+/* Idle breathing */
+.oni-breathe {
+  animation: oni-breathe 3.5s ease-in-out infinite;
+}
+@keyframes oni-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Gentle bounce (happy) */
+.oni-bounce-gentle {
+  animation: oni-bounce-gentle 1.2s ease-in-out infinite;
+}
+@keyframes oni-bounce-gentle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Excited bounce */
+.oni-bounce-excited {
+  animation: oni-bounce-excited 0.5s ease-in-out infinite;
+}
+@keyframes oni-bounce-excited {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  25% {
+    transform: translateY(-6px) scale(1.03);
+  }
+  75% {
+    transform: translateY(-2px) scale(0.98);
+  }
+}
+
+/* Thinking sway */
+.oni-think-sway {
+  animation: oni-think-sway 2.5s ease-in-out infinite;
+}
+@keyframes oni-think-sway {
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+  25% {
+    transform: rotate(-2deg) translateY(-1px);
+  }
+  75% {
+    transform: rotate(2deg) translateY(-1px);
+  }
+}
+
+/* Head tilt (curious, confused) */
+.oni-tilt-head {
+  animation: oni-tilt-head 2s ease-in-out infinite;
+}
+@keyframes oni-tilt-head {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(-5deg);
+  }
+}
+
+/* Focused steady */
+.oni-focus-steady {
+  animation: oni-focus-steady 2s ease-in-out infinite;
+}
+@keyframes oni-focus-steady {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(0) scale(1.01);
+  }
+}
+
+/* Droop (sad, bored, tired) */
+.oni-droop {
+  animation: oni-droop 3s ease-in-out infinite;
+}
+@keyframes oni-droop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+/* Tremble (angry, scared) */
+.oni-tremble {
+  animation: oni-tremble 0.15s ease-in-out infinite;
+}
+@keyframes oni-tremble {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-1px);
+  }
+  75% {
+    transform: translateX(1px);
+  }
+}
+
+/* Gasp (amazed, surprised) */
+.oni-gasp {
+  animation:
+    oni-gasp 0.4s ease-out forwards,
+    oni-breathe 3s ease-in-out 0.4s infinite;
+}
+@keyframes oni-gasp {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1.02);
+  }
+}
+
+/* Wiggle (playful) */
+.oni-wiggle {
+  animation: oni-wiggle 0.8s ease-in-out infinite;
+}
+@keyframes oni-wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-3deg) translateX(-2px);
+  }
+  75% {
+    transform: rotate(3deg) translateX(2px);
+  }
+}
+
+/* Laugh shake */
+.oni-laugh-shake {
+  animation: oni-laugh-shake 0.3s ease-in-out infinite;
+}
+@keyframes oni-laugh-shake {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(-1px) rotate(2deg);
+  }
+}
+
+/* Heartbeat (love) */
+.oni-heartbeat {
+  animation: oni-heartbeat 1s ease-in-out infinite;
+}
+@keyframes oni-heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  15% {
+    transform: scale(1.05);
+  }
+  30% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.03);
+  }
+}
+
+/* Nod (grateful) */
+.oni-nod {
+  animation: oni-nod 1.5s ease-in-out infinite;
+}
+@keyframes oni-nod {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(3px);
+  }
+  60% {
+    transform: translateY(0);
+  }
+}
+
+/* Puff chest (proud) */
+.oni-puff-chest {
+  animation: oni-puff-chest 2s ease-in-out infinite;
+}
+@keyframes oni-puff-chest {
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.04) translateY(-2px);
+  }
+}
+
+/* Float up (hopeful) */
+.oni-float-up {
+  animation: oni-float-up 2.5s ease-in-out infinite;
+}
+@keyframes oni-float-up {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Sigh (relieved) */
+.oni-sigh {
+  animation: oni-sigh 3s ease-in-out infinite;
+}
+@keyframes oni-sigh {
+  0% {
+    transform: scale(1.02) translateY(-1px);
+  }
+  30% {
+    transform: scale(0.98) translateY(2px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Huff (frustrated) */
+.oni-huff {
+  animation: oni-huff 1.5s ease-in-out infinite;
+}
+@keyframes oni-huff {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(-1px) scale(1.02);
+  }
+  60% {
+    transform: translateY(1px) scale(0.99);
+  }
+}
+
+/* Fidget (nervous) */
+.oni-fidget {
+  animation: oni-fidget 1s ease-in-out infinite;
+}
+@keyframes oni-fidget {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-2px);
+  }
+  40% {
+    transform: translateX(1px);
+  }
+  60% {
+    transform: translateX(-1px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+/* Shrink (embarrassed, shy) */
+.oni-shrink {
+  animation: oni-shrink 2s ease-in-out infinite;
+}
+@keyframes oni-shrink {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95) translateY(2px);
+  }
+}
+
+/* Sob (crying) */
+.oni-sob {
+  animation: oni-sob 0.6s ease-in-out infinite;
+}
+@keyframes oni-sob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(2px) scale(0.98);
+  }
+  75% {
+    transform: translateY(-1px) scale(1.01);
+  }
+}
+
+/* Drowsy (sleepy) */
+.oni-drowsy {
+  animation: oni-drowsy 4s ease-in-out infinite;
+}
+@keyframes oni-drowsy {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  30% {
+    transform: translateY(3px) rotate(-2deg);
+  }
+  70% {
+    transform: translateY(2px) rotate(1deg);
+  }
+}
+
+/* Power up (determined) */
+.oni-power-up {
+  animation: oni-power-up 2s ease-in-out infinite;
+}
+@keyframes oni-power-up {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-1px) scale(1.02);
+  }
+}
+
+/* Still (serious) */
+.oni-still {
+  animation: oni-still 5s ease-in-out infinite;
+}
+@keyframes oni-still {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.5px);
+  }
+}
+
+/* Lean in (listening) */
+.oni-lean-in {
+  animation: oni-lean-in 2s ease-in-out infinite;
+}
+@keyframes oni-lean-in {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(1px) rotate(-1.5deg);
+  }
+}
+
+/* Sneak (mischievous) */
+.oni-sneak {
+  animation: oni-sneak 1.8s ease-in-out infinite;
+}
+@keyframes oni-sneak {
+  0%,
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+  30% {
+    transform: translateX(-3px) translateY(-1px);
+  }
+  70% {
+    transform: translateX(2px) translateY(0);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   SPECIAL EFFECT ANIMATIONS
+   ═══════════════════════════════════════════════ */
+
+/* Hearts floating up */
+.oni-heart {
+  fill: #ff6b8a;
+  animation: oni-heart-float 2s ease-in-out infinite;
+  opacity: 0;
+}
+.oni-heart-1 {
+  animation-delay: 0s;
+}
+.oni-heart-2 {
+  animation-delay: 0.6s;
+}
+.oni-heart-3 {
+  animation-delay: 1.2s;
+}
+
+@keyframes oni-heart-float {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.5);
+  }
+  20% {
+    opacity: 0.8;
+    transform: translateY(-5px) scale(1);
+  }
+  80% {
+    opacity: 0.5;
+    transform: translateY(-20px) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.3);
+  }
+}
+
+/* Sparkles */
+.oni-sparkle {
+  fill: #ffd700;
+  animation: oni-sparkle-pop 1.5s ease-in-out infinite;
+  opacity: 0;
+}
+.oni-sparkle-1 {
+  animation-delay: 0s;
+}
+.oni-sparkle-2 {
+  animation-delay: 0.5s;
+}
+.oni-sparkle-3 {
+  animation-delay: 1s;
+}
+
+@keyframes oni-sparkle-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+  60% {
+    opacity: 0.8;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+/* Thought bubbles */
+.oni-thought-dot-1,
+.oni-thought-dot-2,
+.oni-thought-dot-3 {
+  animation: oni-thought-pulse 2s ease-in-out infinite;
+}
+.oni-thought-dot-1 {
+  animation-delay: 0s;
+}
+.oni-thought-dot-2 {
+  animation-delay: 0.3s;
+}
+.oni-thought-dot-3 {
+  animation-delay: 0.6s;
+}
+
+@keyframes oni-thought-pulse {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+/* Question mark */
+.oni-question-mark {
+  animation: oni-question-bob 1.5s ease-in-out infinite;
+}
+@keyframes oni-question-bob {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
+}
+
+/* Tears falling */
+.oni-tear {
+  animation: oni-tear-fall 1.2s ease-in infinite;
+  opacity: 0;
+}
+.oni-tear-left {
+  animation-delay: 0s;
+}
+.oni-tear-right {
+  animation-delay: 0.4s;
+}
+
+@keyframes oni-tear-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scaleY(0.5);
+  }
+  20% {
+    opacity: 0.7;
+    transform: translateY(2px) scaleY(1);
+  }
+  80% {
+    opacity: 0.5;
+    transform: translateY(15px) scaleY(1.3);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(25px) scaleY(0.3);
+  }
+}
+
+/* Blush */
+.oni-blush {
+  animation: oni-blush-pulse 2s ease-in-out infinite;
+}
+@keyframes oni-blush-pulse {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* Glow aura */
+.oni-glow-aura {
+  animation: oni-glow-pulse 3s ease-in-out infinite;
+}
+@keyframes oni-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}

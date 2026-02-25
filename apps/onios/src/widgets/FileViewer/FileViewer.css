@@ -1,0 +1,222 @@
+.file-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.fv-toolbar {
+  display: flex;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  gap: var(--space-sm);
+  border-bottom: 1px solid var(--glass-border-light);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.fv-toolbar-path {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fv-toolbar-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.fv-toolbar-badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+}
+
+.fv-content {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Code view */
+.fv-code {
+  padding: var(--space-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  white-space: pre;
+  color: var(--text-secondary);
+  user-select: text;
+  counter-reset: line;
+}
+
+.fv-code-line {
+  display: flex;
+  min-height: 22px;
+}
+
+.fv-code-line:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.fv-line-number {
+  display: inline-block;
+  width: 48px;
+  text-align: right;
+  padding-right: var(--space-lg);
+  color: var(--text-tertiary);
+  opacity: 0.5;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.fv-line-content {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Image view */
+.fv-image-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: var(--space-xl);
+  background: repeating-conic-gradient(
+      rgba(255, 255, 255, 0.03) 0% 25%,
+      transparent 0% 50%
+    )
+    50% / 20px 20px;
+}
+
+.fv-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* PDF / unsupported */
+.fv-unsupported {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--space-lg);
+  color: var(--text-tertiary);
+  padding: var(--space-3xl);
+  text-align: center;
+}
+
+.fv-unsupported-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.fv-unsupported-name {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.fv-unsupported-size {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
+
+.fv-open-external {
+  padding: var(--space-sm) var(--space-xl);
+  background: var(--accent-blue);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.fv-open-external:hover {
+  background: #0070e0;
+  transform: scale(1.02);
+}
+
+/* Loading */
+.fv-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-tertiary);
+  gap: var(--space-md);
+}
+
+.fv-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Video view */
+.fv-video-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: #000;
+}
+
+.fv-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Audio view */
+.fv-audio-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+}
+
+.fv-audio-icon {
+  margin-bottom: var(--space-md);
+}
+
+.fv-audio-svg {
+  color: var(--accent-purple);
+  filter: drop-shadow(0 4px 12px rgba(191, 90, 242, 0.4));
+}
+
+.fv-audio-name {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.fv-audio {
+  width: 100%;
+  max-width: 400px;
+}

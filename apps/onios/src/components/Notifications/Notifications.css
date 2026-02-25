@@ -1,0 +1,99 @@
+.notifications-container {
+  position: fixed;
+  top: var(--space-xl);
+  right: var(--space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  z-index: 999999;
+  pointer-events: none;
+}
+
+.notification-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: 12px 16px;
+  min-width: 280px;
+  max-width: 380px;
+  background: rgba(28, 28, 38, 0.88);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.08);
+  animation: toastIn 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+.notification-toast:hover {
+  background: rgba(35, 35, 48, 0.95);
+  transform: translateY(-2px);
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.5),
+    0 4px 16px rgba(0, 0, 0, 0.25),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+}
+
+.notification-toast.exiting {
+  animation: toastOut 200ms ease forwards;
+}
+
+.notification-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.notification-dot.info {
+  background: var(--accent-blue);
+  box-shadow: 0 0 8px rgba(10, 132, 255, 0.4);
+}
+.notification-dot.success {
+  background: var(--accent-green);
+  box-shadow: 0 0 8px rgba(48, 209, 88, 0.4);
+}
+.notification-dot.warning {
+  background: var(--accent-orange);
+  box-shadow: 0 0 8px rgba(255, 159, 10, 0.4);
+}
+.notification-dot.error {
+  background: var(--accent-red);
+  box-shadow: 0 0 8px rgba(255, 69, 58, 0.4);
+}
+
+.notification-message {
+  flex: 1;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all var(--transition-fast);
+}
+
+.notification-close:hover {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+}
+
+.notification-close svg {
+  width: 14px;
+  height: 14px;
+}

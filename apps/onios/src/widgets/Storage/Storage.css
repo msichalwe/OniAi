@@ -1,0 +1,584 @@
+/* Storage Widget */
+.storage-widget {
+    display: flex;
+    height: 100%;
+    background: var(--widget-bg, #0e0e1a);
+    color: var(--text-primary, #e4e4ed);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    overflow: hidden;
+}
+
+/* ─── Sidebar ─────────────────────────────────────── */
+
+.storage-sidebar {
+    width: 200px;
+    border-right: 1px solid var(--border-color, #1e1e3a);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    background: var(--surface-bg, #12121e);
+}
+
+.storage-sidebar-header {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color, #1e1e3a);
+}
+
+.storage-sidebar-header h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary, #8888a0);
+    margin: 0 0 8px 0;
+}
+
+.storage-usage-bar {
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.storage-usage-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #a78bfa);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.storage-usage-text {
+    font-size: 10px;
+    color: var(--text-secondary, #8888a0);
+}
+
+.storage-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.storage-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    cursor: pointer;
+    color: var(--text-secondary, #8888a0);
+    transition: all 0.15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 13px;
+    font-family: inherit;
+}
+
+.storage-nav-item:hover {
+    background: rgba(255,255,255,0.04);
+    color: var(--text-primary, #e4e4ed);
+}
+
+.storage-nav-item.active {
+    background: rgba(59,130,246,0.1);
+    color: #3b82f6;
+}
+
+.storage-nav-item .count {
+    margin-left: auto;
+    font-size: 10px;
+    background: rgba(255,255,255,0.06);
+    padding: 1px 6px;
+    border-radius: 8px;
+    color: var(--text-secondary, #8888a0);
+}
+
+.storage-nav-sep {
+    height: 1px;
+    background: var(--border-color, #1e1e3a);
+    margin: 6px 12px;
+}
+
+.storage-nav-sub {
+    padding-left: 28px;
+    font-size: 12px;
+}
+
+.storage-sidebar-actions {
+    padding: 8px;
+    border-top: 1px solid var(--border-color, #1e1e3a);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.storage-sidebar-actions button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: none;
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary, #8888a0);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: all 0.15s;
+}
+
+.storage-sidebar-actions button:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary, #e4e4ed);
+}
+
+/* ─── Main Content ────────────────────────────────── */
+
+.storage-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.storage-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color, #1e1e3a);
+}
+
+.storage-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-color, #1e1e3a);
+    border-radius: 6px;
+    padding: 0 10px;
+}
+
+.storage-search input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text-primary, #e4e4ed);
+    font-size: 13px;
+    padding: 6px 0;
+    outline: none;
+    font-family: inherit;
+}
+
+.storage-search input::placeholder {
+    color: var(--text-secondary, #8888a0);
+}
+
+.storage-search svg {
+    color: var(--text-secondary, #8888a0);
+    flex-shrink: 0;
+}
+
+.storage-toolbar-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border: 1px solid var(--border-color, #1e1e3a);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary, #8888a0);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.storage-toolbar-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary, #e4e4ed);
+}
+
+.storage-toolbar-btn.danger:hover {
+    background: rgba(239,68,68,0.15);
+    color: #ef4444;
+    border-color: rgba(239,68,68,0.3);
+}
+
+/* ─── Table ───────────────────────────────────────── */
+
+.storage-table-wrap {
+    flex: 1;
+    overflow: auto;
+}
+
+.storage-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.storage-table th {
+    position: sticky;
+    top: 0;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary, #8888a0);
+    background: var(--surface-bg, #12121e);
+    border-bottom: 1px solid var(--border-color, #1e1e3a);
+    font-weight: 600;
+    z-index: 1;
+}
+
+.storage-table td {
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    vertical-align: middle;
+    max-width: 0;
+}
+
+.storage-table tr {
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.storage-table tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+.storage-table tbody tr.selected {
+    background: rgba(59,130,246,0.1);
+}
+
+.storage-key {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: #3b82f6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.storage-namespace-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(167,139,250,0.15);
+    color: #a78bfa;
+    margin-right: 4px;
+}
+
+.storage-type-badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-secondary, #8888a0);
+}
+
+.storage-preview {
+    font-size: 12px;
+    color: var(--text-secondary, #8888a0);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.storage-size {
+    font-size: 12px;
+    color: var(--text-secondary, #8888a0);
+    white-space: nowrap;
+    text-align: right;
+}
+
+.storage-actions-cell {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.storage-actions-cell button {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #8888a0);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.storage-actions-cell button:hover {
+    background: rgba(239,68,68,0.15);
+    color: #ef4444;
+}
+
+/* ─── Inspector Panel ─────────────────────────────── */
+
+.storage-inspector {
+    width: 320px;
+    border-left: 1px solid var(--border-color, #1e1e3a);
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-bg, #12121e);
+    flex-shrink: 0;
+}
+
+.storage-inspector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color, #1e1e3a);
+}
+
+.storage-inspector-header h3 {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.storage-inspector-header button {
+    background: none;
+    border: none;
+    color: var(--text-secondary, #8888a0);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.storage-inspector-header button:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+.storage-inspector-meta {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color, #1e1e3a);
+}
+
+.storage-inspector-meta-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 12px;
+}
+
+.storage-inspector-meta-row .label {
+    color: var(--text-secondary, #8888a0);
+}
+
+.storage-inspector-meta-row .value {
+    color: var(--text-primary, #e4e4ed);
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 11px;
+}
+
+.storage-inspector-content {
+    flex: 1;
+    overflow: auto;
+    padding: 12px;
+}
+
+.storage-inspector-content pre {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary, #8888a0);
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 0;
+}
+
+.storage-inspector-actions {
+    padding: 8px 12px;
+    border-top: 1px solid var(--border-color, #1e1e3a);
+    display: flex;
+    gap: 6px;
+}
+
+.storage-inspector-actions button {
+    flex: 1;
+    padding: 6px;
+    border: 1px solid var(--border-color, #1e1e3a);
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary, #8888a0);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.storage-inspector-actions button:hover {
+    background: rgba(255,255,255,0.08);
+    color: var(--text-primary, #e4e4ed);
+}
+
+.storage-inspector-actions button.danger:hover {
+    background: rgba(239,68,68,0.15);
+    color: #ef4444;
+    border-color: rgba(239,68,68,0.3);
+}
+
+/* ─── Stats Cards ─────────────────────────────────── */
+
+.storage-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color, #1e1e3a);
+}
+
+.storage-stat-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-color, #1e1e3a);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+}
+
+.storage-stat-card .stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary, #e4e4ed);
+    line-height: 1.2;
+}
+
+.storage-stat-card .stat-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary, #8888a0);
+    margin-top: 2px;
+}
+
+/* ─── Empty State ─────────────────────────────────── */
+
+.storage-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-secondary, #8888a0);
+    text-align: center;
+}
+
+.storage-empty svg {
+    margin-bottom: 12px;
+    opacity: 0.3;
+}
+
+.storage-empty p {
+    font-size: 13px;
+    margin: 0;
+}
+
+/* ─── Add Key Modal ───────────────────────────────── */
+
+.storage-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.storage-modal {
+    background: var(--surface-bg, #12121e);
+    border: 1px solid var(--border-color, #1e1e3a);
+    border-radius: 12px;
+    padding: 20px;
+    width: 380px;
+    max-width: 90%;
+}
+
+.storage-modal h3 {
+    font-size: 15px;
+    margin: 0 0 16px 0;
+}
+
+.storage-modal-field {
+    margin-bottom: 12px;
+}
+
+.storage-modal-field label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary, #8888a0);
+    margin-bottom: 4px;
+}
+
+.storage-modal-field input,
+.storage-modal-field textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-color, #1e1e3a);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text-primary, #e4e4ed);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+}
+
+.storage-modal-field textarea {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+    height: 100px;
+    resize: vertical;
+}
+
+.storage-modal-field input:focus,
+.storage-modal-field textarea:focus {
+    border-color: #3b82f6;
+}
+
+.storage-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.storage-modal-actions button {
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    border: 1px solid var(--border-color, #1e1e3a);
+    transition: all 0.15s;
+}
+
+.storage-modal-actions .cancel-btn {
+    background: rgba(255,255,255,0.04);
+    color: var(--text-secondary, #8888a0);
+}
+
+.storage-modal-actions .save-btn {
+    background: rgba(59,130,246,0.2);
+    color: #3b82f6;
+    border-color: rgba(59,130,246,0.3);
+}
+
+.storage-modal-actions .save-btn:hover {
+    background: rgba(59,130,246,0.3);
+}

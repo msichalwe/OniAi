@@ -1,0 +1,182 @@
+/* ═══════════════════════════════════════════════
+   OniWidget — Floating AI assistant container
+   ═══════════════════════════════════════════════ */
+
+.oni-widget {
+  position: fixed;
+  z-index: 99999;
+  font-family:
+    "Inter",
+    -apple-system,
+    sans-serif;
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-radius 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.oni-widget-dragging {
+  cursor: grabbing !important;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: none !important;
+}
+
+/* ─── Collapsed: small bubble ─── */
+.oni-widget-collapsed {
+  right: 20px;
+  bottom: 60px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.oni-widget-bubble {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #1e1e24, #141418);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(80, 130, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.oni-widget-bubble:hover {
+  border-color: rgba(80, 130, 255, 0.25);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.6),
+    0 0 40px rgba(80, 130, 255, 0.15);
+  transform: scale(1.05);
+}
+
+.oni-widget-bubble:active {
+  transform: scale(0.97);
+}
+
+.oni-widget-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(80, 130, 255, 0.8);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: oni-badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes oni-badge-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ─── Expanded: chat panel ─── */
+.oni-widget-expanded {
+  right: 20px;
+  bottom: 60px;
+  width: 360px;
+  height: 520px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #18181c, #111114);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(80, 130, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: oni-expand 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes oni-expand {
+  from {
+    opacity: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    width: 360px;
+    height: 520px;
+    border-radius: 16px;
+    transform: scale(1);
+  }
+}
+
+/* ─── Header ─── */
+.oni-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.oni-widget-dragging .oni-widget-header {
+  cursor: grabbing;
+}
+
+.oni-widget-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.oni-widget-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.oni-widget-status {
+  font-size: 10px;
+  color: rgba(100, 200, 100, 0.7);
+  background: rgba(100, 200, 100, 0.08);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.oni-widget-header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.oni-widget-header-actions button {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.oni-widget-header-actions button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+}

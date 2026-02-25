@@ -1,0 +1,133 @@
+.clock-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: transparent;
+  padding: var(--space-2xl);
+  gap: var(--space-2xl);
+}
+
+.clock-analog {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+
+.clock-face {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--surface-solid);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+}
+
+.clock-marker {
+  position: absolute;
+  width: 2px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  left: 50%;
+  top: 6px;
+  transform-origin: 50% 84px;
+  margin-left: -1px;
+}
+
+.clock-marker.major {
+  height: 12px;
+  background: rgba(255, 255, 255, 0.4);
+  width: 2px;
+}
+
+.clock-hand {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform-origin: 50% 100%;
+  border-radius: 2px;
+}
+
+.clock-hour {
+  width: 3px;
+  height: 50px;
+  background: var(--text-primary);
+  margin-left: -1.5px;
+}
+
+.clock-minute {
+  width: 2px;
+  height: 65px;
+  background: var(--text-secondary);
+  margin-left: -1px;
+}
+
+.clock-second {
+  width: 1px;
+  height: 72px;
+  background: var(--accent-red);
+  margin-left: -0.5px;
+}
+
+.clock-center-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--text-primary);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.clock-digital {
+  text-align: center;
+}
+
+.clock-time {
+  font-size: 48px;
+  font-weight: 200;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-date {
+  font-size: var(--text-base);
+  color: var(--text-secondary);
+  margin-top: var(--space-xs);
+}
+
+.clock-system-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-md);
+  width: 100%;
+  max-width: 320px;
+}
+
+.clock-info-card {
+  background: var(--surface-solid);
+  border: 1px solid var(--glass-border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.clock-info-label {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.clock-info-value {
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}

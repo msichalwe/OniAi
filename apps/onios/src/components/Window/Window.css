@@ -1,0 +1,261 @@
+.oni-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  background: rgba(22, 22, 32, 0.78);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  backdrop-filter: blur(32px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow:
+    0 16px 48px rgba(0, 0, 0, 0.45),
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+  overflow: visible;
+  animation: windowOpen 250ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease,
+    box-shadow 200ms ease;
+  will-change: auto;
+}
+
+/* Kill transitions during drag/resize for zero-lag DOM manipulation.
+ * Do NOT kill animation — removing windowOpen fill-state causes a blink. */
+.oni-window.dragging {
+  transition: none !important;
+  will-change: left, top, width, height;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.oni-window.dragging * {
+  transition: none !important;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.oni-window.dragging .oni-window-header {
+  pointer-events: auto;
+}
+.oni-window.dragging .oni-resize-handle {
+  pointer-events: auto;
+}
+
+@keyframes windowOpen {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.oni-window.focused {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.55),
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.12),
+    0 0 0 1px rgba(102, 126, 234, 0.12);
+}
+
+/* Minimized: completely hidden */
+.oni-window.minimized {
+  opacity: 0 !important;
+  transform: scale(0.5) translateY(100vh) !important;
+  pointer-events: none !important;
+  animation: none !important;
+}
+
+/* Maximized */
+.oni-window.maximized {
+  border-radius: 0;
+  animation: none;
+  border: none;
+}
+
+/* ===== Title Bar ===== */
+.oni-window-header {
+  display: flex;
+  align-items: center;
+  height: var(--window-header-height);
+  padding: 0 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px 14px 0 0;
+  cursor: grab;
+  flex-shrink: 0;
+  gap: var(--space-sm);
+}
+
+.oni-window-header:active {
+  cursor: grabbing;
+}
+
+/* Traffic lights */
+.oni-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-right: var(--space-sm);
+}
+
+.oni-window-btn {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.oni-window-btn svg {
+  width: 6px;
+  height: 6px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  stroke: rgba(0, 0, 0, 0.6);
+  stroke-width: 2.5;
+}
+
+.oni-window-controls:hover .oni-window-btn svg {
+  opacity: 1;
+}
+
+.oni-window-btn-close {
+  background: #ff5f57;
+}
+
+.oni-window-btn-close:hover {
+  background: #ff3b30;
+}
+
+.oni-window-btn-minimize {
+  background: #ffbd2e;
+}
+
+.oni-window-btn-minimize:hover {
+  background: #ff9f0a;
+}
+
+.oni-window-btn-maximize {
+  background: #28c840;
+}
+
+.oni-window-btn-maximize:hover {
+  background: #30d158;
+}
+
+/* Inactive state */
+.oni-window:not(.focused) .oni-window-btn {
+  background: var(--text-tertiary);
+}
+
+.oni-window:not(.focused) .oni-window-btn:hover {
+  background: var(--text-secondary);
+}
+
+.oni-window-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.oni-window-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.oni-window-title {
+  flex: 1;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.oni-window.focused .oni-window-title {
+  color: var(--text-primary);
+}
+
+/* ===== Content ===== */
+.oni-window-content {
+  flex: 1;
+  overflow: auto;
+  overflow: hidden auto;
+  position: relative;
+  border-radius: 0 0 14px 14px;
+}
+
+/* ===== Resize Handles ===== */
+.oni-resize-handle {
+  position: absolute;
+  z-index: 10;
+}
+
+.oni-resize-n {
+  top: -4px;
+  left: 14px;
+  right: 14px;
+  height: 8px;
+  cursor: n-resize;
+}
+.oni-resize-s {
+  bottom: -4px;
+  left: 14px;
+  right: 14px;
+  height: 8px;
+  cursor: s-resize;
+}
+.oni-resize-w {
+  left: -4px;
+  top: 14px;
+  bottom: 14px;
+  width: 8px;
+  cursor: w-resize;
+}
+.oni-resize-e {
+  right: -4px;
+  top: 14px;
+  bottom: 14px;
+  width: 8px;
+  cursor: e-resize;
+}
+.oni-resize-nw {
+  top: -4px;
+  left: -4px;
+  width: 18px;
+  height: 18px;
+  cursor: nw-resize;
+}
+.oni-resize-ne {
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  cursor: ne-resize;
+}
+.oni-resize-sw {
+  bottom: -4px;
+  left: -4px;
+  width: 18px;
+  height: 18px;
+  cursor: sw-resize;
+}
+.oni-resize-se {
+  bottom: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  cursor: se-resize;
+}
