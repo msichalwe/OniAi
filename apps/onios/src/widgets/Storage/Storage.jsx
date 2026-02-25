@@ -73,25 +73,12 @@ export default function Storage({ windowId, widgetType }) {
   const setSearch = useStorageStore((s) => s.setSearch);
   const setInspecting = useStorageStore((s) => s.setInspecting);
   const deleteKey = useStorageStore((s) => s.deleteKey);
-  const deleteAIItem = useStorageStore((s) => s.deleteAIItem);
-  const aiData = useStorageStore((s) => s.aiData);
-  const oniData = useStorageStore((s) => s.oniData);
-  const aiMode = useStorageStore((s) => s.aiMode);
   const getFilteredEntries = useStorageStore((s) => s.getFilteredEntries);
   const getRawValue = useStorageStore((s) => s.getRawValue);
   const exportData = useStorageStore((s) => s.exportData);
   const importData = useStorageStore((s) => s.importData);
 
-  // Build categories based on AI mode
-  const CATEGORIES = React.useMemo(() => {
-    const cats = [...BASE_CATEGORIES];
-    if (aiMode === "oni") {
-      cats.push({ id: "oni", label: "OniAI Brain", icon: Shell });
-    } else {
-      cats.push({ id: "aiMemory", label: "AI Memory", icon: Brain });
-    }
-    return cats;
-  }, [aiMode]);
+  const CATEGORIES = BASE_CATEGORIES;
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [addForm, setAddForm] = useState({ namespace: "", key: "", value: "" });
@@ -119,16 +106,6 @@ export default function Storage({ windowId, widgetType }) {
   }, [refresh]);
 
   const filteredEntries = entries ? getFilteredEntries() : [];
-
-  // AI stats
-  const aiMemoryCount = aiData?.memoryTotal || 0;
-  const aiConvCount = aiData?.conversations?.length || 0;
-  const aiKnowledgeCount = aiData?.knowledge?.length || 0;
-  const aiTotalItems =
-    aiMemoryCount +
-    aiConvCount +
-    aiKnowledgeCount +
-    (aiData?.personality?.name ? 1 : 0);
 
   // Get inspected value
   const inspectedRaw = inspectingKey ? getRawValue(inspectingKey) : null;
@@ -241,20 +218,13 @@ export default function Storage({ windowId, widgetType }) {
 
         <div className="storage-nav">
           {CATEGORIES.map((cat) => {
-            const ocCount = oniData?.totalFiles || 0;
-            const brainCount = aiMode === "oni" ? ocCount : aiTotalItems;
             const count = entries
               ? cat.id === "all"
                 ? entries.system.length +
                   entries.storage.length +
                   entries.widgetState.length +
-                  entries.other.length +
-                  brainCount
-                : cat.id === "oni"
-                  ? ocCount
-                  : cat.id === "aiMemory"
-                    ? aiTotalItems
-                    : (entries[cat.id] || []).length
+                  entries.other.length
+                : (entries[cat.id] || []).length
               : 0;
             const Icon = cat.icon;
             return (
@@ -331,14 +301,8 @@ export default function Storage({ windowId, widgetType }) {
               <div className="stat-label">Widget States</div>
             </div>
             <div className="storage-stat-card">
-              <div className="stat-value">
-                {aiMode === "oni"
-                  ? oniData?.totalFiles || 0
-                  : aiMemoryCount}
-              </div>
-              <div className="stat-label">
-                {aiMode === "oni" ? "OniAI Files" : "AI Memories"}
-              </div>
+              <div className="stat-value">{stats.otherKeys || 0}</div>
+              <div className="stat-label">Other Keys</div>
             </div>
           </div>
         )}
@@ -411,13 +375,7 @@ export default function Storage({ windowId, widgetType }) {
                         title="Delete"
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (entry.key.startsWith("ai:")) {
-                            deleteAIItem(entry.key);
-                            if (inspectingKey === entry.key)
-                              setInspecting(null);
-                          } else {
-                            handleDelete(entry.key, e);
-                          }
+                          handleDelete(entry.key, e);
                         }}
                       >
                         <Trash2 size={13} />

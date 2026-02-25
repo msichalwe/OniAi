@@ -33,7 +33,7 @@ import { indexService } from "./core/IndexService";
 import { schedulerService } from "./core/SchedulerService";
 import { commandRunTracker } from "./core/CommandRunTracker";
 import { workflowEngine } from "./core/WorkflowEngine";
-import { serverSync } from "./core/ServerSync";
+// serverSync removed — gateway handles state
 import useWorkflowStore from "./stores/workflowStore";
 import useTaskStore from "./stores/taskStore";
 import usePasswordStore, {
@@ -2847,12 +2847,7 @@ export default function App() {
       },
     );
 
-    // Initialize server sync — pulls state from server, polls for notifications
-    serverSync.init(
-      () => useTaskStore.getState(),
-      () => useNotificationStore.getState(),
-      (cmd, src) => executeCommand(cmd, src || "scheduler"),
-    );
+    // serverSync removed — gateway handles state sync
 
     // Initialize workflow event listeners (auto-fire on event triggers)
     workflowEngine.initListeners();
