@@ -40,8 +40,8 @@ export function formatCliBannerLine(version: string, options: BannerOptions = {}
   const commitLabel = commit ?? "unknown";
   const tagline = pickTagline(options);
   const rich = options.richTty ?? isRich();
-  const title = "🤖 OniAI";
-  const prefix = "🤖 ";
+  const title = "🦊 OniAI";
+  const prefix = "🦊 ";
   const columns = options.columns ?? process.stdout.columns ?? 120;
   const plainFullLine = `${title} ${version} (${commitLabel}) — ${tagline}`;
   const fitsOnOneLine = visibleWidth(plainFullLine) <= columns;
@@ -73,7 +73,7 @@ const ONI_ASCII = [
   "║  ██║   ██║██║╚██╗██║██║    ██╔══██║██║      ║",
   "║  ╚██████╔╝██║ ╚████║██║    ██║  ██║██║      ║",
   "║   ╚═════╝ ╚═╝  ╚═══╝╚═╝    ╚═╝  ╚═╝╚═╝      ║",
-  "║              🤖 AI Gateway 🤖               ║",
+  "║              🦊 AI Gateway 🦊               ║",
   "╚══════════════════════════════════════════════╝",
 ];
 
@@ -100,9 +100,9 @@ export function formatCliBannerArt(options: BannerOptions = {}): string {
     if (line.includes("AI Gateway")) {
       return (
         theme.muted("║              ") +
-        theme.accent("🤖") +
+        theme.accent("🦊") +
         theme.info(" AI Gateway ") +
-        theme.accent("🤖") +
+        theme.accent("🦊") +
         theme.muted("               ║")
       );
     }

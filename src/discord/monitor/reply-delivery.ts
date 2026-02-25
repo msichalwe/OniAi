@@ -46,7 +46,7 @@ function resolveBindingPersona(binding: ThreadBindingRecord | undefined): {
     return {};
   }
   const baseLabel = binding.label?.trim() || binding.agentId;
-  const username = (`🤖 ${baseLabel}`.trim() || "🤖 agent").slice(0, 80);
+  const username = (`🦊 ${baseLabel}`.trim() || "🦊 agent").slice(0, 80);
 
   let avatarUrl: string | undefined;
   try {

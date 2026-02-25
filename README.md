@@ -149,7 +149,7 @@ OniAI uses a **personal assistant trust model** — one trusted operator per gat
 
 ## Attribution
 
-This project uses [OpenClaw](https://github.com/openclaw/openclaw) as its foundational base. OniAI is an independent project and is **not affiliated with, endorsed by, or associated with** the OpenClaw project or its maintainers in any way. OpenClaw is licensed under the MIT License.
+This project uses [OniAI](https://github.com/oni/oni) as its foundational base. OniAI is an independent project and is **not affiliated with, endorsed by, or associated with** the OniAI project or its maintainers in any way. OniAI is licensed under the MIT License.
 
 ## License
 

@@ -9,7 +9,7 @@ import { installSubagentsCommandCoreMocks } from "./commands-subagents.test-mock
 const hoisted = vi.hoisted(() => {
   const callGatewayMock = vi.fn();
   const getThreadBindingManagerMock = vi.fn();
-  const resolveThreadBindingThreadNameMock = vi.fn(() => "🤖 codex");
+  const resolveThreadBindingThreadNameMock = vi.fn(() => "🦊 codex");
   return {
     callGatewayMock,
     getThreadBindingManagerMock,
@@ -174,7 +174,7 @@ describe("/focus, /unfocus, /agents", () => {
     resetSubagentRegistryForTests();
     hoisted.callGatewayMock.mockClear();
     hoisted.getThreadBindingManagerMock.mockClear().mockReturnValue(null);
-    hoisted.resolveThreadBindingThreadNameMock.mockClear().mockReturnValue("🤖 codex");
+    hoisted.resolveThreadBindingThreadNameMock.mockClear().mockReturnValue("🦊 codex");
   });
 
   it("/focus resolves ACP sessions and binds the current Discord thread", async () => {
@@ -189,7 +189,7 @@ describe("/focus, /unfocus, /agents", () => {
         targetKind: "acp",
         targetSessionKey: "agent:codex-acp:session-1",
         introText:
-          "🤖 codex-acp session active (auto-unfocus in 24h). Messages here go directly to this session.",
+          "🦊 codex-acp session active (auto-unfocus in 24h). Messages here go directly to this session.",
       }),
     );
   });

@@ -75,16 +75,16 @@ This page describes the current CLI behavior. If commands change, update this do
 
 ## Color palette
 
-OniAI uses a purple/indigo palette for CLI output.
+OniAI uses a warm nude-brown palette for CLI output.
 
-- `accent` (#6C5CE7): headings, labels, primary highlights.
-- `accentBright` (#A29BFE): command names, emphasis.
-- `accentDim` (#4834D4): secondary highlight text.
-- `info` (#74B9FF): informational values.
-- `success` (#00B894): success states.
-- `warn` (#FDCB6E): warnings, fallbacks, attention.
-- `error` (#D63031): errors, failures.
-- `muted` (#636E72): de-emphasis, metadata.
+- `accent` (#C4A882): headings, labels, primary highlights.
+- `accentBright` (#D4B896): command names, emphasis.
+- `accentDim` (#A68B6B): secondary highlight text.
+- `info` (#B8C4D0): informational values.
+- `success` (#7DB88F): success states.
+- `warn` (#D4A84B): warnings, fallbacks, attention.
+- `error` (#C75050): errors, failures.
+- `muted` (#8B8178): de-emphasis, metadata.
 
 Palette source of truth: `src/terminal/palette.ts`.
 

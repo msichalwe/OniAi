@@ -51,7 +51,7 @@ oni agents set-identity --workspace ~/.oni/workspace --from-identity
 Override fields explicitly:
 
 ```bash
-oni agents set-identity --agent main --name "OniAI" --emoji "🤖" --avatar avatars/oni.png
+oni agents set-identity --agent main --name "OniAI" --emoji "🦊" --avatar avatars/oni.png
 ```
 
 Config sample:
@@ -65,7 +65,7 @@ Config sample:
         identity: {
           name: "OniAI",
           theme: "midnight indigo",
-          emoji: "🤖",
+          emoji: "🦊",
           avatar: "avatars/oni.png",
         },
       },

@@ -1,6 +1,6 @@
 # Contributing to OniAI
 
-Welcome to the lobster tank! 🤖
+Welcome to the lobster tank! 🦊
 
 ## Quick Links
 
@@ -79,7 +79,7 @@ The root `tsconfig.json` is configured for legacy decorators (`experimentalDecor
 with `useDefineForClassFields: false`. Avoid flipping these unless you are also updating the UI
 build tooling to support standard decorators.
 
-## AI/Vibe-Coded PRs Welcome! 🤖
+## AI/Vibe-Coded PRs Welcome! 🦊
 
 Built with Codex, Claude, or other AI tools? **Awesome - just mark it!**
 

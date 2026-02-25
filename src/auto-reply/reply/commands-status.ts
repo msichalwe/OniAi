@@ -131,9 +131,9 @@ export async function buildStatusReply(params: {
           .filter(Boolean)
           .slice(0, 3);
         const labelText = labels.length ? ` (${labels.join(", ")})` : "";
-        subagentsLine = `🤖 Subagents: ${active.length} active${labelText} · ${done} done`;
+        subagentsLine = `🦊 Subagents: ${active.length} active${labelText} · ${done} done`;
       } else if (active.length > 0) {
-        subagentsLine = `🤖 Subagents: ${active.length} active`;
+        subagentsLine = `🦊 Subagents: ${active.length} active`;
       }
     }
   }

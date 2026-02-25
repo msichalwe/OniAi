@@ -31,7 +31,7 @@ Save to `~/.oni/oni.json` and you can DM the bot from that number.
   identity: {
     name: "Clawd",
     theme: "helpful assistant",
-    emoji: "🤖",
+    emoji: "🦊",
   },
   agent: {
     workspace: "~/.oni/workspace",

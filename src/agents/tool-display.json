@@ -271,7 +271,7 @@
       ]
     },
     "subagents": {
-      "emoji": "🤖",
+      "emoji": "🦊",
       "title": "Subagents",
       "actions": {
         "list": { "label": "list", "detailKeys": ["recentMinutes"] },

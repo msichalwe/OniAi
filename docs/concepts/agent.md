@@ -5,7 +5,7 @@ read_when:
 title: "Agent Runtime"
 ---
 
-# Agent Runtime 🤖
+# Agent Runtime 🦊
 
 OniAI runs a single embedded agent runtime derived from **pi-mono**.
 
@@ -120,4 +120,4 @@ At minimum, set:
 
 ---
 
-_Next: [Group Chats](/channels/group-messages)_ 🤖
+_Next: [Group Chats](/channels/group-messages)_ 🦊

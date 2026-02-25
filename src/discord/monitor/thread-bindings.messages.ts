@@ -31,7 +31,7 @@ export function resolveThreadBindingThreadName(params: {
 }): string {
   const label = params.label?.trim();
   const base = label || params.agentId?.trim() || "agent";
-  const raw = `🤖 ${base}`.replace(/\s+/g, " ").trim();
+  const raw = `🦊 ${base}`.replace(/\s+/g, " ").trim();
   return raw.slice(0, 100);
 }
 
@@ -45,9 +45,9 @@ export function resolveThreadBindingIntroText(params: {
   const normalized = base.replace(/\s+/g, " ").trim().slice(0, 100) || "agent";
   const ttlMs = normalizeThreadBindingMessageTtlMs(params.sessionTtlMs);
   if (ttlMs > 0) {
-    return `🤖 ${normalized} session active (auto-unfocus in ${formatThreadBindingTtlLabel(ttlMs)}). Messages here go directly to this session.`;
+    return `🦊 ${normalized} session active (auto-unfocus in ${formatThreadBindingTtlLabel(ttlMs)}). Messages here go directly to this session.`;
   }
-  return `🤖 ${normalized} session active. Messages here go directly to this session.`;
+  return `🦊 ${normalized} session active. Messages here go directly to this session.`;
 }
 
 export function resolveThreadBindingFarewellText(params: {
@@ -68,5 +68,5 @@ export function resolveThreadBindingFarewellText(params: {
 export function summarizeBindingPersona(record: ThreadBindingRecord): string {
   const label = record.label?.trim();
   const base = label || record.agentId;
-  return (`🤖 ${base}`.trim() || "🤖 agent").slice(0, 80);
+  return (`🦊 ${base}`.trim() || "🦊 agent").slice(0, 80);
 }

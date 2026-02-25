@@ -288,14 +288,14 @@ describe("agents.create", () => {
     const { promise } = makeCall("agents.create", {
       name: "Fancy Agent",
       workspace: "/tmp/ws",
-      emoji: "🤖",
+      emoji: "🦊",
       avatar: "https://example.com/avatar.png",
     });
     await promise;
 
     expect(mocks.fsAppendFile).toHaveBeenCalledWith(
       expect.stringContaining("IDENTITY.md"),
-      expect.stringMatching(/- Name: Fancy Agent[\s\S]*- Emoji: 🤖[\s\S]*- Avatar:/),
+      expect.stringMatching(/- Name: Fancy Agent[\s\S]*- Emoji: 🦊[\s\S]*- Avatar:/),
       "utf-8",
     );
   });

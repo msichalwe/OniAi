@@ -269,7 +269,7 @@ export async function launchOniAIChrome(
         name: profile.name,
         color: profile.color,
       });
-      log.info(`🤖 oni browser profile decorated (${profile.color})`);
+      log.info(`🦊 oni browser profile decorated (${profile.color})`);
     } catch (err) {
       log.warn(`oni browser profile decoration failed: ${String(err)}`);
     }
@@ -304,7 +304,7 @@ export async function launchOniAIChrome(
 
   const pid = proc.pid ?? -1;
   log.info(
-    `🤖 oni browser started (${exe.kind}) profile "${profile.name}" on 127.0.0.1:${profile.cdpPort} (pid ${pid})`,
+    `🦊 oni browser started (${exe.kind}) profile "${profile.name}" on 127.0.0.1:${profile.cdpPort} (pid ${pid})`,
   );
 
   return {

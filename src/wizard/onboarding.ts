@@ -28,32 +28,27 @@ async function requireRiskAcknowledgement(params: {
 
   await params.prompter.note(
     [
-      "Security warning — please read.",
+      "Important — please read before proceeding.",
       "",
-      "OniAI is a hobby project and still in beta. Expect sharp edges.",
-      "This bot can read files and run actions if tools are enabled.",
-      "A bad prompt can trick it into doing unsafe things.",
+      "OniAI is an AI gateway that can execute tools, read files,",
+      "and perform actions on your behalf. With great power comes",
+      "great responsibility.",
       "",
-      "If you’re not comfortable with basic security and access control, don’t run OniAI.",
-      "Ask someone experienced to help before enabling tools or exposing it to the internet.",
+      "Before you begin:",
+      "- Enable pairing and allowlists for all channels.",
+      "- Use sandbox mode for tool execution when possible.",
+      "- Keep sensitive files outside the agent's workspace.",
+      "- Use strong models for bots exposed to untrusted input.",
       "",
-      "Recommended baseline:",
-      "- Pairing/allowlists + mention gating.",
-      "- Sandbox + least-privilege tools.",
-      "- Keep secrets out of the agent’s reachable filesystem.",
-      "- Use the strongest available model for any bot with tools or untrusted inboxes.",
-      "",
-      "Run regularly:",
-      "oni security audit --deep",
-      "oni security audit --fix",
-      "",
-      "Must read: https://docs.oni.ai/gateway/security",
+      "Maintain your setup:",
+      "  oni security audit --deep",
+      "  oni doctor",
     ].join("\n"),
     "Security",
   );
 
   const ok = await params.prompter.confirm({
-    message: "I understand this is powerful and inherently risky. Continue?",
+    message: "I understand and accept responsibility. Continue?",
     initialValue: false,
   });
   if (!ok) {

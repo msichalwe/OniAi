@@ -208,7 +208,7 @@ Read, send, and archive messages via Beeper Desktop. Uses Beeper local MCP API s
 
 </CardGroup>
 
-## 🤖 Automation & Workflows
+## 🦊 Automation & Workflows
 
 <CardGroup cols={2}>
 

@@ -1095,7 +1095,7 @@ describe("handleCommands subagents", () => {
         });
       },
       verboseLevel: "off" as const,
-      expectedText: ["🤖 Subagents: 1 active"],
+      expectedText: ["🦊 Subagents: 1 active"],
       unexpectedText: [] as string[],
     },
     {
@@ -1125,7 +1125,7 @@ describe("handleCommands subagents", () => {
         });
       },
       verboseLevel: "on" as const,
-      expectedText: ["🤖 Subagents: 1 active", "· 1 done"],
+      expectedText: ["🦊 Subagents: 1 active", "· 1 done"],
       unexpectedText: [] as string[],
     },
   ])("$name", async ({ seedRuns, verboseLevel, expectedText, unexpectedText }) => {

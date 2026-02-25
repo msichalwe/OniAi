@@ -1,12 +1,12 @@
 // OniAI palette tokens for CLI/UI theming.
 // Keep in sync with docs/cli/index.md (CLI palette section).
 export const ONI_PALETTE = {
-  accent: "#6C5CE7",
-  accentBright: "#A29BFE",
-  accentDim: "#4834D4",
-  info: "#74B9FF",
-  success: "#00B894",
-  warn: "#FDCB6E",
-  error: "#D63031",
-  muted: "#636E72",
+  accent: "#C4A882",
+  accentBright: "#D4B896",
+  accentDim: "#A68B6B",
+  info: "#B8C4D0",
+  success: "#7DB88F",
+  warn: "#D4A84B",
+  error: "#C75050",
+  muted: "#8B8178",
 } as const;

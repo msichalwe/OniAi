@@ -154,7 +154,7 @@ ${theme.muted("Docs:")} ${formatDocsLink("/cli/agent", "docs.oni.ai/cli/agent")}
         `
 ${theme.heading("Examples:")}
 ${formatHelpExamples([
-  ['oni agents set-identity --agent main --name "OniAI" --emoji "🤖"', "Set name + emoji."],
+  ['oni agents set-identity --agent main --name "OniAI" --emoji "🦊"', "Set name + emoji."],
   ["oni agents set-identity --agent main --avatar avatars/oni.png", "Set avatar path."],
   [
     "oni agents set-identity --workspace ~/.oni/workspace --from-identity",

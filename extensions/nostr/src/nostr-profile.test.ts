@@ -356,17 +356,17 @@ describe("sanitizeProfileForDisplay", () => {
 describe("edge cases", () => {
   it("handles emoji in profile fields", () => {
     const profile: NostrProfile = {
-      name: "🤖 Bot",
-      about: "I am a 🤖 robot! 🎉",
+      name: "🦊 Bot",
+      about: "I am a 🦊 robot! 🎉",
     };
 
     const content = profileToContent(profile);
-    expect(content.name).toBe("🤖 Bot");
-    expect(content.about).toBe("I am a 🤖 robot! 🎉");
+    expect(content.name).toBe("🦊 Bot");
+    expect(content.about).toBe("I am a 🦊 robot! 🎉");
 
     const event = createProfileEvent(TEST_SK, profile);
     const parsed = JSON.parse(event.content) as ProfileContent;
-    expect(parsed.name).toBe("🤖 Bot");
+    expect(parsed.name).toBe("🦊 Bot");
   });
 
   it("handles unicode in profile fields", () => {
