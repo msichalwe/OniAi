@@ -7,8 +7,8 @@
     "library": "lucide"
   },
   "logo": {
-    "light": "/assets/pixel-lobster.svg",
-    "dark": "/assets/pixel-lobster.svg"
+    "light": "/assets/oni-logo-text-dark.png",
+    "dark": "/assets/oni-logo-text.png"
   },
   "fonts": {
     "body": {
@@ -18,10 +18,10 @@
       "family": "DM Sans"
     }
   },
-  "favicon": "/assets/pixel-lobster.svg",
+  "favicon": "/assets/oni-logo-text.png",
   "colors": {
-    "primary": "#FF5A36",
-    "dark": "#FF5A36",
+    "primary": "#6C5CE7",
+    "dark": "#A29BFE",
     "light": "#FF8A6B"
   },
   "styling": {

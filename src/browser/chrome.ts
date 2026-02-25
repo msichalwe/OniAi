@@ -18,10 +18,7 @@ import {
   isProfileDecorated,
 } from "./chrome.profile-decoration.js";
 import type { ResolvedBrowserConfig, ResolvedBrowserProfile } from "./config.js";
-import {
-  DEFAULT_ONI_BROWSER_COLOR,
-  DEFAULT_ONI_BROWSER_PROFILE_NAME,
-} from "./constants.js";
+import { DEFAULT_ONI_BROWSER_COLOR, DEFAULT_ONI_BROWSER_PROFILE_NAME } from "./constants.js";
 
 const log = createSubsystemLogger("browser").child("chrome");
 
@@ -272,7 +269,7 @@ export async function launchOniAIChrome(
         name: profile.name,
         color: profile.color,
       });
-      log.info(`🦞 oni browser profile decorated (${profile.color})`);
+      log.info(`🤖 oni browser profile decorated (${profile.color})`);
     } catch (err) {
       log.warn(`oni browser profile decoration failed: ${String(err)}`);
     }
@@ -307,7 +304,7 @@ export async function launchOniAIChrome(
 
   const pid = proc.pid ?? -1;
   log.info(
-    `🦞 oni browser started (${exe.kind}) profile "${profile.name}" on 127.0.0.1:${profile.cdpPort} (pid ${pid})`,
+    `🤖 oni browser started (${exe.kind}) profile "${profile.name}" on 127.0.0.1:${profile.cdpPort} (pid ${pid})`,
   );
 
   return {

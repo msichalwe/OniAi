@@ -133,7 +133,7 @@
     "test:voicecall:closedloop": "vitest run extensions/voice-call/src/manager.test.ts extensions/voice-call/src/media-stream.test.ts src/plugins/voice-call.plugin.test.ts --maxWorkers=1",
     "test:watch": "vitest",
     "tui": "node scripts/run-node.mjs tui",
-    "tui:dev": "ONI_PROFILE=dev CLAWDBOT_PROFILE=dev node scripts/run-node.mjs --dev tui",
+    "tui:dev": "ONI_PROFILE=dev CLAWDBOT_PROFILE=dev node scripts/run-node.mjs --dev tui"
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "0.14.1",

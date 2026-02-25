@@ -27,11 +27,7 @@ describe("config identity defaults", () => {
   const writeAndLoadConfig = async (home: string, config: Record<string, unknown>) => {
     const configDir = path.join(home, ".oni");
     await fs.mkdir(configDir, { recursive: true });
-    await fs.writeFile(
-      path.join(configDir, "oni.json"),
-      JSON.stringify(config, null, 2),
-      "utf-8",
-    );
+    await fs.writeFile(path.join(configDir, "oni.json"), JSON.stringify(config, null, 2), "utf-8");
     return loadConfig();
   };
 
@@ -71,7 +67,7 @@ describe("config identity defaults", () => {
               identity: {
                 name: "Samantha Sloth",
                 theme: "space lobster",
-                emoji: "🦞",
+                emoji: "🤖",
               },
               groupChat: { mentionPatterns: ["@oni"] },
             },
@@ -92,7 +88,7 @@ describe("config identity defaults", () => {
       const cfg = await writeAndLoadConfig(home, {
         messages: {
           messagePrefix: "[oni]",
-          responsePrefix: "🦞",
+          responsePrefix: "🤖",
         },
         channels: {
           whatsapp: { allowFrom: ["+15555550123"], textChunkLimit: 4444 },

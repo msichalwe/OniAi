@@ -5,7 +5,7 @@ read_when:
 title: "OniAI"
 ---
 
-# OniAI 🦞
+# OniAI 🤖
 
 <p align="center">
     <img
