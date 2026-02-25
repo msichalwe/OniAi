@@ -189,15 +189,22 @@ class GatewayClient {
         try {
             // Import dynamically to avoid circular deps
             const { widgetContext } = await import('../core/WidgetContextProvider.js');
+            const windowStore = (await import('../stores/windowStore.js')).default;
+
             const summary = widgetContext?.getSummary?.() || '';
-            if (summary) {
-                // Push to server for the gateway AI's next message context
-                await fetch('/api/oni/context', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ widgetContext: summary, timestamp: Date.now() }),
-                }).catch(() => { /* endpoint may not exist yet */ });
-            }
+            const windows = (windowStore?.getState?.()?.windows || []).map(w => ({
+                id: w.id,
+                type: w.widgetType,
+                title: w.title || w.widgetType,
+                focused: !!w.focused,
+                minimized: !!w.isMinimized,
+            }));
+
+            await fetch('/api/oni/context', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ widgetContext: summary, windows, timestamp: Date.now() }),
+            }).catch(() => { /* endpoint may not exist yet */ });
         } catch { /* context provider not ready */ }
     }
 

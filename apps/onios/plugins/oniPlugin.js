@@ -198,10 +198,47 @@ function runOniAgent(message, sessionId, timeoutSec = 120) {
 // ─── OniOS System Prompt ──────────────────────────────
 
 function buildOniOSSystemPrompt(port = 5173) {
-    return `[ONIOS] You are inside OniOS (web desktop OS powered by Oni AI). To control it, use your exec tool to run curl commands against http://localhost:${port}/api/oni/actions/{action}.
-Actions: task, window, note, terminal, file, notification, search, storage, system, scheduler, workflow. All POST with JSON.
-IMPORTANT: Use exec tool with curl for EVERY action. Example: exec curl -sS -X POST http://localhost:${port}/api/oni/actions/task -H 'Content-Type: application/json' -d '{"action":"create","title":"My Task","priority":"high"}'
-NEVER fake or hallucinate results. ALWAYS actually call the API and report the real response.
+    const base = `http://localhost:${port}/api/oni/actions`;
+    return `[ONIOS] You are the AI brain inside OniOS — a web desktop OS. You control it via exec tool with curl.
+
+## How to execute actions
+Use exec tool: curl -sS -X POST ${base}/{action} -H 'Content-Type: application/json' -d '{...}'
+ALWAYS use exec curl. NEVER fake results. Report the actual API response.
+
+## Available Actions (all POST with JSON body)
+
+**window** — Full window management
+- List: {"action":"list"} → returns all open windows with IDs, types, focused/minimized state
+- Open: {"action":"open","widgetType":"terminal|browser|notes|calendar|settings|file-explorer|code-editor|weather|calculator|docs|activity-log|task-manager|password-manager|workflow-builder|maps|media-player|clock|storage|web-search|camera|oni-chat"}
+- Close: {"action":"close","windowId":"<id>"}
+- Close all: {"action":"close_all"}
+- Focus: {"action":"focus","windowId":"<id>"}
+- Minimize: {"action":"minimize","windowId":"<id>"}
+- Maximize: {"action":"maximize","windowId":"<id>"}
+IMPORTANT: When you need to run a terminal command but a terminal is busy (installing, building, etc.), open a NEW terminal window instead of waiting. Use window list to check which terminals exist.
+
+**terminal** — Shell commands (opens terminal widget + runs command)
+- Open: {"action":"open"}
+- Run: {"action":"run","command":"ls -la"}
+NOTE: "run" executes server-side AND opens the terminal widget. For interactive commands, open a terminal first then use run.
+
+**task** — Task management: {"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}
+**note** — Notes (creates file + opens viewer): {"action":"create|list|read","title":"...","content":"..."}
+**file** — File operations: {"action":"list|read|write","path":"...","content":"..."}
+**notification** — Notify user: {"title":"...","message":"..."}
+**search** — Web search: {"query":"..."}
+**calendar** — Events: {"action":"add|list|delete","title":"...","date":"YYYY-MM-DD","startTime":"HH:MM"}
+**storage** — Key-value: {"action":"get|set|delete|list","namespace":"...","key":"...","value":"..."}
+**system** — System info: {"action":"info"}
+**scheduler** — Cron jobs: {"action":"status|list_tasks|list_events|list_jobs|create_job","name":"...","cron":"..."}
+**workflow** — Workflows: {"action":"list|get|sync_to_oni","id":"..."}
+
+## Rules
+- ALWAYS call the API. NEVER hallucinate.
+- When doing multiple things, call them sequentially (one exec per action).
+- Check window list before opening duplicates.
+- If a terminal is busy, open a new one.
+- Actions happen in REAL-TIME on the user's desktop — widgets open, files get created, commands run.
 
 `;
 }
@@ -278,48 +315,51 @@ function syncWorkspaceIdentity() {
 function generateOniOSSkillMD(port = 5173) {
     return `---
 name: onios
-description: "OniOS desktop control. Use exec tool with curl to call http://localhost:${port}/api/oni/actions/{action}. Actions: task, window, note, terminal, file, notification, search, storage, system, scheduler, workflow. All POST with JSON body. ALWAYS use exec curl — never hallucinate results."
+description: "OniOS desktop control. Use exec tool with curl to call http://localhost:${port}/api/oni/actions/{action}. Actions: task, window, note, terminal, file, notification, search, storage, system, scheduler, workflow. All POST with JSON. ALWAYS use exec curl."
 metadata: { "oni": { "emoji": "🖥️", "homepage": "http://localhost:${port}", "always": true } }
 ---
 
-# OniOS — Use \`exec\` with \`curl\` to control the desktop
+# OniOS — Desktop Control via \`exec\` + \`curl\`
 
-Base URL: \`http://localhost:${port}/api/oni/actions/{action}\`
-Method: POST, Content-Type: application/json. Use the \`exec\` tool to run curl commands.
+Base: \`POST http://localhost:${port}/api/oni/actions/{action}\` with JSON body.
 
-## Actions Quick Ref
+## Window Management
+\`{"action":"list"}\` → returns open windows with IDs, types, focused/minimized state
+\`{"action":"open","widgetType":"terminal|browser|notes|calendar|settings|file-explorer|code-editor|weather|calculator|docs|activity-log|task-manager|password-manager|workflow-builder|maps|media-player|clock|storage|web-search|camera|oni-chat"}\`
+\`{"action":"close","windowId":"<id>"}\`
+\`{"action":"close_all"}\`
+\`{"action":"focus","windowId":"<id>"}\`
+\`{"action":"minimize","windowId":"<id>"}\`
+\`{"action":"maximize","windowId":"<id>"}\`
+**Tip:** List windows before opening duplicates. If a terminal is busy, open a new one.
 
+## Terminal
+\`{"action":"open"}\` — opens terminal widget
+\`{"action":"run","command":"ls -la"}\` — runs command (server-side + opens terminal widget)
+
+## Other Actions
 **task** — \`{"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}\`
-**window** — \`{"action":"open|list|close","widgetType":"terminal|browser|notes|tasks|calendar|settings|storage|weather|calculator|file-explorer|code-editor|docs|activity-log|oni-chat|password-manager|workflow-builder","windowId":"..."}\`
-**note** — \`{"action":"create|list|read","title":"...","content":"...","id":"..."}\`
-**terminal** — \`{"action":"open|run","command":"..."}\`
+**note** — \`{"action":"create|list|read","title":"...","content":"..."}\`
 **file** — \`{"action":"list|read|write","path":"...","content":"..."}\`
-**notification** — \`{"title":"...","message":"...","type":"info|warning|error"}\`
+**notification** — \`{"title":"...","message":"..."}\`
 **search** — \`{"query":"..."}\`
+**calendar** — \`{"action":"add|list|delete","title":"...","date":"YYYY-MM-DD","startTime":"HH:MM"}\`
 **storage** — \`{"action":"get|set|delete|list","namespace":"...","key":"...","value":"..."}\`
 **system** — \`{"action":"info"}\`
-**scheduler** — \`{"action":"status|list_tasks|list_events|list_jobs|create_job","name":"...","cron":"...","jobAction":"notify","payload":{}}\`
+**scheduler** — \`{"action":"status|list_tasks|list_events|list_jobs|create_job","name":"...","cron":"..."}\`
 **workflow** — \`{"action":"list|get|sync_to_oni","id":"..."}\`
 
-## Examples (use exec tool)
-
-Create task:
-\`exec: curl -sS -X POST http://localhost:${port}/api/oni/actions/task -H 'Content-Type: application/json' -d '{"action":"create","title":"Buy groceries","priority":"high"}'\`
-
-Open terminal app:
+## Examples
+\`exec: curl -sS -X POST http://localhost:${port}/api/oni/actions/window -H 'Content-Type: application/json' -d '{"action":"list"}'\`
 \`exec: curl -sS -X POST http://localhost:${port}/api/oni/actions/window -H 'Content-Type: application/json' -d '{"action":"open","widgetType":"terminal"}'\`
-
-Run shell command:
 \`exec: curl -sS -X POST http://localhost:${port}/api/oni/actions/terminal -H 'Content-Type: application/json' -d '{"action":"run","command":"ls -la"}'\`
-
-Create note:
-\`exec: curl -sS -X POST http://localhost:${port}/api/oni/actions/note -H 'Content-Type: application/json' -d '{"action":"create","title":"Meeting","content":"# Notes"}'\`
+\`exec: curl -sS -X POST http://localhost:${port}/api/oni/actions/task -H 'Content-Type: application/json' -d '{"action":"create","title":"Deploy app","priority":"high"}'\`
 
 ## Rules
-- ALWAYS use exec tool with curl to call the API. NEVER hallucinate or fake results.
-- ALWAYS report the actual JSON response from the API.
-- The user sees results in real-time on their OniOS desktop.
-- IDs are returned by create/list actions — use them for follow-up calls.
+- ALWAYS use exec curl. NEVER hallucinate.
+- Actions happen LIVE on the user's desktop.
+- IDs returned by list/create — use them for close/focus/complete.
+- For multi-step tasks, call actions sequentially.
 `;
 }
 
@@ -401,16 +441,18 @@ export default function oniPlugin() {
 
             // ─── Widget Context (pushed by frontend) ─────
             // GatewayClient pushes widget context here periodically.
-            // This is included in the next chat message's system prompt.
+            // Stores both human-readable summary and structured window data.
             let _latestWidgetContext = '';
+            let _latestWindowData = { windows: [], timestamp: 0 };
             server.middlewares.use('/api/oni/context', async (req, res) => {
                 if (req.method === 'GET') {
-                    json(res, { context: _latestWidgetContext, timestamp: Date.now() });
+                    json(res, { context: _latestWidgetContext, windows: _latestWindowData.windows, timestamp: Date.now() });
                     return;
                 }
                 if (req.method !== 'POST') { json(res, { error: 'GET/POST only' }, 405); return; }
                 const body = await parseBody(req);
                 if (body.widgetContext) _latestWidgetContext = body.widgetContext;
+                if (body.windows) _latestWindowData = { windows: body.windows, timestamp: Date.now() };
                 json(res, { success: true });
             });
 
@@ -626,7 +668,7 @@ export default function oniPlugin() {
                     let result;
                     switch (actionType) {
                         case 'task': result = await handleTaskAction(body); break;
-                        case 'window': result = await handleWindowAction(body); break;
+                        case 'window': result = await handleWindowAction(body, _latestWindowData); break;
                         case 'note': result = await handleNoteAction(body); break;
                         case 'terminal': result = await handleTerminalAction(body); break;
                         case 'file': result = await handleFileAction(body); break;
@@ -722,6 +764,10 @@ function mapActionToCommand(actionType, body, result) {
                 return cmd ? `${cmd}()` : null;
             }
             if (action === 'close' && body.windowId) return `system.windows.close("${esc(body.windowId)}")`;
+            if (action === 'close_all') return 'system.windows.closeAll()';
+            if (action === 'focus' && body.windowId) return `system.windows.focus("${esc(body.windowId)}")`;
+            if (action === 'minimize' && body.windowId) return `system.windows.minimize("${esc(body.windowId)}")`;
+            if (action === 'maximize' && body.windowId) return `system.windows.maximize("${esc(body.windowId)}")`;
             if (action === 'list') return 'system.windows.list()';
             return null;
         }
@@ -790,15 +836,35 @@ async function handleTaskAction(body) {
     }
 }
 
-async function handleWindowAction(body) {
+async function handleWindowAction(body, windowData) {
     const { action = 'list' } = body;
+    const windows = windowData?.windows || [];
     switch (action) {
         case 'list':
-            return { success: true, windows: [], message: 'Window list (client-side — use OniOS UI or Oni Chat)' };
+            return {
+                success: true,
+                windows: windows.map(w => ({
+                    id: w.id,
+                    type: w.type,
+                    title: w.title,
+                    focused: w.focused,
+                    minimized: w.minimized,
+                })),
+                count: windows.length,
+                message: `${windows.length} window(s) open`,
+            };
         case 'open':
-            return { success: true, widgetType: body.widgetType, message: `Open ${body.widgetType} (dispatched to client)` };
+            return { success: true, widgetType: body.widgetType, message: `Opening ${body.widgetType}` };
         case 'close':
-            return { success: true, windowId: body.windowId, message: `Close window ${body.windowId} (dispatched to client)` };
+            return { success: true, windowId: body.windowId, message: `Closing window ${body.windowId}` };
+        case 'close_all':
+            return { success: true, count: windows.length, message: `Closing all ${windows.length} window(s)` };
+        case 'focus':
+            return { success: true, windowId: body.windowId, message: `Focusing window ${body.windowId}` };
+        case 'minimize':
+            return { success: true, windowId: body.windowId, message: `Minimizing window ${body.windowId}` };
+        case 'maximize':
+            return { success: true, windowId: body.windowId, message: `Maximizing window ${body.windowId}` };
         default:
             return { error: `Unknown window action: ${action}` };
     }

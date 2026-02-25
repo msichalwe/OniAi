@@ -29,6 +29,8 @@ let _nanoid = 0;
 const nanoid = () => `oni_${++_nanoid}_${Date.now().toString(36)}`;
 
 const SESSION_KEY = "onios:main";
+const CHAT_STORAGE_KEY = "onios_chat_messages";
+const MAX_STORED_MESSAGES = 100;
 
 // Action type → human-readable label + emotion
 const ACTION_LABELS = {
@@ -47,7 +49,28 @@ const ACTION_LABELS = {
 };
 
 export default function OniChatWidget() {
-  const [messages, setMessages] = useState([]);
+  // Restore messages from localStorage on mount
+  const [messages, setMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+      if (saved) return JSON.parse(saved).filter((m) => m.role !== "status");
+    } catch {
+      /* corrupt */
+    }
+    return [];
+  });
+
+  // Persist messages to localStorage on every change
+  useEffect(() => {
+    try {
+      const toSave = messages
+        .filter((m) => m.role !== "status")
+        .slice(-MAX_STORED_MESSAGES);
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(toSave));
+    } catch {
+      /* quota exceeded */
+    }
+  }, [messages]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [emotion, setEmotion] = useState("neutral");
@@ -73,7 +96,10 @@ export default function OniChatWidget() {
       if (!chatStartTimeRef.current) return;
       if (event.timestamp < chatStartTimeRef.current) return;
 
-      const actionInfo = ACTION_LABELS[event.actionType] || { label: event.actionType, emotion: "energetic" };
+      const actionInfo = ACTION_LABELS[event.actionType] || {
+        label: event.actionType,
+        emotion: "energetic",
+      };
 
       if (event.type === "action_start") {
         setEmotion(actionInfo.emotion);
@@ -85,8 +111,12 @@ export default function OniChatWidget() {
       }
 
       if (event.type === "action_done") {
-        const resultDesc = event.result?.message || event.result?.success ? "Done" : "Failed";
-        addStatusMessage(`${actionInfo.label}: ${resultDesc}`, event.result?.success !== false ? "success" : "error");
+        const resultDesc =
+          event.result?.message || event.result?.success ? "Done" : "Failed";
+        addStatusMessage(
+          `${actionInfo.label}: ${resultDesc}`,
+          event.result?.success !== false ? "success" : "error",
+        );
       }
 
       if (event.type === "action_error") {
@@ -102,13 +132,21 @@ export default function OniChatWidget() {
   useEffect(() => {
     const handlers = {
       "command:executed": () => {
-        if (!streamingRef.current) { setEmotion("happy"); setAction("complete"); }
+        if (!streamingRef.current) {
+          setEmotion("happy");
+          setAction("complete");
+        }
       },
       "command:error": () => {
-        if (!streamingRef.current) { setEmotion("frustrated"); setAction("error"); }
+        if (!streamingRef.current) {
+          setEmotion("frustrated");
+          setAction("error");
+        }
       },
       "gateway:command:executed": () => {
-        if (streamingRef.current) { setEmotion("happy"); }
+        if (streamingRef.current) {
+          setEmotion("happy");
+        }
       },
     };
     Object.entries(handlers).forEach(([evt, fn]) => eventBus.on(evt, fn));
@@ -120,7 +158,10 @@ export default function OniChatWidget() {
   // Idle emotion timeout
   useEffect(() => {
     if (action === "idle" || action === "complete" || action === "success") {
-      const t = setTimeout(() => { setEmotion("neutral"); setAction("idle"); }, 8000);
+      const t = setTimeout(() => {
+        setEmotion("neutral");
+        setAction("idle");
+      }, 8000);
       return () => clearTimeout(t);
     }
   }, [action]);
@@ -133,11 +174,16 @@ export default function OniChatWidget() {
     const focused = windows.find((w) => w.focused);
     const liveState = widgetContext?.getSummary?.() || "";
     return {
-      windows: windows.map((w) => `${w.title || w.widgetType} (${w.widgetType})`).join(", ") || "none",
+      windows:
+        windows
+          .map((w) => `${w.title || w.widgetType} (${w.widgetType})`)
+          .join(", ") || "none",
       desktops: `${desktops.length} desktops`,
       theme,
       time: new Date().toLocaleString(),
-      focusedWindow: focused ? `${focused.title || focused.widgetType}` : "none",
+      focusedWindow: focused
+        ? `${focused.title || focused.widgetType}`
+        : "none",
       liveWidgetState: liveState,
     };
   }, []);
@@ -146,7 +192,13 @@ export default function OniChatWidget() {
   const addStatusMessage = useCallback((content, type = "status") => {
     setMessages((prev) => [
       ...prev,
-      { id: nanoid(), role: "status", content, statusType: type, timestamp: Date.now() },
+      {
+        id: nanoid(),
+        role: "status",
+        content,
+        statusType: type,
+        timestamp: Date.now(),
+      },
     ]);
   }, []);
 
@@ -258,7 +310,9 @@ export default function OniChatWidget() {
 
         // Remove "working" status messages, keep success/error/info, add the assistant message
         setMessages((prev) => [
-          ...prev.filter((m) => m.role !== "status" || m.statusType !== "working"),
+          ...prev.filter(
+            (m) => m.role !== "status" || m.statusType !== "working",
+          ),
           assistantMsg,
         ]);
         setAction("success");
@@ -270,7 +324,9 @@ export default function OniChatWidget() {
         setEmotion("frustrated");
 
         setMessages((prev) => [
-          ...prev.filter((m) => m.role !== "status" || m.statusType !== "working"),
+          ...prev.filter(
+            (m) => m.role !== "status" || m.statusType !== "working",
+          ),
           {
             id: nanoid(),
             role: "assistant",
@@ -316,23 +372,27 @@ function describeAction(actionType, params) {
   const action = params?.action || actionType;
   switch (actionType) {
     case "task":
-      if (action === "create") return `Creating task: "${params.title || "Untitled"}"`;
+      if (action === "create")
+        return `Creating task: "${params.title || "Untitled"}"`;
       if (action === "list") return "Listing tasks...";
       if (action === "complete") return `Completing task ${params.id}`;
       return `Task: ${action}`;
     case "window":
-      if (action === "open") return `Opening ${params.widgetType || "widget"}...`;
+      if (action === "open")
+        return `Opening ${params.widgetType || "widget"}...`;
       if (action === "close") return `Closing window ${params.windowId}`;
       if (action === "list") return "Listing windows...";
       return `Window: ${action}`;
     case "note":
-      if (action === "create") return `Creating note: "${params.title || "Untitled"}"`;
+      if (action === "create")
+        return `Creating note: "${params.title || "Untitled"}"`;
       if (action === "list") return "Listing notes...";
       if (action === "read") return `Reading note...`;
       return `Note: ${action}`;
     case "terminal":
       if (action === "open") return "Opening terminal...";
-      if (action === "run") return `Running: ${params.command?.substring(0, 60) || "command"}`;
+      if (action === "run")
+        return `Running: ${params.command?.substring(0, 60) || "command"}`;
       return `Terminal: ${action}`;
     case "file":
       if (action === "list") return `Listing files in ${params.path || "~"}`;
@@ -347,7 +407,8 @@ function describeAction(actionType, params) {
       if (params.title) return `Adding event: "${params.title}"`;
       return "Calendar operation...";
     case "scheduler":
-      if (action === "create_job") return `Creating job: "${params.name || ""}"`;
+      if (action === "create_job")
+        return `Creating job: "${params.name || ""}"`;
       return `Scheduler: ${action}`;
     case "workflow":
       return `Workflow: ${action}`;
