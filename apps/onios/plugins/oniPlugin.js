@@ -659,49 +659,82 @@ export default function oniPlugin() {
 // Maps server-side action API calls to frontend commandRegistry commands.
 // The frontend uses these hints to open widgets, create tasks, etc.
 
+// Widget type → command path for opening widgets.
+// These MUST match the actual commandRegistry.register() paths in App.jsx.
+const WIDGET_OPEN_COMMANDS = {
+    'terminal': 'terminal.open',
+    'browser': 'browser.open',
+    'notes': 'document.open',
+    'calendar': 'calendar.open',
+    'settings': 'system.settings.open',
+    'file-explorer': 'system.files.openExplorer',
+    'code-editor': 'code.open',
+    'weather': 'widgets.weather.getCurrent',
+    'calculator': 'widgets.calculator.open',
+    'docs': 'system.docs.open',
+    'activity-log': 'system.activity.open',
+    'oni-chat': 'oni.chat',
+    'password-manager': 'password.open',
+    'workflow-builder': 'workflow.open',
+    'task-manager': 'taskManager.open',
+    'maps': 'maps.open',
+    'media-player': 'system.media.open',
+    'clock': 'system.info.clock',
+    'storage': 'storage.open',
+    'web-search': 'web.search',
+    'camera': 'camera.open',
+    'document-viewer': 'document.open',
+    'tasks': 'taskManager.open',
+};
+
 function mapActionToCommand(actionType, body, result) {
     const action = body.action || actionType;
+    const esc = (s) => (s || '').replace(/"/g, '\\"');
     switch (actionType) {
         case 'task':
-            if (action === 'create') return `task.add("${body.title || 'Untitled'}", "${body.dueDate || ''}", "${body.dueTime || ''}", "${body.priority || 'medium'}")`;
+            if (action === 'create') return `task.add("${esc(body.title)}", "${esc(body.dueDate)}", "${esc(body.dueTime)}", "${esc(body.priority || 'medium')}")`;
             if (action === 'list') return 'task.list()';
-            if (action === 'complete') return `task.complete("${body.id}")`;
-            return null;
-        case 'window':
-            if (action === 'open' && body.widgetType) return `system.windows.open("${body.widgetType}")`;
-            if (action === 'close' && body.windowId) return `system.windows.close("${body.windowId}")`;
+            if (action === 'complete') return `task.complete("${esc(body.id)}")`;
+            return 'taskManager.open()';
+        case 'window': {
+            if (action === 'open' && body.widgetType) {
+                const cmd = WIDGET_OPEN_COMMANDS[body.widgetType];
+                return cmd ? `${cmd}()` : null;
+            }
+            if (action === 'close' && body.windowId) return `system.windows.close("${esc(body.windowId)}")`;
             if (action === 'list') return 'system.windows.list()';
             return null;
+        }
         case 'note':
-            if (action === 'create') return `document.create("${body.path || `~/Documents/${(body.title || 'note').replace(/[^a-zA-Z0-9-_ ]/g, '')}.md`}", ${JSON.stringify(body.content || `# ${body.title || 'Note'}\n`)})`;
+            if (action === 'create') return `document.create("${esc(body.path || `~/Documents/${(body.title || 'note').replace(/[^a-zA-Z0-9-_ ]/g, '')}.md`)}", ${JSON.stringify(body.content || `# ${body.title || 'Note'}\n`)})`;
             if (action === 'list') return 'document.list()';
-            return null;
+            return 'document.open()';
         case 'terminal':
             if (action === 'open') return 'terminal.open()';
-            if (action === 'run' && body.command) return `terminal.exec("${body.command.replace(/"/g, '\\"')}")`;
-            return null;
+            if (action === 'run' && body.command) return `terminal.exec("${esc(body.command)}")`;
+            return 'terminal.open()';
         case 'file':
-            if (action === 'list') return `system.files.list("${body.path || '~'}")`;
-            if (action === 'read') return `system.files.read("${body.path}")`;
-            if (action === 'write') return `system.files.write("${body.path}", ${JSON.stringify(body.content || '')})`;
-            return null;
+            if (action === 'list') return `system.files.list("${esc(body.path || '~')}")`;
+            if (action === 'read') return `system.files.read("${esc(body.path)}")`;
+            if (action === 'write') return `system.files.write("${esc(body.path)}", ${JSON.stringify(body.content || '')})`;
+            return 'system.files.openExplorer()';
         case 'notification':
-            return `system.notify("${(body.message || body.title || '').replace(/"/g, '\\"')}")`;
+            return `system.notify("${esc(body.message || body.title)}")`;
         case 'search':
-            return `web.search("${(body.query || '').replace(/"/g, '\\"')}")`;
+            return `web.search("${esc(body.query)}")`;
         case 'calendar':
-            if (action === 'add' || body.title) return `event.add("${body.title}", "${body.date || ''}", "${body.startTime || ''}", "${body.endTime || ''}")`;
+            if (action === 'add' || body.title) return `event.add("${esc(body.title)}", "${esc(body.date)}", "${esc(body.startTime)}", "${esc(body.endTime)}")`;
             return 'calendar.open()';
         case 'storage':
-            return null; // Storage actions are server-side only
+            return null;
         case 'system':
             return null;
         case 'scheduler':
-            if (action === 'create_job') return `schedule.add("${body.name || ''}", "${body.jobAction || ''}")`;
+            if (action === 'create_job') return `schedule.add("${esc(body.name)}", "${esc(body.jobAction)}")`;
             return null;
         case 'workflow':
             if (action === 'list') return 'workflow.list()';
-            return null;
+            return 'workflow.open()';
         default:
             return null;
     }
