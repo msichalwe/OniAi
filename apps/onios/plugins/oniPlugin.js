@@ -399,6 +399,21 @@ export default function oniPlugin() {
                 json(res, { success: true, config: updated });
             });
 
+            // ─── Widget Context (pushed by frontend) ─────
+            // GatewayClient pushes widget context here periodically.
+            // This is included in the next chat message's system prompt.
+            let _latestWidgetContext = '';
+            server.middlewares.use('/api/oni/context', async (req, res) => {
+                if (req.method === 'GET') {
+                    json(res, { context: _latestWidgetContext, timestamp: Date.now() });
+                    return;
+                }
+                if (req.method !== 'POST') { json(res, { error: 'GET/POST only' }, 405); return; }
+                const body = await parseBody(req);
+                if (body.widgetContext) _latestWidgetContext = body.widgetContext;
+                json(res, { success: true });
+            });
+
             // ─── Live Action Events (SSE) ────────────────
             // Frontend subscribes to this to see gateway AI actions in real-time
             // and execute corresponding widget commands locally.
@@ -541,9 +556,10 @@ export default function oniPlugin() {
                     if (ctxParts.length > 0) {
                         enrichedMessage += `\n[Desktop State: ${ctxParts.join(' | ')}]\n`;
                     }
-                    // Include live widget states if available (terminal output, browser URL, file path, etc.)
-                    if (context.liveWidgetState) {
-                        enrichedMessage += `\n[Live Widget State]\n${context.liveWidgetState}\n`;
+                    // Include live widget states — prefer frontend-provided, fallback to stored
+                    const widgetState = context.liveWidgetState || _latestWidgetContext;
+                    if (widgetState) {
+                        enrichedMessage += `\n[Live Widget State]\n${widgetState}\n`;
                     }
                 }
                 enrichedMessage += `\n${message}`;
