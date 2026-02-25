@@ -537,12 +537,16 @@ export default function oniPlugin() {
                     if (context.desktops) ctxParts.push(`Desktops: ${context.desktops}`);
                     if (context.theme) ctxParts.push(`Theme: ${context.theme}`);
                     if (context.time) ctxParts.push(`Time: ${context.time}`);
-                    if (context.focusedWindow) ctxParts.push(`Focused: ${context.focusedWindow}`);
+                    if (context.focusedWindow) ctxParts.push(`Focused window: ${context.focusedWindow}`);
                     if (ctxParts.length > 0) {
-                        enrichedMessage += `[Desktop State: ${ctxParts.join(' | ')}]\n\n`;
+                        enrichedMessage += `\n[Desktop State: ${ctxParts.join(' | ')}]\n`;
+                    }
+                    // Include live widget states if available (terminal output, browser URL, file path, etc.)
+                    if (context.liveWidgetState) {
+                        enrichedMessage += `\n[Live Widget State]\n${context.liveWidgetState}\n`;
                     }
                 }
-                enrichedMessage += message;
+                enrichedMessage += `\n${message}`;
 
                 // SSE headers
                 res.writeHead(200, {
