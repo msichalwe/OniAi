@@ -51,6 +51,42 @@ const DEFAULT_CONFIG = {
     mode: 'oni',
 };
 
+// ─── Action Event Bus ────────────────────────────────
+// When gateway AI triggers /api/oni/actions/*, we push events here.
+// Frontend subscribes via /api/oni/events SSE to see live action updates
+// and execute corresponding widget commands.
+
+const ACTION_EVENT_BUS = {
+    _clients: new Set(),
+    _queue: [],     // buffered events for active chat sessions
+
+    /** Push an action event to all SSE clients and buffer for chat */
+    push(event) {
+        const payload = { ...event, timestamp: Date.now() };
+        this._queue.push(payload);
+        // Keep only last 50 events
+        if (this._queue.length > 50) this._queue.shift();
+        // Send to all SSE clients
+        for (const client of this._clients) {
+            try {
+                client.write(`event: action\ndata: ${JSON.stringify(payload)}\n\n`);
+            } catch { /* client disconnected */ }
+        }
+    },
+
+    /** Drain buffered events since a timestamp */
+    drain(since = 0) {
+        const events = this._queue.filter(e => e.timestamp > since);
+        return events;
+    },
+
+    /** Register an SSE client */
+    addClient(res) {
+        this._clients.add(res);
+        res.on('close', () => this._clients.delete(res));
+    },
+};
+
 // ─── Helpers ──────────────────────────────────────────
 
 function ensureDir(dir) {
@@ -363,6 +399,26 @@ export default function oniPlugin() {
                 json(res, { success: true, config: updated });
             });
 
+            // ─── Live Action Events (SSE) ────────────────
+            // Frontend subscribes to this to see gateway AI actions in real-time
+            // and execute corresponding widget commands locally.
+            server.middlewares.use('/api/oni/events', (req, res) => {
+                if (req.method !== 'GET') { json(res, { error: 'GET only' }, 405); return; }
+                res.writeHead(200, {
+                    'Content-Type': 'text/event-stream',
+                    'Cache-Control': 'no-cache',
+                    'Connection': 'keep-alive',
+                    'X-Accel-Buffering': 'no',
+                });
+                res.write(`event: connected\ndata: ${JSON.stringify({ timestamp: Date.now() })}\n\n`);
+                ACTION_EVENT_BUS.addClient(res);
+                // Keep alive
+                const keepAlive = setInterval(() => {
+                    try { res.write(': keepalive\n\n'); } catch { clearInterval(keepAlive); }
+                }, 15000);
+                res.on('close', () => clearInterval(keepAlive));
+            });
+
             // ─── Install Skills ──────────────────────────
             server.middlewares.use('/api/oni/install-skills', async (req, res) => {
                 if (req.method !== 'POST') { json(res, { error: 'POST only' }, 405); return; }
@@ -530,12 +586,21 @@ export default function oniPlugin() {
             });
 
             // ─── OniOS Action API (called BY Oni gateway) ─
+            // Each action pushes an event to the frontend so widgets can react.
             server.middlewares.use('/api/oni/actions', async (req, res) => {
                 if (req.method !== 'POST') { json(res, { error: 'POST only' }, 405); return; }
 
                 const urlPath = req.originalUrl || req.url;
                 const actionType = urlPath.replace('/api/oni/actions/', '').split('?')[0];
                 const body = await parseBody(req);
+
+                // Push "starting" event to frontend
+                ACTION_EVENT_BUS.push({
+                    type: 'action_start',
+                    actionType,
+                    action: body.action || actionType,
+                    params: body,
+                });
 
                 try {
                     let result;
@@ -555,8 +620,26 @@ export default function oniPlugin() {
                         case 'workflow': result = await handleWorkflowAction(body); break;
                         default: json(res, { error: `Unknown action: ${actionType}` }, 400); return;
                     }
+
+                    // Push "completed" event with result + command hint for frontend
+                    ACTION_EVENT_BUS.push({
+                        type: 'action_done',
+                        actionType,
+                        action: body.action || actionType,
+                        params: body,
+                        result,
+                        // Frontend command hints — tells the frontend what widget command to execute
+                        command: mapActionToCommand(actionType, body, result),
+                    });
+
                     json(res, result);
                 } catch (err) {
+                    ACTION_EVENT_BUS.push({
+                        type: 'action_error',
+                        actionType,
+                        action: body.action || actionType,
+                        error: err.message,
+                    });
                     console.error(`[Oni] Action '${actionType}' error:`, err);
                     json(res, { error: err.message }, 500);
                 }
@@ -570,6 +653,58 @@ export default function oniPlugin() {
             });
         },
     };
+}
+
+// ─── Action → Frontend Command Mapping ───────────────
+// Maps server-side action API calls to frontend commandRegistry commands.
+// The frontend uses these hints to open widgets, create tasks, etc.
+
+function mapActionToCommand(actionType, body, result) {
+    const action = body.action || actionType;
+    switch (actionType) {
+        case 'task':
+            if (action === 'create') return `task.add("${body.title || 'Untitled'}", "${body.dueDate || ''}", "${body.dueTime || ''}", "${body.priority || 'medium'}")`;
+            if (action === 'list') return 'task.list()';
+            if (action === 'complete') return `task.complete("${body.id}")`;
+            return null;
+        case 'window':
+            if (action === 'open' && body.widgetType) return `system.windows.open("${body.widgetType}")`;
+            if (action === 'close' && body.windowId) return `system.windows.close("${body.windowId}")`;
+            if (action === 'list') return 'system.windows.list()';
+            return null;
+        case 'note':
+            if (action === 'create') return `document.create("${body.path || `~/Documents/${(body.title || 'note').replace(/[^a-zA-Z0-9-_ ]/g, '')}.md`}", ${JSON.stringify(body.content || `# ${body.title || 'Note'}\n`)})`;
+            if (action === 'list') return 'document.list()';
+            return null;
+        case 'terminal':
+            if (action === 'open') return 'terminal.open()';
+            if (action === 'run' && body.command) return `terminal.exec("${body.command.replace(/"/g, '\\"')}")`;
+            return null;
+        case 'file':
+            if (action === 'list') return `system.files.list("${body.path || '~'}")`;
+            if (action === 'read') return `system.files.read("${body.path}")`;
+            if (action === 'write') return `system.files.write("${body.path}", ${JSON.stringify(body.content || '')})`;
+            return null;
+        case 'notification':
+            return `system.notify("${(body.message || body.title || '').replace(/"/g, '\\"')}")`;
+        case 'search':
+            return `web.search("${(body.query || '').replace(/"/g, '\\"')}")`;
+        case 'calendar':
+            if (action === 'add' || body.title) return `event.add("${body.title}", "${body.date || ''}", "${body.startTime || ''}", "${body.endTime || ''}")`;
+            return 'calendar.open()';
+        case 'storage':
+            return null; // Storage actions are server-side only
+        case 'system':
+            return null;
+        case 'scheduler':
+            if (action === 'create_job') return `schedule.add("${body.name || ''}", "${body.jobAction || ''}")`;
+            return null;
+        case 'workflow':
+            if (action === 'list') return 'workflow.list()';
+            return null;
+        default:
+            return null;
+    }
 }
 
 // ─── Action Handlers ──────────────────────────────────

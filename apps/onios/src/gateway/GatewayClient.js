@@ -1,329 +1,284 @@
 /**
- * GatewayClient — Single WebSocket RPC client for the Oni gateway.
+ * GatewayClient — Full bridge between OniOS frontend and Oni gateway.
  *
- * Every widget uses this instead of direct fetch() calls to /api/ai/*.
- * Wraps the Oni gateway's JSON-RPC-like protocol over WebSocket.
+ * This is the central nervous system connecting the browser UI to the
+ * gateway AI brain. It handles:
  *
- * Usage:
- *   import { gateway } from '../gateway/GatewayClient';
- *   await gateway.connect('ws://127.0.0.1:19100', 'my-token');
- *   const health = await gateway.request('health');
- *   const sessions = await gateway.request('sessions.list');
+ * 1. **Action Event Stream** — subscribes to /api/oni/events SSE to receive
+ *    real-time notifications when the gateway AI executes actions
+ *    (tasks, windows, terminal, notes, etc.)
+ *
+ * 2. **Local Command Execution** — when action events include a `command` hint,
+ *    executes them via commandRegistry so widgets actually open/update on screen.
+ *
+ * 3. **Widget Context Sync** — periodically pushes current widget state to the
+ *    gateway so the AI knows what's on screen.
+ *
+ * 4. **Status Tracking** — tracks gateway connection state and exposes it to UI.
+ *
+ * Architecture:
+ *   Gateway AI → exec curl /api/oni/actions/terminal → oniPlugin handles it →
+ *   pushes event to ACTION_EVENT_BUS → SSE /api/oni/events → GatewayClient
+ *   receives → executes terminal.exec() via commandRegistry → Terminal widget opens
  */
 
+import { commandRegistry } from '../core/CommandRegistry.js';
 import { eventBus } from '../core/EventBus.js';
-
-let _requestId = 0;
-function nextId() { return `onios-${++_requestId}-${Date.now()}`; }
 
 class GatewayClient {
     constructor() {
-        this.ws = null;
-        this.url = '';
-        this.token = '';
         this._status = 'disconnected'; // disconnected | connecting | connected | error
+        this._eventSource = null;
+        this._statusListeners = [];
+        this._actionListeners = [];
         this._reconnectTimer = null;
-        this._pendingRequests = new Map(); // id → { resolve, reject, timeout }
-        this._eventHandlers = new Map(); // event → Set<handler>
-        this._statusHandlers = new Set();
-        this._chatStreamHandlers = new Map(); // runId → handler
+        this._contextSyncInterval = null;
+        this._actionHistory = []; // recent actions for chat display
     }
 
-    // ─── Connection ──────────────────────────────────────
+    get connected() {
+        return this._status === 'connected';
+    }
 
-    get status() { return this._status; }
-    get connected() { return this._status === 'connected' && this.ws?.readyState === WebSocket.OPEN; }
+    get status() {
+        return this._status;
+    }
 
-    async connect(url, token) {
-        if (this.connected) return;
-        this.url = url;
-        this.token = token;
+    /** Recent action events (for chat widget to display) */
+    get actionHistory() {
+        return this._actionHistory;
+    }
+
+    // ─── Event Stream Connection ─────────────────────────
+
+    /**
+     * Connect to the /api/oni/events SSE stream.
+     * This is the primary connection — all gateway AI actions flow through here.
+     */
+    connect() {
+        if (this._eventSource) {
+            this._eventSource.close();
+        }
+
         this._setStatus('connecting');
 
-        return new Promise((resolve, reject) => {
-            try {
-                const wsUrl = token
-                    ? `${url}?token=${encodeURIComponent(token)}`
-                    : url;
-                this.ws = new WebSocket(wsUrl);
+        try {
+            this._eventSource = new EventSource('/api/oni/events');
 
-                this.ws.onopen = () => {
-                    this._setStatus('connected');
-                    console.log('[GatewayClient] Connected to', url);
-                    // Send connect frame
-                    this._sendRaw({
-                        type: 'req',
-                        id: nextId(),
-                        method: 'connect',
-                        params: {
-                            client: 'onios',
-                            version: '0.1.0',
-                            role: 'operator',
-                        },
-                    });
-                    resolve();
-                };
+            this._eventSource.addEventListener('connected', () => {
+                this._setStatus('connected');
+                console.log('[GatewayClient] Connected to action event stream');
+                this._startContextSync();
+            });
 
-                this.ws.onmessage = (event) => {
-                    this._handleMessage(event.data);
-                };
+            this._eventSource.addEventListener('action', (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    this._handleActionEvent(data);
+                } catch (err) {
+                    console.warn('[GatewayClient] Failed to parse action event:', err);
+                }
+            });
 
-                this.ws.onclose = () => {
+            this._eventSource.onerror = () => {
+                if (this._eventSource?.readyState === EventSource.CLOSED) {
                     this._setStatus('disconnected');
-                    this._rejectAllPending('Connection closed');
+                    this._stopContextSync();
                     this._scheduleReconnect();
-                };
-
-                this.ws.onerror = () => {
+                } else {
                     this._setStatus('error');
-                    reject(new Error('Gateway connection failed'));
-                };
-            } catch (err) {
-                this._setStatus('error');
-                reject(err);
-            }
-        });
+                }
+            };
+        } catch (err) {
+            console.error('[GatewayClient] Connection failed:', err);
+            this._setStatus('error');
+            this._scheduleReconnect();
+        }
     }
 
+    /** Disconnect from the event stream */
     disconnect() {
         if (this._reconnectTimer) {
             clearTimeout(this._reconnectTimer);
             this._reconnectTimer = null;
         }
-        this._rejectAllPending('Disconnected');
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
+        this._stopContextSync();
+        if (this._eventSource) {
+            this._eventSource.close();
+            this._eventSource = null;
         }
         this._setStatus('disconnected');
     }
 
-    onStatusChange(handler) {
-        this._statusHandlers.add(handler);
-        return () => this._statusHandlers.delete(handler);
-    }
-
-    // ─── RPC Request ─────────────────────────────────────
+    // ─── Action Event Handling ───────────────────────────
 
     /**
-     * Send a JSON-RPC request to the gateway and await the response.
-     * @param {string} method - e.g. 'health', 'sessions.list', 'config.get'
-     * @param {object} params - method parameters
-     * @param {number} timeoutMs - request timeout (default 30s)
-     * @returns {Promise<object>} response payload
+     * Handle an action event from the gateway.
+     * This is where the magic happens: gateway AI actions become widget commands.
      */
-    request(method, params = {}, timeoutMs = 30000) {
-        return new Promise((resolve, reject) => {
-            if (!this.connected) {
-                reject(new Error('Not connected to gateway'));
-                return;
-            }
+    _handleActionEvent(data) {
+        // Store in history for chat display
+        this._actionHistory.push(data);
+        if (this._actionHistory.length > 100) this._actionHistory.shift();
 
-            const id = nextId();
-            const timeout = setTimeout(() => {
-                this._pendingRequests.delete(id);
-                reject(new Error(`Gateway request timeout: ${method}`));
-            }, timeoutMs);
+        // Notify all action listeners (chat widget uses this)
+        for (const listener of this._actionListeners) {
+            try { listener(data); } catch { /* listener error */ }
+        }
 
-            this._pendingRequests.set(id, { resolve, reject, timeout, method });
+        // Emit on eventBus for any component to listen
+        eventBus.emit('gateway:action', data);
 
-            this._sendRaw({
-                type: 'req',
-                id,
-                method,
-                params,
+        // Execute frontend command if provided
+        if (data.type === 'action_done' && data.command) {
+            this._executeCommand(data.command, data);
+        }
+    }
+
+    /**
+     * Execute a commandRegistry command from a gateway action event.
+     * This is how gateway AI actions translate to widget operations.
+     */
+    async _executeCommand(commandStr, actionData) {
+        try {
+            console.log(`[GatewayClient] Executing: ${commandStr}`);
+            const handle = commandRegistry.execute(commandStr, 'ai');
+            const result = await handle.await();
+
+            eventBus.emit('gateway:command:executed', {
+                command: commandStr,
+                actionType: actionData.actionType,
+                result,
             });
-        });
-    }
 
-    // ─── Convenience Methods ─────────────────────────────
-
-    async health() {
-        return this.request('health');
-    }
-
-    async getConfig() {
-        return this.request('config.get');
-    }
-
-    async listModels() {
-        return this.request('models.list');
-    }
-
-    async listSessions(params = {}) {
-        return this.request('sessions.list', params);
-    }
-
-    async previewSessions(keys, opts = {}) {
-        return this.request('sessions.preview', { keys, ...opts });
-    }
-
-    async resetSession(key, reason = 'reset') {
-        return this.request('sessions.reset', { key, reason });
-    }
-
-    async deleteSession(key) {
-        return this.request('sessions.delete', { key });
-    }
-
-    async listSkills() {
-        return this.request('skills.list');
-    }
-
-    async getAgentIdentity(params = {}) {
-        return this.request('agent.identity', params);
-    }
-
-    /**
-     * Send a chat message through the gateway agent.
-     * Returns immediately; stream deltas arrive via onChatStream().
-     * @param {string} message - user message
-     * @param {string} sessionKey - session key (e.g. 'onios:main')
-     * @param {object} opts - { attachments, channel }
-     * @returns {Promise<object>} initial response (contains runId)
-     */
-    async chatSend(message, sessionKey, opts = {}) {
-        return this.request('agent', {
-            message,
-            key: sessionKey,
-            channel: opts.channel || 'onios',
-            ...opts,
-        }, 120000); // 2 min timeout for chat
-    }
-
-    /**
-     * Register a handler for chat stream events (deltas, tool calls, done).
-     * @param {string} sessionKey
-     * @param {function} handler - receives { event, data }
-     * @returns {function} unsubscribe
-     */
-    onChatStream(sessionKey, handler) {
-        if (!this._chatStreamHandlers.has(sessionKey)) {
-            this._chatStreamHandlers.set(sessionKey, new Set());
+            return result;
+        } catch (err) {
+            console.warn(`[GatewayClient] Command failed: ${commandStr}`, err);
+            eventBus.emit('gateway:command:error', {
+                command: commandStr,
+                actionType: actionData.actionType,
+                error: err.message,
+            });
+            return null;
         }
-        this._chatStreamHandlers.get(sessionKey).add(handler);
-        return () => this._chatStreamHandlers.get(sessionKey)?.delete(handler);
     }
 
-    // ─── Gateway Events ──────────────────────────────────
+    // ─── Widget Context Sync ─────────────────────────────
 
     /**
-     * Subscribe to gateway broadcast events.
-     * @param {string} event - e.g. 'chat.delta', 'chat.done', 'agent.run'
-     * @param {function} handler
-     * @returns {function} unsubscribe
+     * Push current widget context to the gateway so the AI knows
+     * what's on screen. Runs every 10 seconds while connected.
      */
-    on(event, handler) {
-        if (!this._eventHandlers.has(event)) {
-            this._eventHandlers.set(event, new Set());
-        }
-        this._eventHandlers.get(event).add(handler);
-        return () => this._eventHandlers.get(event)?.delete(handler);
+    _startContextSync() {
+        this._stopContextSync();
+        this._contextSyncInterval = setInterval(() => {
+            this._syncContext();
+        }, 10000);
+        // Initial sync
+        this._syncContext();
     }
 
-    // ─── Private ─────────────────────────────────────────
+    _stopContextSync() {
+        if (this._contextSyncInterval) {
+            clearInterval(this._contextSyncInterval);
+            this._contextSyncInterval = null;
+        }
+    }
+
+    async _syncContext() {
+        try {
+            // Import dynamically to avoid circular deps
+            const { widgetContext } = await import('../core/WidgetContextProvider.js');
+            const summary = widgetContext?.getSummary?.() || '';
+            if (summary) {
+                // Push to server for the gateway AI's next message context
+                await fetch('/api/oni/context', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ widgetContext: summary, timestamp: Date.now() }),
+                }).catch(() => { /* endpoint may not exist yet */ });
+            }
+        } catch { /* context provider not ready */ }
+    }
+
+    // ─── Listeners ───────────────────────────────────────
+
+    /** Subscribe to status changes */
+    onStatusChange(listener) {
+        this._statusListeners.push(listener);
+        return () => {
+            this._statusListeners = this._statusListeners.filter(l => l !== listener);
+        };
+    }
+
+    /** Subscribe to action events (for chat widget live updates) */
+    onAction(listener) {
+        this._actionListeners.push(listener);
+        return () => {
+            this._actionListeners = this._actionListeners.filter(l => l !== listener);
+        };
+    }
+
+    // ─── Internal ────────────────────────────────────────
 
     _setStatus(status) {
+        const prev = this._status;
         this._status = status;
-        eventBus.emit('gateway:status', status);
-        for (const handler of this._statusHandlers) {
-            try { handler(status); } catch { /* skip */ }
-        }
-    }
-
-    _sendRaw(obj) {
-        if (this.ws?.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify(obj));
-        }
-    }
-
-    _handleMessage(raw) {
-        try {
-            const msg = JSON.parse(raw);
-
-            // Response to a pending request
-            if (msg.type === 'res' && msg.id && this._pendingRequests.has(msg.id)) {
-                const pending = this._pendingRequests.get(msg.id);
-                this._pendingRequests.delete(msg.id);
-                clearTimeout(pending.timeout);
-
-                if (msg.ok === false || msg.error) {
-                    pending.reject(new Error(msg.error?.message || `Gateway error: ${pending.method}`));
-                } else {
-                    pending.resolve(msg.payload ?? msg.result ?? msg);
-                }
-                return;
+        if (prev !== status) {
+            eventBus.emit('gateway:status', status);
+            for (const listener of this._statusListeners) {
+                try { listener(status); } catch { /* listener error */ }
             }
-
-            // Broadcast event from gateway
-            if (msg.type === 'event' || msg.event) {
-                const eventName = msg.event || msg.type;
-                const data = msg.data || msg.payload || msg;
-
-                // Route chat events to stream handlers
-                if (eventName?.startsWith('chat.') || eventName?.startsWith('agent.')) {
-                    const sessionKey = data?.sessionKey || data?.key;
-                    if (sessionKey && this._chatStreamHandlers.has(sessionKey)) {
-                        for (const handler of this._chatStreamHandlers.get(sessionKey)) {
-                            try { handler({ event: eventName, data }); } catch { /* skip */ }
-                        }
-                    }
-                    // Also broadcast to wildcard chat handlers
-                    if (this._chatStreamHandlers.has('*')) {
-                        for (const handler of this._chatStreamHandlers.get('*')) {
-                            try { handler({ event: eventName, data }); } catch { /* skip */ }
-                        }
-                    }
-                }
-
-                // Emit to event handlers
-                const handlers = this._eventHandlers.get(eventName);
-                if (handlers) {
-                    for (const handler of handlers) {
-                        try { handler(data); } catch { /* skip */ }
-                    }
-                }
-
-                // Emit to wildcard handlers
-                const wildcardHandlers = this._eventHandlers.get('*');
-                if (wildcardHandlers) {
-                    for (const handler of wildcardHandlers) {
-                        try { handler({ event: eventName, data }); } catch { /* skip */ }
-                    }
-                }
-
-                eventBus.emit(`gateway:${eventName}`, data);
-                return;
-            }
-
-            // Unknown message — emit as raw
-            eventBus.emit('gateway:raw', msg);
-        } catch (err) {
-            console.error('[GatewayClient] Parse error:', err);
         }
-    }
-
-    _rejectAllPending(reason) {
-        for (const [id, pending] of this._pendingRequests) {
-            clearTimeout(pending.timeout);
-            pending.reject(new Error(reason));
-        }
-        this._pendingRequests.clear();
     }
 
     _scheduleReconnect() {
         if (this._reconnectTimer) return;
         this._reconnectTimer = setTimeout(() => {
             this._reconnectTimer = null;
-            if (this._status === 'disconnected' && this.url) {
+            if (this._status !== 'connected') {
                 console.log('[GatewayClient] Reconnecting...');
-                this.connect(this.url, this.token).catch(() => {
-                    this._scheduleReconnect();
-                });
+                this.connect();
             }
         }, 5000);
     }
+
+    // ─── Helper methods for widgets ──────────────────────
+
+    /** Get the gateway agent identity from server */
+    async getAgentIdentity() {
+        const res = await fetch('/api/oni/status');
+        const data = await res.json();
+        return {
+            name: data.agentName,
+            model: data.agentModel,
+            id: data.agentId,
+        };
+    }
+
+    /** Reset a chat session */
+    async resetSession(sessionKey) {
+        // Sessions are managed by the gateway — this is a no-op hint
+        console.log(`[GatewayClient] Session reset requested: ${sessionKey}`);
+    }
+
+    /** Clear action history */
+    clearHistory() {
+        this._actionHistory = [];
+    }
 }
 
+// ─── Singleton ───────────────────────────────────────
+
 export const gateway = new GatewayClient();
+
+// Auto-connect on load
+if (typeof window !== 'undefined') {
+    // Delay slightly to let the app initialize
+    setTimeout(() => {
+        gateway.connect();
+        console.log('[GatewayClient] Auto-connecting to action event stream');
+    }, 1000);
+}
+
 export default gateway;

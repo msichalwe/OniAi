@@ -1,19 +1,23 @@
 /**
- * OniChatWidget — Gateway-native AI chat widget.
+ * OniChatWidget — Gateway-native AI chat widget with live action updates.
  *
- * All AI processing happens through the Oni gateway.
- * No local OpenAI calls, no local agent loop, no API keys.
- * The gateway handles: agent brain, skills, memory, tool execution, streaming.
+ * Architecture:
+ *   1. User types a message
+ *   2. Message is sent to /api/oni/chat (which calls `oni agent` CLI)
+ *   3. Gateway AI processes and may call /api/oni/actions/* (terminal, notes, etc.)
+ *   4. GatewayClient receives action events via /api/oni/events SSE
+ *   5. Action events trigger local commandRegistry commands (widgets open/update)
+ *   6. Chat UI shows live status of each action as it happens
+ *   7. Final AI text response streams back via SSE
  *
- * Flow:
- *   User types → gateway.chatSend(message, sessionKey) → gateway processes →
- *   gateway streams deltas via /api/oni/chat SSE → widget renders response
+ * This widget subscribes to gateway.onAction() to see what the AI is doing
+ * in real-time, and shows status messages + executes widget commands.
  */
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import OniChat from "./OniChat";
 import { gateway } from "../../gateway/GatewayClient";
-import { skillsRegistry } from "../../core/SkillsRegistry";
+import { commandRegistry } from "../../core/CommandRegistry";
 import { eventBus } from "../../core/EventBus";
 import useWindowStore from "../../stores/windowStore";
 import useDesktopStore from "../../stores/desktopStore";
@@ -26,6 +30,22 @@ const nanoid = () => `oni_${++_nanoid}_${Date.now().toString(36)}`;
 
 const SESSION_KEY = "onios:main";
 
+// Action type → human-readable label + emotion
+const ACTION_LABELS = {
+  task: { label: "Managing tasks", emotion: "determined" },
+  window: { label: "Managing windows", emotion: "energetic" },
+  note: { label: "Writing notes", emotion: "focused" },
+  terminal: { label: "Running commands", emotion: "determined" },
+  file: { label: "Working with files", emotion: "focused" },
+  notification: { label: "Sending notification", emotion: "happy" },
+  search: { label: "Searching the web", emotion: "curious" },
+  calendar: { label: "Managing calendar", emotion: "determined" },
+  storage: { label: "Accessing storage", emotion: "focused" },
+  system: { label: "System operations", emotion: "energetic" },
+  scheduler: { label: "Setting up scheduler", emotion: "determined" },
+  workflow: { label: "Managing workflows", emotion: "determined" },
+};
+
 export default function OniChatWidget() {
   const [messages, setMessages] = useState([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -33,6 +53,7 @@ export default function OniChatWidget() {
   const [emotion, setEmotion] = useState("neutral");
   const [action, setAction] = useState("idle");
   const abortRef = useRef(null);
+  const chatStartTimeRef = useRef(null);
 
   // Initialize AbortController
   useEffect(() => {
@@ -40,9 +61,44 @@ export default function OniChatWidget() {
     return () => abortRef.current?.abort();
   }, []);
 
-  // Listen to kernel events for emotion changes
+  // ─── Subscribe to gateway action events ────────────────
+  // This is how we see what the AI is doing in real-time
   const streamingRef = useRef(false);
   streamingRef.current = isStreaming;
+
+  useEffect(() => {
+    const unsub = gateway.onAction((event) => {
+      // Only show events that happened during an active chat
+      if (!streamingRef.current) return;
+      if (!chatStartTimeRef.current) return;
+      if (event.timestamp < chatStartTimeRef.current) return;
+
+      const actionInfo = ACTION_LABELS[event.actionType] || { label: event.actionType, emotion: "energetic" };
+
+      if (event.type === "action_start") {
+        setEmotion(actionInfo.emotion);
+        setAction("executing");
+
+        // Build descriptive status message
+        const desc = describeAction(event.actionType, event.params);
+        addStatusMessage(desc, "working");
+      }
+
+      if (event.type === "action_done") {
+        const resultDesc = event.result?.message || event.result?.success ? "Done" : "Failed";
+        addStatusMessage(`${actionInfo.label}: ${resultDesc}`, event.result?.success !== false ? "success" : "error");
+      }
+
+      if (event.type === "action_error") {
+        addStatusMessage(`${actionInfo.label}: ${event.error}`, "error");
+        setEmotion("frustrated");
+      }
+    });
+
+    return unsub;
+  }, []);
+
+  // Listen to kernel events for emotion changes
   useEffect(() => {
     const handlers = {
       "command:executed": () => {
@@ -51,14 +107,8 @@ export default function OniChatWidget() {
       "command:error": () => {
         if (!streamingRef.current) { setEmotion("frustrated"); setAction("error"); }
       },
-      "task:created": () => {
-        if (!streamingRef.current) { setEmotion("determined"); setAction("scheduling"); }
-      },
-      "task:completed": () => {
-        if (!streamingRef.current) { setEmotion("proud"); setAction("success"); }
-      },
-      "window:opened": () => {
-        if (!streamingRef.current) setEmotion("excited");
+      "gateway:command:executed": () => {
+        if (streamingRef.current) { setEmotion("happy"); }
       },
     };
     Object.entries(handlers).forEach(([evt, fn]) => eventBus.on(evt, fn));
@@ -81,12 +131,14 @@ export default function OniChatWidget() {
     const desktops = useDesktopStore.getState().desktops || [];
     const theme = useThemeStore.getState().theme || "dark";
     const focused = windows.find((w) => w.focused);
+    const liveState = widgetContext?.getSummary?.() || "";
     return {
       windows: windows.map((w) => `${w.title || w.widgetType} (${w.widgetType})`).join(", ") || "none",
       desktops: `${desktops.length} desktops`,
       theme,
       time: new Date().toLocaleString(),
       focusedWindow: focused ? `${focused.title || focused.widgetType}` : "none",
+      liveWidgetState: liveState,
     };
   }, []);
 
@@ -107,19 +159,10 @@ export default function OniChatWidget() {
     setAction("idle");
     abortRef.current?.abort();
     abortRef.current = new AbortController();
+    gateway.clearHistory();
+  }, []);
 
-    // Try to reset gateway session
-    if (gateway.connected) {
-      try {
-        await gateway.resetSession(SESSION_KEY);
-        addStatusMessage("New session started", "success");
-      } catch {
-        // Gateway not connected — that's OK, just clear local state
-      }
-    }
-  }, [addStatusMessage]);
-
-  // ─── SEND MESSAGE — Gateway-native flow ────────────────
+  // ─── SEND MESSAGE ─────────────────────────────────────
 
   const handleSend = useCallback(
     async (text) => {
@@ -134,13 +177,11 @@ export default function OniChatWidget() {
       setAction("thinking");
       setIsStreaming(true);
       setStreamingText("");
+      chatStartTimeRef.current = Date.now();
 
       try {
-        // Build context for the gateway
         const context = getDesktopContext();
 
-        // Send via Oni plugin chat endpoint (which calls `oni agent` CLI)
-        // This goes through the gateway's full agent loop with skills, memory, etc.
         addStatusMessage("Sending to Oni gateway...", "working");
         setAction("generating");
         setEmotion("focused");
@@ -186,8 +227,12 @@ export default function OniChatWidget() {
                 if (currentEvent === "text_delta" && data.delta) {
                   fullText += data.delta;
                   setStreamingText(fullText);
+                  // Once text starts flowing, switch emotion
+                  if (fullText.length === data.delta.length) {
+                    setEmotion("focused");
+                    setAction("generating");
+                  }
                 } else if (currentEvent === "done") {
-                  // Response complete
                   if (data.model) {
                     addStatusMessage(`Model: ${data.model}`, "info");
                   }
@@ -211,7 +256,7 @@ export default function OniChatWidget() {
           timestamp: Date.now(),
         };
 
-        // Remove working status messages, add the assistant message
+        // Remove "working" status messages, keep success/error/info, add the assistant message
         setMessages((prev) => [
           ...prev.filter((m) => m.role !== "status" || m.statusType !== "working"),
           assistantMsg,
@@ -236,6 +281,7 @@ export default function OniChatWidget() {
       } finally {
         setIsStreaming(false);
         setStreamingText("");
+        chatStartTimeRef.current = null;
       }
     },
     [getDesktopContext, addStatusMessage],
@@ -262,4 +308,50 @@ export default function OniChatWidget() {
       />
     </div>
   );
+}
+
+// ─── Helper: Describe an action in human-readable text ───
+
+function describeAction(actionType, params) {
+  const action = params?.action || actionType;
+  switch (actionType) {
+    case "task":
+      if (action === "create") return `Creating task: "${params.title || "Untitled"}"`;
+      if (action === "list") return "Listing tasks...";
+      if (action === "complete") return `Completing task ${params.id}`;
+      return `Task: ${action}`;
+    case "window":
+      if (action === "open") return `Opening ${params.widgetType || "widget"}...`;
+      if (action === "close") return `Closing window ${params.windowId}`;
+      if (action === "list") return "Listing windows...";
+      return `Window: ${action}`;
+    case "note":
+      if (action === "create") return `Creating note: "${params.title || "Untitled"}"`;
+      if (action === "list") return "Listing notes...";
+      if (action === "read") return `Reading note...`;
+      return `Note: ${action}`;
+    case "terminal":
+      if (action === "open") return "Opening terminal...";
+      if (action === "run") return `Running: ${params.command?.substring(0, 60) || "command"}`;
+      return `Terminal: ${action}`;
+    case "file":
+      if (action === "list") return `Listing files in ${params.path || "~"}`;
+      if (action === "read") return `Reading ${params.path}`;
+      if (action === "write") return `Writing to ${params.path}`;
+      return `File: ${action}`;
+    case "notification":
+      return `Sending notification: "${params.message || params.title || ""}"`;
+    case "search":
+      return `Searching: "${params.query || ""}"`;
+    case "calendar":
+      if (params.title) return `Adding event: "${params.title}"`;
+      return "Calendar operation...";
+    case "scheduler":
+      if (action === "create_job") return `Creating job: "${params.name || ""}"`;
+      return `Scheduler: ${action}`;
+    case "workflow":
+      return `Workflow: ${action}`;
+    default:
+      return `${actionType}: ${action}`;
+  }
 }
