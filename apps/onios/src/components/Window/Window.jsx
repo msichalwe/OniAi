@@ -44,8 +44,13 @@ export default function Window({ windowData, isFocused, children }) {
       const handleDrag = (e) => {
         if (rafRef.current) return;
         rafRef.current = requestAnimationFrame(() => {
-          lastX = Math.max(0, e.clientX - startX);
-          lastY = Math.max(0, e.clientY - startY);
+          const maxX = window.innerWidth - 100;
+          const maxY = window.innerHeight - 64;
+          lastX = Math.max(
+            -size.width + 100,
+            Math.min(maxX, e.clientX - startX),
+          );
+          lastY = Math.max(0, Math.min(maxY, e.clientY - startY));
           el.style.left = lastX + "px";
           el.style.top = lastY + "px";
           rafRef.current = null;
@@ -66,7 +71,7 @@ export default function Window({ windowData, isFocused, children }) {
       document.addEventListener("mousemove", handleDrag);
       document.addEventListener("mouseup", handleDragEnd);
     },
-    [id, position, isMaximized, focusWindow, moveWindow],
+    [id, position, size, isMaximized, focusWindow, moveWindow],
   );
 
   // --- Resizing (direct DOM during resize, commit on mouseup) ---

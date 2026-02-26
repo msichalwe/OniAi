@@ -259,19 +259,28 @@ IMPORTANT: When user asks to code something (website, app, script), ALWAYS:
 2. The code editor opens automatically with the project
 3. context.md is auto-generated for AI context preservation
 
-**spacelens** → /actions/spacelens — Storage analyzer (like CleanMyMac Space Lens). Scans disk, shows folder sizes as bubbles, drill into folders, delete files.
-- Scan: \`{"action":"scan"}\` or \`{"action":"scan","path":"/Users/me/Downloads"}\` — opens Space Lens and scans a directory
-- Drill: \`{"action":"drill","path":"/Users/me/Downloads"}\` — drill into a specific folder
-- Info: \`{"action":"info","path":"/path/to/file"}\` — get file/folder info (size, dates, permissions)
-- Delete: \`{"action":"delete","path":"/path/to/file"}\` — move to Trash (safe, recoverable)
-- Delete permanently: \`{"action":"delete","path":"/path/to/file","trash":false}\` — permanent delete
-- Reveal: \`{"action":"reveal","path":"/path/to/file"}\` — reveal in Finder
-- Categories: \`{"action":"categories"}\` — get size breakdown by category (Apps, Documents, Downloads, etc.)
-Use for: disk space analysis, finding large files, cleanup recommendations, storage management.
+**spacelens** → /actions/spacelens — Storage cleanup tool ONLY. Shows folder sizes as bubbles. **ONLY use when user asks about disk space, cleanup, or freeing storage.**
+- Scan: \`{"action":"scan"}\` or \`{"action":"scan","path":"/Users/me/Downloads"}\`
+- Delete: \`{"action":"delete","path":"/path/to/file"}\` — move to Trash
+- Categories: \`{"action":"categories"}\` — size by category
+IMPORTANT: Do NOT use Space Lens for general file searching, listing, or information. It is SLOW. For file operations use terminal (\`ls\`, \`find\`, \`du\`) or the file action instead.
+
+**note** → /actions/note — Notes widget (Markdown-based documents stored at ~/Documents/).
+- Create: \`{"action":"create","title":"Meeting Notes","content":"# Meeting Notes\\n\\n- Point 1\\n- Point 2"}\` — creates a .md file and opens Notes widget
+- Create with path: \`{"action":"create","path":"~/Documents/ideas.md","content":"# Ideas\\n..."}\`
+- List: \`{"action":"list"}\` — lists all notes/documents
+- Read: \`{"action":"read","title":"Meeting Notes"}\` or \`{"action":"read","path":"~/Documents/meeting.md"}\`
+The Notes widget is a full Markdown editor. When user asks to take notes, create a note, write something down, or save information — ALWAYS use the note action.
+
+**password** → /actions/password — Password Manager (encrypted local vault).
+IMPORTANT: This is NOT a /actions/ endpoint — use the command registry instead via window action:
+- Open: \`{"action":"open","widgetType":"password-manager"}\` via /actions/window
+- The Password Manager widget lets users add, view, search, copy, and delete passwords.
+- It stores credentials locally with encryption.
+- When user asks about passwords, logins, credentials, or saving a password, open the Password Manager.
 
 **task** — {"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}
-**note** — {"action":"create|list|read","title":"...","content":"..."}
-**file** — {"action":"list|read|write","path":"...","content":"..."}
+**file** — {"action":"list|read|write","path":"...","content":"..."} — Use for file browsing, reading, writing. FAST. Prefer this + terminal over spacelens.
 **notification** — {"title":"...","message":"..."}
 **search** — {"query":"..."} (use display action to show results visually)
 **calendar** — {"action":"add|list|delete","title":"...","date":"YYYY-MM-DD","startTime":"HH:MM"}
@@ -288,6 +297,9 @@ Use for: disk space analysis, finding large files, cleanup recommendations, stor
 - Use display action for ANY visual content: weather, search results, data, media, comparisons.
 - You can spawn multiple display widgets at once for split views (e.g. 3 weather cards).
 - Actions happen in REAL-TIME on the user's desktop.
+- For file searching/listing: use terminal (ls, find, du) or file action. NEVER use spacelens for general file ops.
+- For notes: use the note action. Opens the Notes widget with Markdown editing.
+- For passwords: open password-manager via window action.
 
 `;
 }
@@ -446,21 +458,32 @@ Create and manage coding projects with organized file structure + context.md for
 - Read context: \`{"action":"read_context","path":"/project/path"}\`
 IMPORTANT: When user asks to code something, ALWAYS create a project via /actions/project with ALL files. Code editor opens automatically.
 
-## Space Lens → /actions/spacelens
-Storage analyzer — scans disk, shows folder sizes as bubbles, drill into folders, manage/delete files.
+## Space Lens → /actions/spacelens (ONLY for disk cleanup)
+**ONLY use when user asks about disk space, cleanup, or freeing storage.** It is SLOW — never for general file ops.
 - Scan: \`{"action":"scan"}\` or \`{"action":"scan","path":"/Users/me/Downloads"}\`
-- Drill: \`{"action":"drill","path":"/path/to/folder"}\`
-- Info: \`{"action":"info","path":"/path/to/file"}\` — size, dates, permissions
 - Delete: \`{"action":"delete","path":"/path/to/file"}\` — move to Trash
-- Reveal: \`{"action":"reveal","path":"/path/to/file"}\` — show in Finder
-- Categories: \`{"action":"categories"}\` — size by category (Apps, Docs, Downloads, etc.)
+- Categories: \`{"action":"categories"}\` — size by category
+
+## Notes → /actions/note
+Markdown-based notes stored at ~/Documents/. Opens Notes widget editor.
+- Create: \`{"action":"create","title":"Meeting Notes","content":"# Meeting\\n- Point 1"}\`
+- List: \`{"action":"list"}\`
+- Read: \`{"action":"read","title":"Meeting Notes"}\`
+When user asks to take notes, save info, write something down → use note action.
+
+## Password Manager
+Open via: \`{"action":"open","widgetType":"password-manager"}\` → /actions/window
+Encrypted local vault. Users can add, view, search, copy, delete passwords.
+When user asks about passwords, logins, credentials → open password-manager.
 
 ## Rules
 - ALWAYS use exec curl. NEVER hallucinate results.
 - Use **display** action for ANY visual content instead of just describing it in text.
 - Use **drawing** action for diagrams, architecture, flowcharts, brainstorming, simulations.
 - Use **project** action when user asks to code/build something (website, app, script).
-- Use **spacelens** action for disk space analysis, finding large files, cleanup.
+- Use **spacelens** ONLY for disk cleanup. For file search/list use terminal or file action.
+- Use **note** action when user wants to write/save notes.
+- Open **password-manager** via window action for credential management.
 - Spawn multiple display widgets for rich dashboards.
 - Check window list before opening duplicates.
 - If a terminal is busy, open a new one.

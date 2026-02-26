@@ -2,21 +2,27 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: var(--space-2xl);
-  gap: var(--space-2xl);
+  padding: var(--space-2xl, 20px);
+  gap: var(--space-2xl, 20px);
   overflow-y: auto;
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
 }
 
 .settings-section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-md);
+  gap: var(--space-md, 10px);
 }
 
 .settings-section-title {
-  font-size: var(--text-xs);
+  font-size: var(--text-xs, 11px);
   font-weight: 700;
-  color: var(--text-tertiary);
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.4));
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -25,10 +31,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-md) var(--space-lg);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border-light);
-  border-radius: var(--radius-md);
+  padding: var(--space-md, 10px) var(--space-lg, 14px);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--glass-border-light, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius-md, 10px);
 }
 
 .settings-row-info {
@@ -38,14 +44,14 @@
 }
 
 .settings-row-label {
-  font-size: var(--text-base);
-  color: var(--text-primary);
+  font-size: var(--text-base, 13px);
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
   font-weight: 500;
 }
 
 .settings-row-desc {
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
+  font-size: var(--text-xs, 11px);
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.4));
 }
 
 /* Toggle Switch */
@@ -54,15 +60,15 @@
   width: 44px;
   height: 24px;
   border-radius: 12px;
-  background: var(--surface-active);
+  background: var(--surface-active, rgba(255, 255, 255, 0.1));
   border: none;
   cursor: pointer;
-  transition: background var(--transition-base);
+  transition: background 0.15s ease;
   flex-shrink: 0;
 }
 
 .settings-toggle.active {
-  background: var(--accent-green);
+  background: var(--accent-green, #34d399);
 }
 
 .settings-toggle-thumb {
@@ -73,7 +79,7 @@
   height: 20px;
   border-radius: 50%;
   background: white;
-  transition: transform var(--transition-smooth);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
@@ -89,21 +95,21 @@
 .settings-wallpaper-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-  gap: var(--space-sm);
+  gap: var(--space-sm, 8px);
 }
 
 .settings-wallpaper-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--space-xs, 4px);
   padding: 0;
   border: 2px solid transparent;
   background: none;
   cursor: pointer;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-md, 10px);
   overflow: hidden;
-  transition: all var(--transition-base);
+  transition: all 0.15s ease;
   position: relative;
 }
 
@@ -119,15 +125,18 @@
 .settings-wallpaper-preview {
   width: 100%;
   aspect-ratio: 16/10;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-sm, 8px);
   overflow: hidden;
 }
 
 .settings-wallpaper-label {
   font-size: 10px;
   font-weight: 600;
-  color: var(--text-secondary);
-  font-family: var(--font-ui);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  font-family:
+    "Inter",
+    -apple-system,
+    sans-serif;
   padding: 2px 0 4px;
 }
 
@@ -136,14 +145,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--glass-bg);
-  border: 2px dashed var(--glass-border);
-  color: var(--text-tertiary);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.04));
+  border: 2px dashed var(--glass-border, rgba(255, 255, 255, 0.08));
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.4));
 }
 
 .settings-wallpaper-item.upload:hover .settings-upload-preview {
-  border-color: var(--accent-blue);
-  color: var(--accent-blue);
+  border-color: var(--accent-blue, #0a84ff);
+  color: var(--accent-blue, #0a84ff);
 }
 
 /* Remove custom wallpaper button */
@@ -162,7 +171,7 @@
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity var(--transition-fast);
+  transition: opacity 0.1s ease;
 }
 
 .settings-wallpaper-item:hover .settings-wallpaper-remove {
@@ -171,55 +180,55 @@
 
 /* About */
 .settings-about {
-  padding: var(--space-lg);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border-light);
-  border-radius: var(--radius-md);
+  padding: var(--space-lg, 14px);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--glass-border-light, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius-md, 10px);
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-sm, 8px);
 }
 
 .settings-about-logo {
   font-size: 32px;
   font-weight: 700;
-  background: var(--gradient-accent);
+  background: var(--gradient-accent, linear-gradient(135deg, #6366f1, #8b5cf6));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .settings-about-version {
-  font-size: var(--text-xs);
-  color: var(--text-tertiary);
+  font-size: var(--text-xs, 11px);
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.4));
 }
 
 .settings-about-desc {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+  font-size: var(--text-sm, 12px);
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
 }
 
 /* API Keys */
 .settings-api-key {
-  padding: var(--space-md) var(--space-lg);
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border-light);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-sm);
+  padding: var(--space-md, 10px) var(--space-lg, 14px);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--glass-border-light, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius-md, 10px);
+  margin-bottom: var(--space-sm, 8px);
 }
 
 .settings-api-key-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--space-sm, 8px);
 }
 
 .settings-api-key-input-row {
   display: flex;
-  gap: var(--space-sm);
+  gap: var(--space-sm, 8px);
   align-items: center;
 }
 

@@ -34,23 +34,34 @@ function createWindow() {
     title: "OniOS",
     titleBarStyle: "hiddenInset",
     trafficLightPosition: { x: 14, y: 14 },
-    vibrancy: "under-window",
-    visualEffectState: "active",
     backgroundColor: "#111114",
     show: false,
+    hasShadow: true,
+    roundedCorners: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: true,
       sandbox: false,
+      backgroundThrottling: false,
+      enableBlinkFeatures: 'CSSContainerQueries',
     },
   });
 
   // Show window when ready (avoids white flash)
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
+    mainWindow.focus();
     if (isDev) mainWindow.webContents.openDevTools({ mode: "detach" });
+  });
+
+  // Prevent navigation away from the app
+  mainWindow.webContents.on('will-navigate', (e, url) => {
+    if (!url.startsWith(`http://localhost:${vitePort}`) && !url.startsWith('file://')) {
+      e.preventDefault();
+      shell.openExternal(url);
+    }
   });
 
   // Open external links in system browser
