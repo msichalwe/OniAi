@@ -814,7 +814,7 @@ export default function DrawingWidget({ windowId }) {
     [record],
   );
 
-  // Listen for AI draw commands
+  // Listen for AI draw commands + drain any queued commands on mount
   useEffect(() => {
     const handler = (cmd) => {
       if (Array.isArray(cmd)) {
@@ -824,6 +824,16 @@ export default function DrawingWidget({ windowId }) {
       }
     };
     eventBus.on("drawing:command", handler);
+
+    // Drain queued commands that arrived before this widget mounted
+    if (eventBus._drawingQueue && eventBus._drawingQueue.length > 0) {
+      const queued = [...eventBus._drawingQueue];
+      eventBus._drawingQueue = [];
+      queued.forEach((cmd, qi) => {
+        setTimeout(() => handler(cmd), qi * 200);
+      });
+    }
+
     return () => eventBus.off("drawing:command", handler);
   }, [execCommand]);
 

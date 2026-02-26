@@ -1749,9 +1749,13 @@ function registerAllCommands() {
       } catch {
         commands = args;
       }
+      // Queue commands — widget may not be mounted yet
+      // Store on eventBus so Drawing widget can pick up queued commands on mount
+      if (!eventBus._drawingQueue) eventBus._drawingQueue = [];
+      eventBus._drawingQueue.push(commands);
       setTimeout(() => {
         eventBus.emit("drawing:command", commands);
-      }, 400);
+      }, 800);
       return "Drawing commands sent to board";
     },
     {
