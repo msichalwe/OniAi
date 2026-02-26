@@ -1772,6 +1772,26 @@ function registerAllCommands() {
     { description: "Clear the drawing board" },
   );
 
+  // === space lens commands ===
+  commandRegistry.register(
+    "spacelens.open",
+    () => {
+      openWidget("space-lens");
+      return "Space Lens opened";
+    },
+    { description: "Open Space Lens storage analyzer", widget: "space-lens" },
+  );
+  commandRegistry.register(
+    "spacelens.scan",
+    (targetPath) => {
+      openWidget("space-lens", targetPath ? { scanPath: targetPath } : {});
+      return targetPath
+        ? `Space Lens scanning: ${targetPath}`
+        : "Space Lens opened";
+    },
+    { description: "Scan a directory with Space Lens" },
+  );
+
   // === browser commands ===
   commandRegistry.register(
     "browser.open",

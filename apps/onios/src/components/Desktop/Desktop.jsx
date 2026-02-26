@@ -16,6 +16,7 @@ import {
   Moon,
   ClipboardList,
   Database,
+  HardDrive,
 } from "lucide-react";
 import useWindowStore from "../../stores/windowStore";
 import useCommandStore from "../../stores/commandStore";
@@ -107,6 +108,12 @@ const DESKTOP_SHORTCUTS = [
     icon: Database,
     gradient: "linear-gradient(135deg, #26A69A, #00897B)",
     label: "Storage",
+  },
+  {
+    type: "space-lens",
+    icon: HardDrive,
+    gradient: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+    label: "Space Lens",
   },
   {
     type: "settings",

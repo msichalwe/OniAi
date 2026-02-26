@@ -31,7 +31,7 @@
  * widget. The AI can spawn multiple display instances simultaneously.
  */
 
-import { Folder, Terminal, Film, FileText, Clock, Calculator, Activity, BookOpen, Settings, Code, Map, FileSpreadsheet, Shield, Database, MessageSquare, Camera, LayoutDashboard, MonitorUp, Globe, PenTool } from 'lucide-react';
+import { Folder, Terminal, Film, FileText, Clock, Calculator, Activity, BookOpen, Settings, Code, Map, FileSpreadsheet, Shield, Database, MessageSquare, Camera, LayoutDashboard, MonitorUp, Globe, PenTool, HardDrive } from 'lucide-react';
 
 import FileExplorer from '../widgets/FileExplorer/FileExplorer';
 import TerminalWidget from '../widgets/Terminal/Terminal';
@@ -53,6 +53,7 @@ import OniChatWidget from '../widgets/OniAssistant/OniChatWidget';
 import ScreenCaptureWidget from '../widgets/ScreenCapture/ScreenCapture';
 import BrowserWidget from '../widgets/Browser/Browser';
 import DrawingWidget from '../widgets/Drawing/Drawing';
+import SpaceLensWidget from '../widgets/SpaceLens/SpaceLens';
 
 export const WIDGET_REGISTRY = {
     'file-explorer': {
@@ -274,5 +275,16 @@ export const WIDGET_REGISTRY = {
         minWidth: 320,
         minHeight: 400,
         commands: ['oni.chat'],
+    },
+    'space-lens': {
+        component: SpaceLensWidget,
+        title: 'Space Lens',
+        icon: HardDrive,
+        singleton: true,
+        defaultWidth: 960,
+        defaultHeight: 620,
+        minWidth: 700,
+        minHeight: 450,
+        commands: ['spacelens.open', 'spacelens.scan'],
     },
 };

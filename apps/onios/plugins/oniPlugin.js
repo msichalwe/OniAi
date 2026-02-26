@@ -259,6 +259,16 @@ IMPORTANT: When user asks to code something (website, app, script), ALWAYS:
 2. The code editor opens automatically with the project
 3. context.md is auto-generated for AI context preservation
 
+**spacelens** → /actions/spacelens — Storage analyzer (like CleanMyMac Space Lens). Scans disk, shows folder sizes as bubbles, drill into folders, delete files.
+- Scan: \`{"action":"scan"}\` or \`{"action":"scan","path":"/Users/me/Downloads"}\` — opens Space Lens and scans a directory
+- Drill: \`{"action":"drill","path":"/Users/me/Downloads"}\` — drill into a specific folder
+- Info: \`{"action":"info","path":"/path/to/file"}\` — get file/folder info (size, dates, permissions)
+- Delete: \`{"action":"delete","path":"/path/to/file"}\` — move to Trash (safe, recoverable)
+- Delete permanently: \`{"action":"delete","path":"/path/to/file","trash":false}\` — permanent delete
+- Reveal: \`{"action":"reveal","path":"/path/to/file"}\` — reveal in Finder
+- Categories: \`{"action":"categories"}\` — get size breakdown by category (Apps, Documents, Downloads, etc.)
+Use for: disk space analysis, finding large files, cleanup recommendations, storage management.
+
 **task** — {"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}
 **note** — {"action":"create|list|read","title":"...","content":"..."}
 **file** — {"action":"list|read|write","path":"...","content":"..."}
@@ -356,7 +366,7 @@ function syncWorkspaceIdentity() {
 function generateOniOSSkillMD(port = 5173) {
     return `---
 name: onios
-description: "OniOS desktop control. Use exec tool with curl to call http://localhost:${port}/api/oni/actions/{action}. Actions: task, window, note, terminal, file, notification, display, drawing, project, search, storage, system, scheduler, workflow, screen. All POST with JSON. ALWAYS use exec curl."
+description: "OniOS desktop control. Use exec tool with curl to call http://localhost:${port}/api/oni/actions/{action}. Actions: task, window, note, terminal, file, notification, display, drawing, project, spacelens, search, storage, system, scheduler, workflow, screen. All POST with JSON. ALWAYS use exec curl."
 metadata: { "oni": { "emoji": "🖥️", "homepage": "http://localhost:${port}", "always": true } }
 ---
 
@@ -436,11 +446,21 @@ Create and manage coding projects with organized file structure + context.md for
 - Read context: \`{"action":"read_context","path":"/project/path"}\`
 IMPORTANT: When user asks to code something, ALWAYS create a project via /actions/project with ALL files. Code editor opens automatically.
 
+## Space Lens → /actions/spacelens
+Storage analyzer — scans disk, shows folder sizes as bubbles, drill into folders, manage/delete files.
+- Scan: \`{"action":"scan"}\` or \`{"action":"scan","path":"/Users/me/Downloads"}\`
+- Drill: \`{"action":"drill","path":"/path/to/folder"}\`
+- Info: \`{"action":"info","path":"/path/to/file"}\` — size, dates, permissions
+- Delete: \`{"action":"delete","path":"/path/to/file"}\` — move to Trash
+- Reveal: \`{"action":"reveal","path":"/path/to/file"}\` — show in Finder
+- Categories: \`{"action":"categories"}\` — size by category (Apps, Docs, Downloads, etc.)
+
 ## Rules
 - ALWAYS use exec curl. NEVER hallucinate results.
 - Use **display** action for ANY visual content instead of just describing it in text.
 - Use **drawing** action for diagrams, architecture, flowcharts, brainstorming, simulations.
 - Use **project** action when user asks to code/build something (website, app, script).
+- Use **spacelens** action for disk space analysis, finding large files, cleanup.
 - Spawn multiple display widgets for rich dashboards.
 - Check window list before opening duplicates.
 - If a terminal is busy, open a new one.
@@ -855,8 +875,11 @@ export default function oniPlugin() {
                             break;
                         }
                         case 'project': {
-                            // Project management: create project folder, write files, open in editor
                             result = await handleProjectAction(body);
+                            break;
+                        }
+                        case 'spacelens': {
+                            result = await handleSpaceLensAction(body);
                             break;
                         }
                         default: json(res, { error: `Unknown action: ${actionType}` }, 400); return;
@@ -926,6 +949,7 @@ const WIDGET_OPEN_COMMANDS = {
     'document-viewer': 'document.open',
     'tasks': 'taskManager.open',
     'drawing': 'board.open',
+    'space-lens': 'spacelens.open',
 };
 
 function mapActionToCommand(actionType, body, result) {
@@ -993,9 +1017,15 @@ function mapActionToCommand(actionType, body, result) {
             const da = body.action || 'draw';
             if (da === 'open') return 'board.open()';
             if (da === 'clear') return 'board.clear()';
-            // For draw commands, pass the commands JSON to board.draw
             const cmds = body.commands || body.steps || [body];
             return `board.draw(${JSON.stringify(cmds)})`;
+        }
+        case 'spacelens': {
+            const sa = body.action || 'scan';
+            if (sa === 'open' || sa === 'scan') return body.path ? `spacelens.scan("${esc(body.path)}")` : 'spacelens.open()';
+            if (sa === 'drill' && body.path) return `spacelens.scan("${esc(body.path)}")`;
+            if (sa === 'delete' && body.path) return `spacelens.delete("${esc(body.path)}")`;
+            return 'spacelens.open()';
         }
         case 'project': {
             const pa = body.action || 'create';
@@ -1372,5 +1402,174 @@ async function handleWorkflowAction(body) {
         }
         default:
             return { error: `Unknown workflow action: ${action}` };
+    }
+}
+
+// ─── Space Lens Handler ──────────────────────────────
+
+function getDiskUsage() {
+    try {
+        const raw = execSync('df -k / 2>/dev/null', { encoding: 'utf-8' });
+        const lines = raw.trim().split('\n');
+        if (lines.length < 2) return null;
+        const parts = lines[1].split(/\s+/);
+        const total = parseInt(parts[1]) * 1024;
+        const used = parseInt(parts[2]) * 1024;
+        const available = parseInt(parts[3]) * 1024;
+        return { total, used, available, percent: Math.round((used / total) * 100) };
+    } catch { return null; }
+}
+
+function scanDirectory(dirPath, depth = 1, maxItems = 80) {
+    const results = [];
+    try {
+        const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+        for (const entry of entries) {
+            if (entry.name.startsWith('.') && entry.name !== '.Trash') continue;
+            const fullPath = path.join(dirPath, entry.name);
+            try {
+                const stats = fs.lstatSync(fullPath);
+                const isDir = entry.isDirectory() && !stats.isSymbolicLink();
+                let size = 0;
+                let childCount = 0;
+                if (isDir) {
+                    try {
+                        const raw = execSync(`du -sk "${fullPath}" 2>/dev/null | head -1`, { encoding: 'utf-8', timeout: 10000 });
+                        size = parseInt(raw.split('\t')[0] || '0') * 1024;
+                    } catch { size = 0; }
+                    try { childCount = fs.readdirSync(fullPath).length; } catch { childCount = 0; }
+                } else {
+                    size = stats.size || 0;
+                }
+                const ext = isDir ? null : path.extname(entry.name).toLowerCase().slice(1) || null;
+                results.push({
+                    name: entry.name,
+                    path: fullPath,
+                    isDir,
+                    size,
+                    childCount,
+                    ext,
+                    modified: stats.mtime?.toISOString(),
+                });
+            } catch { /* skip inaccessible */ }
+        }
+    } catch (err) {
+        return { error: `Cannot read directory: ${err.message}`, items: [] };
+    }
+    results.sort((a, b) => b.size - a.size);
+    return { items: results.slice(0, maxItems), totalItems: results.length };
+}
+
+async function handleSpaceLensAction(body) {
+    const { action = 'scan' } = body;
+    switch (action) {
+        case 'scan':
+        case 'open': {
+            const targetPath = body.path || os.homedir();
+            const disk = getDiskUsage();
+            const scan = scanDirectory(targetPath);
+            return {
+                success: true,
+                disk,
+                path: targetPath,
+                items: scan.items || [],
+                totalItems: scan.totalItems || 0,
+                message: `Scanned ${targetPath}: ${scan.items?.length || 0} items`,
+            };
+        }
+        case 'drill': {
+            if (!body.path) return { error: 'path required' };
+            const scan = scanDirectory(body.path);
+            return {
+                success: true,
+                path: body.path,
+                items: scan.items || [],
+                totalItems: scan.totalItems || 0,
+            };
+        }
+        case 'info': {
+            if (!body.path) return { error: 'path required' };
+            try {
+                const stats = fs.statSync(body.path);
+                const isDir = stats.isDirectory();
+                let size = stats.size;
+                if (isDir) {
+                    try {
+                        const raw = execSync(`du -sk "${body.path}" 2>/dev/null | head -1`, { encoding: 'utf-8', timeout: 15000 });
+                        size = parseInt(raw.split('\t')[0] || '0') * 1024;
+                    } catch { /* keep stats.size */ }
+                }
+                return {
+                    success: true,
+                    info: {
+                        path: body.path,
+                        name: path.basename(body.path),
+                        isDir,
+                        size,
+                        created: stats.birthtime?.toISOString(),
+                        modified: stats.mtime?.toISOString(),
+                        accessed: stats.atime?.toISOString(),
+                        permissions: stats.mode?.toString(8).slice(-3),
+                    },
+                };
+            } catch (err) {
+                return { error: `Cannot access: ${err.message}` };
+            }
+        }
+        case 'delete': {
+            if (!body.path) return { error: 'path required' };
+            const target = body.path;
+            // Safety: never delete critical system paths
+            const blocked = ['/', '/System', '/Library', '/usr', '/bin', '/sbin', '/var', '/private', '/etc', '/tmp', '/cores', os.homedir()];
+            if (blocked.includes(target) || blocked.some(b => target === b + '/')) {
+                return { error: `Cannot delete protected path: ${target}` };
+            }
+            try {
+                if (body.trash !== false) {
+                    // Move to trash (macOS)
+                    execSync(`osascript -e 'tell application "Finder" to delete POSIX file "${target}"' 2>/dev/null`, { timeout: 10000 });
+                    return { success: true, message: `Moved to Trash: ${path.basename(target)}` };
+                } else {
+                    fs.rmSync(target, { recursive: true, force: true });
+                    return { success: true, message: `Permanently deleted: ${path.basename(target)}` };
+                }
+            } catch (err) {
+                return { error: `Delete failed: ${err.message}` };
+            }
+        }
+        case 'reveal': {
+            if (!body.path) return { error: 'path required' };
+            try {
+                execSync(`open -R "${body.path}" 2>/dev/null`, { timeout: 5000 });
+                return { success: true, message: `Revealed in Finder: ${path.basename(body.path)}` };
+            } catch (err) {
+                return { error: `Reveal failed: ${err.message}` };
+            }
+        }
+        case 'categories': {
+            // Scan common directories and categorize
+            const home = os.homedir();
+            const cats = [
+                { name: 'Applications', path: '/Applications', icon: 'app' },
+                { name: 'Documents', path: path.join(home, 'Documents'), icon: 'doc' },
+                { name: 'Downloads', path: path.join(home, 'Downloads'), icon: 'download' },
+                { name: 'Desktop', path: path.join(home, 'Desktop'), icon: 'desktop' },
+                { name: 'Pictures', path: path.join(home, 'Pictures'), icon: 'image' },
+                { name: 'Music', path: path.join(home, 'Music'), icon: 'music' },
+                { name: 'Movies', path: path.join(home, 'Movies'), icon: 'video' },
+                { name: 'Library', path: path.join(home, 'Library'), icon: 'system' },
+            ];
+            const results = cats.map(cat => {
+                let size = 0;
+                try {
+                    const raw = execSync(`du -sk "${cat.path}" 2>/dev/null | head -1`, { encoding: 'utf-8', timeout: 15000 });
+                    size = parseInt(raw.split('\t')[0] || '0') * 1024;
+                } catch { /* skip */ }
+                return { ...cat, size };
+            });
+            return { success: true, categories: results.filter(c => c.size > 0) };
+        }
+        default:
+            return { error: `Unknown spacelens action: ${action}` };
     }
 }
