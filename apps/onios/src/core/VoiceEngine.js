@@ -305,7 +305,10 @@ class VoiceEngine {
     this._clearTimers();
     this._activatedAt = 0;
 
-    const command = this.transcript.trim();
+    // Combine final transcript + any pending interim text the user saw on screen.
+    // When user clicks mic quickly, the last speech chunk may still be interim
+    // (not yet finalized by the speech API), so we must include it.
+    const command = (this.transcript + ' ' + (this.interimTranscript || '')).trim();
     if (!command) {
       // No speech captured — go back to OFF
       this._stopping = false;
@@ -322,7 +325,9 @@ class VoiceEngine {
     this.interimTranscript = '';
     this._stopping = false;
     this._emit();
-    if (this._onTranscript) this._onTranscript(command);
+    if (this._onTranscript) {
+      this._onTranscript(command);
+    }
   }
 }
 
