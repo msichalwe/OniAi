@@ -5,17 +5,20 @@
  *   OFF         → Not listening. Click mic to start.
  *   ACTIVATED   → Mic on, capturing speech. Silence timer only starts
  *                 AFTER first speech is detected. Click mic again to send.
+ *                 Hard limit: 40s auto-cut.
  *   PROCESSING  → Command sent to AI, waiting for response.
  *   FOLLOW_UP   → AI responded, mic stays hot for follow-up.
  *
- * No wake word. No always-on listening. Pure manual control.
+ * Emits: { state, transcript, interimTranscript, elapsed, maxDuration }
  */
 
 import { eventBus } from './EventBus.js';
 
 const SILENCE_TIMEOUT = 3500;      // ms of silence AFTER speech before auto-sending
 const FOLLOW_UP_TIMEOUT = 15000;   // ms to wait for follow-up after AI responds
+const MAX_DURATION = 40000;        // hard limit — auto-cut at 40s
 const MIN_WORD_LENGTH = 2;
+const TICK_INTERVAL = 250;         // timer tick for UI updates
 
 const SpeechRecognition = typeof window !== 'undefined'
   ? (window.SpeechRecognition || window.webkitSpeechRecognition)
@@ -34,7 +37,10 @@ class VoiceEngine {
     this._onCommand = null;
     this._restartTimeout = null;
     this._stopping = false;
-    this._hasSpoken = false;       // True once ANY speech detected in this session
+    this._hasSpoken = false;
+    this._activatedAt = 0;         // timestamp when ACTIVATED started
+    this._tickTimer = null;        // interval for elapsed time updates
+    this._maxTimer = null;         // hard 40s auto-cut timer
   }
 
   get isSupported() { return this.supported; }
@@ -47,10 +53,14 @@ class VoiceEngine {
   setCommandHandler(fn) { this._onCommand = fn; }
 
   _emit() {
+    const elapsed = this.state === 'ACTIVATED' && this._activatedAt
+      ? Date.now() - this._activatedAt : 0;
     const data = {
       state: this.state,
       transcript: this.transcript,
       interimTranscript: this.interimTranscript,
+      elapsed,
+      maxDuration: MAX_DURATION,
     };
     for (const fn of this._listeners) { try { fn(data); } catch {} }
     eventBus.emit('voice:state', data);
@@ -63,12 +73,10 @@ class VoiceEngine {
     if (!this.supported) return;
 
     if (this.state === 'ACTIVATED') {
-      // Already listening — send whatever we have (or stop if nothing)
       this._finalizeCommand();
       return;
     }
 
-    // Start fresh
     this._stopping = false;
     this._hasSpoken = false;
     this._clearTimers();
@@ -76,9 +84,21 @@ class VoiceEngine {
     this.state = 'ACTIVATED';
     this.transcript = '';
     this.interimTranscript = '';
+    this._activatedAt = Date.now();
     this._emit();
     this._startRecognition();
-    // NO silence timer here — we wait for user to start speaking first
+
+    // Tick timer for elapsed time UI updates
+    this._tickTimer = setInterval(() => {
+      if (this.state === 'ACTIVATED') this._emit();
+    }, TICK_INTERVAL);
+
+    // Hard 40s auto-cut
+    this._maxTimer = setTimeout(() => {
+      if (this.state === 'ACTIVATED') {
+        this._finalizeCommand();
+      }
+    }, MAX_DURATION);
   }
 
   /** Stop everything and go to OFF */
@@ -90,6 +110,7 @@ class VoiceEngine {
     this.state = 'OFF';
     this.transcript = '';
     this.interimTranscript = '';
+    this._activatedAt = 0;
     this._emit();
   }
 
@@ -103,6 +124,7 @@ class VoiceEngine {
   onProcessingStart() {
     this._clearTimers();
     this._hasSpoken = false;
+    this._activatedAt = 0;
     this.state = 'PROCESSING';
     this.transcript = '';
     this.interimTranscript = '';
@@ -112,6 +134,7 @@ class VoiceEngine {
   onProcessingEnd() {
     if (this._stopping) return;
     this._hasSpoken = false;
+    this._activatedAt = 0;
     this.state = 'FOLLOW_UP';
     this.transcript = '';
     this.interimTranscript = '';
@@ -162,7 +185,6 @@ class VoiceEngine {
         }
       }
 
-      // Any result (interim or final) means user is speaking
       if (final || (interim && interim.trim().length >= MIN_WORD_LENGTH)) {
         this._hasSpoken = true;
       }
@@ -172,7 +194,6 @@ class VoiceEngine {
       if (interim && interim.trim().length >= MIN_WORD_LENGTH) {
         this.interimTranscript = interim;
         this._emit();
-        // Reset silence timer on interim speech too (user still talking)
         if (this.state === 'ACTIVATED' && this._hasSpoken) {
           this._resetSilenceTimer();
         }
@@ -188,7 +209,6 @@ class VoiceEngine {
     rec.onerror = (event) => {
       if (event.error === 'aborted') return;
       if (event.error === 'no-speech') {
-        // No speech yet — just restart silently, keep waiting
         if (this.state === 'ACTIVATED' || this.state === 'FOLLOW_UP') {
           this._scheduleRestart(200);
         }
@@ -231,7 +251,6 @@ class VoiceEngine {
       this.transcript = (this.transcript + ' ' + trimmed).trim();
       this.interimTranscript = '';
       this._emit();
-      // NOW start silence timer — user has spoken, wait for pause
       this._resetSilenceTimer();
     } else if (this.state === 'FOLLOW_UP') {
       clearTimeout(this.followUpTimer);
@@ -239,8 +258,17 @@ class VoiceEngine {
       this.transcript = trimmed;
       this.interimTranscript = '';
       this._hasSpoken = true;
+      this._activatedAt = Date.now();
       this._emit();
       this._resetSilenceTimer();
+
+      // Start tick + max timers for follow-up → activated transition
+      this._tickTimer = setInterval(() => {
+        if (this.state === 'ACTIVATED') this._emit();
+      }, TICK_INTERVAL);
+      this._maxTimer = setTimeout(() => {
+        if (this.state === 'ACTIVATED') this._finalizeCommand();
+      }, MAX_DURATION);
     }
   }
 
@@ -265,20 +293,34 @@ class VoiceEngine {
     this._clearSilenceTimer();
     if (this.followUpTimer) { clearTimeout(this.followUpTimer); this.followUpTimer = null; }
     if (this._restartTimeout) { clearTimeout(this._restartTimeout); this._restartTimeout = null; }
+    if (this._tickTimer) { clearInterval(this._tickTimer); this._tickTimer = null; }
+    if (this._maxTimer) { clearTimeout(this._maxTimer); this._maxTimer = null; }
   }
 
   _finalizeCommand() {
+    // Kill recognition FIRST to avoid lag (recognition.abort() is slow if done after state change)
+    this._stopping = true;
+    this._killRecognition();
+    this._clearTimers();
+    this._activatedAt = 0;
+
     const command = this.transcript.trim();
     if (!command) {
-      // No speech captured — keep listening, don't stop
+      // No speech captured — go back to OFF
+      this._stopping = false;
+      this.state = 'OFF';
+      this.transcript = '';
+      this.interimTranscript = '';
+      this._emit();
       return;
     }
-    this._killRecognition();
+
     this.state = 'PROCESSING';
     this._emit();
     if (this._onCommand) this._onCommand(command);
     this.transcript = '';
     this.interimTranscript = '';
+    this._stopping = false;
     this._emit();
   }
 }

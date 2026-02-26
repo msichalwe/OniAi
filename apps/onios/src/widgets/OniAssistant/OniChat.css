@@ -291,11 +291,13 @@
   border-radius: 10px;
   padding: 7px 10px;
   color: rgba(255, 255, 255, 0.9);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 18px;
   font-family: inherit;
   resize: none;
   min-height: 20px;
-  max-height: 80px;
+  max-height: 104px; /* 5 lines × 18px + 14px padding */
+  overflow-y: auto;
   outline: none;
   transition: border-color 0.15s ease;
 }
@@ -740,4 +742,182 @@
 .oni-voice-interim {
   color: rgba(255, 255, 255, 0.4);
   font-style: italic;
+}
+
+/* Voice timer countdown */
+.oni-voice-timer {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+  min-width: 32px;
+  justify-content: flex-end;
+}
+
+/* Voice progress bar (elapsed time) */
+.oni-voice-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+  border-radius: 0 2px 2px 0;
+  transition: width 0.25s linear;
+}
+
+/* Make voice bar position:relative for progress bar */
+.oni-voice-bar {
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════════
+   Light Theme Overrides
+   ═══════════════════════════════════════════════ */
+
+/* Header */
+[data-theme="light"] .oni-chat-header {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .oni-chat-header-title {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="light"] .oni-chat-new-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] .oni-chat-new-btn:hover:not(:disabled) {
+  background: rgba(80, 100, 220, 0.1);
+  border-color: rgba(80, 100, 220, 0.3);
+  color: rgba(0, 0, 0, 0.85);
+}
+
+/* Input area */
+[data-theme="light"] .oni-chat-input-wrap {
+  border-top-color: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .oni-chat-input {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="light"] .oni-chat-input:focus {
+  border-color: rgba(80, 100, 220, 0.5);
+}
+
+[data-theme="light"] .oni-chat-input::placeholder {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+/* Send button */
+[data-theme="light"] .oni-chat-send-btn {
+  background: rgba(80, 100, 220, 0.15);
+  color: rgba(60, 80, 200, 0.8);
+}
+
+[data-theme="light"] .oni-chat-send-btn:hover:not(:disabled) {
+  background: rgba(80, 100, 220, 0.25);
+  color: rgba(50, 70, 190, 1);
+}
+
+[data-theme="light"] .oni-chat-stop-btn {
+  background: rgba(220, 60, 60, 0.12);
+  color: rgba(200, 50, 50, 0.8);
+}
+
+[data-theme="light"] .oni-chat-stop-btn:hover {
+  background: rgba(220, 60, 60, 0.2) !important;
+  color: rgba(200, 50, 50, 1);
+}
+
+/* Mic button — VISIBLE on light theme */
+[data-theme="light"] .oni-chat-mic-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.15);
+  color: rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="light"] .oni-chat-mic-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.25);
+  color: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="light"] .oni-chat-mic-btn.oni-mic-on {
+  color: rgba(80, 80, 220, 0.8);
+  border-color: rgba(80, 80, 220, 0.3);
+}
+
+[data-theme="light"] .oni-chat-mic-btn.oni-mic-active {
+  background: rgba(220, 50, 50, 0.1);
+  border-color: rgba(220, 50, 50, 0.4);
+  color: #dc2626;
+}
+
+/* Messages */
+[data-theme="light"] .oni-chat-msg-assistant .oni-chat-msg-content {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="light"] .oni-chat-msg-user .oni-chat-msg-content {
+  background: rgba(80, 100, 220, 0.1);
+  border-color: rgba(80, 100, 220, 0.15);
+  color: rgba(0, 0, 0, 0.85);
+}
+
+/* Voice bar */
+[data-theme="light"] .oni-voice-bar {
+  background: rgba(80, 80, 220, 0.06);
+  border-color: rgba(80, 80, 220, 0.12);
+  color: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] .oni-voice-bar.oni-voice-activated {
+  background: rgba(80, 80, 220, 0.08);
+  border-color: rgba(80, 80, 220, 0.18);
+}
+
+[data-theme="light"] .oni-voice-bar.oni-voice-processing {
+  background: rgba(200, 130, 10, 0.06);
+  border-color: rgba(200, 130, 10, 0.15);
+}
+
+[data-theme="light"] .oni-voice-bar.oni-voice-follow_up {
+  background: rgba(30, 160, 70, 0.06);
+  border-color: rgba(30, 160, 70, 0.15);
+}
+
+[data-theme="light"] .oni-voice-label {
+  color: rgba(0, 0, 0, 0.75);
+}
+
+[data-theme="light"] .oni-voice-interim {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .oni-voice-timer {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/* Scroll button */
+[data-theme="light"] .oni-chat-scroll-btn {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .oni-chat-scroll-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.7);
 }

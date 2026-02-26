@@ -24,6 +24,7 @@ import {
   Info,
   Mic,
   MicOff,
+  Clock,
 } from "lucide-react";
 import { eventBus } from "../../core/EventBus";
 import "./OniChat.css";
@@ -213,11 +214,26 @@ export default function OniChat({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
+  // Auto-grow textarea up to 5 lines
+  const autoGrow = useCallback(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const lineHeight = 18;
+    const maxHeight = lineHeight * 5 + 14; // 5 lines + padding
+    el.style.height = Math.min(el.scrollHeight, maxHeight) + "px";
+  }, []);
+
+  useEffect(() => {
+    autoGrow();
+  }, [input, autoGrow]);
+
   const handleSend = useCallback(() => {
     const text = input.trim();
     if (!text || isStreaming) return;
     onSend?.(text);
     setInput("");
+    if (inputRef.current) inputRef.current.style.height = "auto";
     inputRef.current?.focus();
   }, [input, isStreaming, onSend]);
 
@@ -428,6 +444,26 @@ export default function OniChat({
             {voiceState.state === "PROCESSING" && "Sending to Oni..."}
             {voiceState.state === "FOLLOW_UP" && "Anything else?"}
           </span>
+          {voiceState.state === "ACTIVATED" && voiceState.maxDuration > 0 && (
+            <span className="oni-voice-timer">
+              <Clock size={10} />
+              {Math.ceil(
+                (voiceState.maxDuration - (voiceState.elapsed || 0)) / 1000,
+              )}
+              s
+            </span>
+          )}
+          {voiceState.state === "ACTIVATED" && (
+            <div
+              className="oni-voice-progress"
+              style={{
+                width: `${Math.min(
+                  100,
+                  ((voiceState.elapsed || 0) / voiceState.maxDuration) * 100,
+                )}%`,
+              }}
+            />
+          )}
         </div>
       )}
 
