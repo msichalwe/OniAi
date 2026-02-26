@@ -57,18 +57,78 @@ const WALLPAPER_STYLES = {
 };
 
 const QUICK_TILES = [
-  { type: "weather", icon: Cloud, label: "Weather", gradient: "linear-gradient(135deg, #4FC3F7, #0288D1)" },
-  { type: "notes", icon: FileText, label: "Notes", gradient: "linear-gradient(135deg, #FFCA28, #FFB300)" },
-  { type: "terminal", icon: Terminal, label: "Terminal", gradient: "linear-gradient(135deg, #1B1B1B, #333333)" },
-  { type: "browser", icon: Globe, label: "Browser", gradient: "linear-gradient(135deg, #4285F4, #34A853)" },
-  { type: "file-explorer", icon: Folder, label: "Files", gradient: "linear-gradient(135deg, #2196F3, #1565C0)" },
-  { type: "code-editor", icon: Code, label: "Code", gradient: "linear-gradient(135deg, #007ACC, #1E9DE7)" },
-  { type: "calculator", icon: Calculator, label: "Calc", gradient: "linear-gradient(135deg, #78909C, #546E7A)" },
-  { type: "clock", icon: Clock, label: "Clock", gradient: "linear-gradient(135deg, #AB47BC, #7B1FA2)" },
-  { type: "docs", icon: BookOpen, label: "Docs", gradient: "linear-gradient(135deg, #FF7043, #E64A19)" },
-  { type: "activity-log", icon: Activity, label: "Activity", gradient: "linear-gradient(135deg, #AB47BC, #7B1FA2)" },
-  { type: "storage", icon: Database, label: "Storage", gradient: "linear-gradient(135deg, #26A69A, #00897B)" },
-  { type: "settings", icon: Settings, label: "Settings", gradient: "linear-gradient(135deg, #78909C, #455A64)" },
+  {
+    type: "weather",
+    icon: Cloud,
+    label: "Weather",
+    gradient: "linear-gradient(135deg, #4FC3F7, #0288D1)",
+  },
+  {
+    type: "notes",
+    icon: FileText,
+    label: "Notes",
+    gradient: "linear-gradient(135deg, #FFCA28, #FFB300)",
+  },
+  {
+    type: "terminal",
+    icon: Terminal,
+    label: "Terminal",
+    gradient: "linear-gradient(135deg, #1B1B1B, #333333)",
+  },
+  {
+    type: "browser",
+    icon: Globe,
+    label: "Browser",
+    gradient: "linear-gradient(135deg, #4285F4, #34A853)",
+  },
+  {
+    type: "file-explorer",
+    icon: Folder,
+    label: "Files",
+    gradient: "linear-gradient(135deg, #2196F3, #1565C0)",
+  },
+  {
+    type: "code-editor",
+    icon: Code,
+    label: "Code",
+    gradient: "linear-gradient(135deg, #007ACC, #1E9DE7)",
+  },
+  {
+    type: "calculator",
+    icon: Calculator,
+    label: "Calc",
+    gradient: "linear-gradient(135deg, #78909C, #546E7A)",
+  },
+  {
+    type: "clock",
+    icon: Clock,
+    label: "Clock",
+    gradient: "linear-gradient(135deg, #AB47BC, #7B1FA2)",
+  },
+  {
+    type: "docs",
+    icon: BookOpen,
+    label: "Docs",
+    gradient: "linear-gradient(135deg, #FF7043, #E64A19)",
+  },
+  {
+    type: "activity-log",
+    icon: Activity,
+    label: "Activity",
+    gradient: "linear-gradient(135deg, #AB47BC, #7B1FA2)",
+  },
+  {
+    type: "storage",
+    icon: Database,
+    label: "Storage",
+    gradient: "linear-gradient(135deg, #26A69A, #00897B)",
+  },
+  {
+    type: "settings",
+    icon: Settings,
+    label: "Settings",
+    gradient: "linear-gradient(135deg, #78909C, #455A64)",
+  },
 ];
 
 export default function TabletDesktop() {
@@ -101,14 +161,18 @@ export default function TabletDesktop() {
     (type) => {
       const reg = WIDGET_REGISTRY[type];
       if (!reg) return;
-      openWindow(type, {}, {
-        title: reg.title,
-        icon: reg.icon,
-        defaultWidth: reg.defaultWidth,
-        defaultHeight: reg.defaultHeight,
-        minWidth: reg.minWidth,
-        minHeight: reg.minHeight,
-      });
+      openWindow(
+        type,
+        {},
+        {
+          title: reg.title,
+          icon: reg.icon,
+          defaultWidth: reg.defaultWidth,
+          defaultHeight: reg.defaultHeight,
+          minWidth: reg.minWidth,
+          minHeight: reg.minHeight,
+        },
+      );
     },
     [openWindow],
   );
@@ -175,7 +239,9 @@ export default function TabletDesktop() {
           <div
             className={`tablet-voice-indicator tablet-voice-${voiceState.state.toLowerCase()}`}
             onClick={handleOrbClick}
-            title={voiceState.state === "OFF" ? "Click to speak" : "Listening..."}
+            title={
+              voiceState.state === "OFF" ? "Click to speak" : "Listening..."
+            }
           >
             <Mic size={14} />
           </div>
@@ -191,66 +257,80 @@ export default function TabletDesktop() {
 
         {/* Right: Tile Grid */}
         <div className="tablet-tiles-panel">
-          {/* Active widget tiles */}
-          {activeTiles.map((win) => {
-            const reg = WIDGET_REGISTRY[win.widgetType];
-            if (!reg) return null;
-            const WidgetComponent = reg.component;
-            const IconComponent = reg.icon;
+          {/* Greeting */}
+          <div className="tablet-tiles-welcome">
+            <h2 className="tablet-tiles-greeting">Good {getGreeting()}</h2>
+            <p className="tablet-tiles-sub">
+              {activeTiles.length > 0
+                ? `${activeTiles.length} widget${activeTiles.length > 1 ? "s" : ""} open`
+                : "Tap a tile to open, or ask Oni anything"}
+            </p>
+          </div>
 
-            return (
-              <div key={win.id} className="tablet-tile tablet-tile-active">
-                <div className="tablet-tile-header">
-                  <div className="tablet-tile-title">
-                    {IconComponent && <IconComponent size={13} />}
-                    <span>{win.title || reg.title}</span>
+          {/* Active widget tiles — GRID */}
+          {activeTiles.length > 0 && (
+            <div className="tablet-active-grid">
+              {activeTiles.map((win) => {
+                const reg = WIDGET_REGISTRY[win.widgetType];
+                if (!reg) return null;
+                const WidgetComponent = reg.component;
+                const IconComponent = reg.icon;
+
+                return (
+                  <div key={win.id} className="tablet-tile">
+                    <div className="tablet-tile-header">
+                      <div className="tablet-tile-title">
+                        {IconComponent && <IconComponent size={13} />}
+                        <span>{win.title || reg.title}</span>
+                      </div>
+                      <button
+                        className="tablet-tile-close"
+                        onClick={(e) => handleCloseTile(e, win.id)}
+                        title="Close"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                    <div className="tablet-tile-content">
+                      <WidgetComponent
+                        {...win.props}
+                        windowId={win.id}
+                        widgetType={win.widgetType}
+                      />
+                    </div>
                   </div>
-                  <button
-                    className="tablet-tile-close"
-                    onClick={(e) => handleCloseTile(e, win.id)}
-                    title="Close"
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-                <div className="tablet-tile-content">
-                  <WidgetComponent
-                    {...win.props}
-                    windowId={win.id}
-                    widgetType={win.widgetType}
-                  />
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Quick-launch tiles */}
-          {activeTiles.length === 0 && (
-            <div className="tablet-tiles-welcome">
-              <h2 className="tablet-tiles-greeting">Good {getGreeting()}</h2>
-              <p className="tablet-tiles-sub">
-                Tap a tile to open, or ask Oni anything
-              </p>
+                );
+              })}
             </div>
           )}
 
-          <div className="tablet-quick-grid">
-            {availableQuickTiles.map(({ type, icon: Icon, label, gradient }) => (
-              <div
-                key={type}
-                className="tablet-quick-tile"
-                onClick={() => handleOpenTile(type)}
-              >
-                <div
-                  className="tablet-quick-icon"
-                  style={{ background: gradient }}
-                >
-                  <Icon size={20} />
-                </div>
-                <span className="tablet-quick-label">{label}</span>
+          {/* Quick-launch section */}
+          {availableQuickTiles.length > 0 && (
+            <>
+              {activeTiles.length > 0 && (
+                <div className="tablet-section-label">Quick Launch</div>
+              )}
+              <div className="tablet-quick-grid">
+                {availableQuickTiles.map(
+                  ({ type, icon: Icon, label, gradient }) => (
+                    <div
+                      key={type}
+                      className="tablet-quick-tile"
+                      onClick={() => handleOpenTile(type)}
+                    >
+                      <div
+                        className="tablet-quick-icon"
+                        style={{ background: gradient }}
+                      >
+                        <Icon size={20} />
+                      </div>
+                      <span className="tablet-quick-label">{label}</span>
+                    </div>
+                  ),
+                )}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>
