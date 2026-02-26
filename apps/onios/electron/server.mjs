@@ -29,8 +29,9 @@ export async function startProductionServer() {
   const app = express();
   const server = http.createServer(app);
 
-  // JSON body parsing
-  app.use(express.json({ limit: "50mb" }));
+  // NOTE: Do NOT add express.json() here — the Vite plugins use their own
+  // parseBody() that reads the raw request stream. Express body parsers
+  // consume the stream, causing plugin parseBody() calls to hang forever.
 
   // ─── Load backend plugins as Express middleware ────────
   // Each plugin was originally a Vite plugin that registered routes via
@@ -84,11 +85,11 @@ export async function startProductionServer() {
   app.use(express.static(DIST));
 
   // SPA fallback — serve index.html for all non-API routes
-  app.get("*", (req, res) => {
-    if (req.path.startsWith("/api/")) {
-      res.status(404).json({ error: "Not found" });
-    } else {
+  app.use((req, res, next) => {
+    if (req.method === "GET" && !req.path.startsWith("/api/") && !req.path.startsWith("/ws/")) {
       res.sendFile(path.join(DIST, "index.html"));
+    } else {
+      next();
     }
   });
 
