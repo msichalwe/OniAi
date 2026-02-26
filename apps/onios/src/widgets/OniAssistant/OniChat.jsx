@@ -410,17 +410,24 @@ export default function OniChat({
           <div className="oni-voice-pulse" />
           <span className="oni-voice-label">
             {voiceState.state === "ACTIVATED" &&
-              (voiceState.transcript ||
-                voiceState.interimTranscript ||
-                "Listening...")}
-            {voiceState.state === "PROCESSING" && "Processing..."}
+              !voiceState.transcript &&
+              !voiceState.interimTranscript &&
+              "Listening... speak now"}
+            {voiceState.state === "ACTIVATED" &&
+              (voiceState.transcript || voiceState.interimTranscript) && (
+                <>
+                  {voiceState.transcript}
+                  {voiceState.interimTranscript && (
+                    <span className="oni-voice-interim">
+                      {voiceState.transcript ? " " : ""}
+                      {voiceState.interimTranscript}
+                    </span>
+                  )}
+                </>
+              )}
+            {voiceState.state === "PROCESSING" && "Sending to Oni..."}
             {voiceState.state === "FOLLOW_UP" && "Anything else?"}
           </span>
-          {voiceState.state === "ACTIVATED" && voiceState.transcript && (
-            <span className="oni-voice-transcript">
-              "{voiceState.transcript}"
-            </span>
-          )}
         </div>
       )}
 
@@ -442,18 +449,20 @@ export default function OniChat({
         />
         {onVoiceMic && (
           <button
-            className={`oni-chat-mic-btn ${voiceState?.state === "ACTIVATED" ? "oni-mic-active" : ""} ${voiceState?.state !== "OFF" && voiceState ? "oni-mic-on" : ""}`}
+            className={`oni-chat-mic-btn ${voiceState?.state === "ACTIVATED" ? "oni-mic-active" : ""} ${voiceState?.state === "FOLLOW_UP" ? "oni-mic-on" : ""}`}
             onClick={onVoiceMic}
             title={
               voiceState?.state === "ACTIVATED"
-                ? "Stop listening"
-                : "Speak to Oni"
+                ? "Click to send"
+                : voiceState?.state === "FOLLOW_UP"
+                  ? "Listening for follow-up..."
+                  : "Click to speak"
             }
           >
             {voiceState?.state === "ACTIVATED" ? (
-              <MicOff size={14} />
+              <MicOff size={16} />
             ) : (
-              <Mic size={14} />
+              <Mic size={16} />
             )}
           </button>
         )}
