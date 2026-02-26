@@ -103,6 +103,9 @@ function queueNotification(message, type = 'info') {
 function tick() {
     tickCount++;
     try {
+        // Reload from disk each tick — oniPlugin writes jobs to disk,
+        // so we must pick up newly created timers/jobs
+        reloadFromDisk();
         checkScheduledJobs();
         checkTaskReminders();
         checkOverdueTasks();
@@ -111,21 +114,65 @@ function tick() {
     }
 }
 
+function reloadFromDisk() {
+    try {
+        if (!fs.existsSync(DATA_FILE)) return;
+        const raw = fs.readFileSync(DATA_FILE, 'utf8');
+        const loaded = JSON.parse(raw);
+        // Merge: keep notifications (ephemeral) but reload persistent data
+        state.tasks = loaded.tasks || [];
+        state.events = loaded.events || [];
+        state.scheduledJobs = loaded.scheduledJobs || [];
+    } catch {}
+}
+
 function checkScheduledJobs() {
     const now = Date.now();
+    const toRemove = [];
     for (const job of state.scheduledJobs) {
         if (!job.enabled) continue;
         const nextRun = calcNextRun(job);
         if (nextRun && now >= nextRun) {
-            console.log(`[Scheduler] Firing job: ${job.name} → ${job.command}`);
-            queueNotification(`⏰ Scheduled: ${job.name}`, 'info');
+            const label = job.message || job.name;
+            console.log(`[Scheduler] 🔔 Firing job: ${job.name} (${job.oneShot ? 'one-shot' : 'recurring'})`);
+            queueNotification(`⏰ ${label}`, 'timer');
+            // Fire native macOS notification
+            fireNativeNotification(job.name, label);
             job.lastRun = now;
             job.runCount = (job.runCount || 0) + 1;
-            job.nextRun = calcNextRunAfterNow(job);
+
+            if (job.oneShot) {
+                // One-shot timer: disable after firing, mark for removal
+                job.enabled = false;
+                toRemove.push(job.id);
+            } else {
+                job.nextRun = calcNextRunAfterNow(job);
+            }
+
             // Queue the command for client execution
-            queueNotification(`__CMD__:${job.command}`, 'command');
+            if (job.command) {
+                queueNotification(`__CMD__:${job.command}`, 'command');
+            }
             saveState();
         }
+    }
+    // Remove fired one-shot timers
+    if (toRemove.length > 0) {
+        state.scheduledJobs = state.scheduledJobs.filter(j => !toRemove.includes(j.id));
+        saveState();
+    }
+}
+
+function fireNativeNotification(title, message) {
+    try {
+        const cp = require('child_process');
+        const escapedTitle = (title || 'Oni Timer').replace(/"/g, '\\"');
+        const escapedMsg = (message || '').replace(/"/g, '\\"');
+        const cmd = `osascript -e 'display notification "${escapedMsg}" with title "OniOS" subtitle "${escapedTitle}" sound name "Glass"'`;
+        cp.execSync(cmd, { timeout: 5000 });
+        console.log(`[Scheduler] 🔔 Native notification sent: ${title}`);
+    } catch (err) {
+        console.warn('[Scheduler] Native notification failed:', err.message);
     }
 }
 

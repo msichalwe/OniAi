@@ -2941,7 +2941,31 @@ export default function App() {
       },
     );
 
-    // serverSync removed — gateway handles state sync
+    // Poll server-side scheduler notifications every 5 seconds
+    const notifPollInterval = setInterval(async () => {
+      try {
+        const res = await fetch("/api/scheduler/notifications");
+        if (!res.ok) return;
+        const { notifications: notifs } = await res.json();
+        if (!notifs || notifs.length === 0) return;
+        const { addNotification } = useNotificationStore.getState();
+        const { executeCommand: execCmd } = useCommandStore.getState();
+        for (const n of notifs) {
+          if (n.type === "command" && n.message?.startsWith("__CMD__:")) {
+            const cmd = n.message.replace("__CMD__:", "");
+            try {
+              execCmd(cmd, "scheduler");
+            } catch {}
+          } else {
+            addNotification(
+              n.message,
+              n.type === "timer" ? "info" : n.type,
+              8000,
+            );
+          }
+        }
+      } catch {}
+    }, 5000);
 
     // Initialize workflow event listeners (auto-fire on event triggers)
     workflowEngine.initListeners();
@@ -2995,6 +3019,7 @@ export default function App() {
       unsubWorkflows();
       unsubCmdExec();
       workflowEngine.stopListeners();
+      clearInterval(notifPollInterval);
     };
   }, []);
 

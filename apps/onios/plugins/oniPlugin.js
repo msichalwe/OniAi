@@ -307,7 +307,10 @@ USE DEVICE when: user asks "what am I looking at?", "reply to that email", "open
 **calendar** — {"action":"add|list|delete","title":"...","date":"YYYY-MM-DD","startTime":"HH:MM"}
 **storage** — {"action":"get|set|delete|list","namespace":"...","key":"...","value":"..."}
 **system** — {"action":"info"}
-**scheduler** — {"action":"status|list_tasks|list_events|list_jobs|create_job","name":"...","cron":"..."}
+**scheduler** — {"action":"status|list_tasks|list_events|list_jobs|create_timer|create_job|delete_job"}
+  Timers: {"action":"create_timer","minutes":10,"name":"Cooking timer"} — one-shot, fires once after N minutes. Supports "unit":"seconds|minutes|hours".
+  Recurring: {"action":"create_job","name":"Hourly check","interval":1,"unit":"hours","command":"notify(\\"Check status\\")"} — repeats on schedule.
+  Delete: {"action":"delete_job","id":"..."}
 **workflow** — {"action":"list|get|sync_to_oni","id":"..."}
 
 ## Rules
@@ -459,7 +462,7 @@ Section types: hero, stats, cards, table, list, text, image, video, gallery, emb
 **calendar** → /actions/calendar — \`{"action":"add|list|delete","title":"...","date":"YYYY-MM-DD"}\`
 **storage** → /actions/storage — \`{"action":"get|set|delete|list","namespace":"...","key":"..."}\`
 **system** → /actions/system — \`{"action":"info"}\`
-**scheduler** → /actions/scheduler — \`{"action":"status|list_jobs|create_job","name":"...","cron":"..."}\`
+**scheduler** → /actions/scheduler — \`{"action":"status|list_jobs|create_timer|create_job|delete_job","minutes":10,"name":"..."}\`
 **workflow** → /actions/workflow — \`{"action":"list|get|sync_to_oni","id":"..."}\`
 **screen** → /actions/screen — \`{"action":"screenshot"}\` takes a screenshot, \`{"action":"record_start"}\` starts recording, \`{"action":"record_stop"}\` stops recording. User selects screen/window.
 
@@ -1322,20 +1325,63 @@ async function handleSchedulerAction(body) {
             return { success: true, events: state.events || [] };
         case 'list_jobs':
             return { success: true, jobs: state.scheduledJobs || [] };
+        case 'create_timer': {
+            // One-shot timer: fires once after N minutes/seconds
+            const minutes = body.minutes || body.duration || 1;
+            const unit = body.unit || 'minutes';
+            const multipliers = { seconds: 1000, minutes: 60000, hours: 3600000 };
+            const ms = minutes * (multipliers[unit] || 60000);
+            const fireAt = Date.now() + ms;
+            const job = {
+                id: Math.random().toString(36).substring(2, 12),
+                name: body.name || `Timer ${minutes} ${unit}`,
+                command: body.command || `notify("⏰ Timer done: ${body.name || minutes + ' ' + unit}")`,
+                message: body.message || `⏰ Timer: ${body.name || minutes + ' ' + unit} is up!`,
+                schedule: { interval: minutes, unit },
+                enabled: true,
+                oneShot: true,
+                lastRun: null,
+                nextRun: fireAt,
+                runCount: 0,
+                createdAt: Date.now(),
+            };
+            state.scheduledJobs = [...(state.scheduledJobs || []), job];
+            writeJSON(SCHEDULER_FILE, state);
+            const fireTime = new Date(fireAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return { success: true, job, message: `Timer set for ${minutes} ${unit} (fires at ${fireTime})` };
+        }
         case 'create_job': {
+            // Recurring job: schedule format matches schedulerPlugin expectations
+            const interval = body.interval || 1;
+            const unit = body.unit || 'hours';
             const job = {
                 id: Math.random().toString(36).substring(2, 12),
                 name: body.name || 'Untitled Job',
-                cron: body.cron || '0 * * * *',
-                action: body.jobAction || 'notify',
-                payload: body.payload || {},
+                command: body.command || `notify("⏰ ${body.name || 'Scheduled job'}")`,
+                message: body.message || null,
+                schedule: {
+                    interval,
+                    unit,
+                    at: body.at || null,
+                    dayOfWeek: body.dayOfWeek || null,
+                },
                 enabled: true,
-                createdAt: new Date().toISOString(),
+                oneShot: false,
+                lastRun: null,
                 nextRun: null,
+                runCount: 0,
+                createdAt: Date.now(),
             };
             state.scheduledJobs = [...(state.scheduledJobs || []), job];
             writeJSON(SCHEDULER_FILE, state);
             return { success: true, job };
+        }
+        case 'delete_job': {
+            const id = body.id || body.jobId;
+            if (!id) return { error: 'Missing job id' };
+            state.scheduledJobs = (state.scheduledJobs || []).filter(j => j.id !== id);
+            writeJSON(SCHEDULER_FILE, state);
+            return { success: true, deleted: id };
         }
         default:
             return { error: `Unknown scheduler action: ${action}` };

@@ -51,6 +51,7 @@ class VoiceEngine {
   }
 
   setCommandHandler(fn) { this._onCommand = fn; }
+  setTranscriptHandler(fn) { this._onTranscript = fn; }
 
   _emit() {
     const elapsed = this.state === 'ACTIVATED' && this._activatedAt
@@ -315,13 +316,13 @@ class VoiceEngine {
       return;
     }
 
-    this.state = 'PROCESSING';
-    this._emit();
-    if (this._onCommand) this._onCommand(command);
+    // Put transcript into text box for review — user clicks send manually
+    this.state = 'OFF';
     this.transcript = '';
     this.interimTranscript = '';
     this._stopping = false;
     this._emit();
+    if (this._onTranscript) this._onTranscript(command);
   }
 }
 

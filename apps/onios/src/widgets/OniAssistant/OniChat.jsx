@@ -190,12 +190,24 @@ export default function OniChat({
   voiceState = null,
   onVoiceToggle,
   onVoiceMic,
+  setInputRef,
 }) {
   const [input, setInput] = useState("");
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Expose setInput to parent (for voice transcript → text box)
+  useEffect(() => {
+    if (setInputRef) {
+      setInputRef.current = (text) => {
+        setInput(text);
+        // Focus the input so user can review and send
+        setTimeout(() => inputRef.current?.focus(), 50);
+      };
+    }
+  }, [setInputRef]);
 
   // Auto-scroll to bottom
   useEffect(() => {

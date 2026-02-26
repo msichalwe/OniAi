@@ -424,8 +424,15 @@ export default function OniChatWidget() {
   // Track whether the current message was initiated by voice
   const voiceInitiatedRef = useRef(false);
 
-  // Wire voice commands to handleSend
+  // Wire voice transcript to populate text box (user reviews, then clicks send)
+  const setInputRef = useRef(null);
   useEffect(() => {
+    voiceEngine.setTranscriptHandler((text) => {
+      if (text && setInputRef.current) {
+        setInputRef.current(text);
+      }
+    });
+    // Keep legacy command handler for programmatic use (silence auto-send)
     voiceEngine.setCommandHandler((text) => {
       if (text && handleSendRef.current) {
         voiceInitiatedRef.current = true;
@@ -475,6 +482,7 @@ export default function OniChatWidget() {
         voiceState={voiceState}
         onVoiceToggle={handleVoiceToggle}
         onVoiceMic={handleVoiceMic}
+        setInputRef={setInputRef}
       />
     </div>
   );
