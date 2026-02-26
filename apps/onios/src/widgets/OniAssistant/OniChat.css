@@ -139,14 +139,6 @@
 
 .oni-chat-msg-assistant {
   align-self: flex-start;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.oni-chat-msg-avatar {
-  flex-shrink: 0;
-  margin-top: 2px;
 }
 
 .oni-chat-msg-content {

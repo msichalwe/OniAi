@@ -10,55 +10,41 @@
 
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { MessageSquare } from "lucide-react";
-import OniAvatar from "./OniAvatar";
+// import OniAvatar from "./OniAvatar"; // Commented out — replaced with Siri-like orb
 import { eventBus } from "../../core/EventBus";
 import useWindowStore from "../../stores/windowStore";
 import { WIDGET_REGISTRY } from "../../core/widgetRegistry";
 import "./OniWidget.css";
 
 export default function OniWidget({ visible, onClose }) {
-  const [emotion, setEmotion] = useState("neutral");
-  const [action, setAction] = useState("idle");
+  const [glowIntensity, setGlowIntensity] = useState(0);
   const [position, setPosition] = useState({ x: null, y: null });
   const [isDragging, setIsDragging] = useState(false);
   const dragOffset = useRef({ x: 0, y: 0 });
   const widgetRef = useRef(null);
 
-  // ─── Listen to OS events and react with emotions ───
+  // ─── Listen to OS events and pulse the orb ───
   useEffect(() => {
-    const setTemp = (emo, act, duration = 5000) => {
-      setEmotion(emo);
-      setAction(act);
-      setTimeout(() => {
-        setEmotion("neutral");
-        setAction("idle");
-      }, duration);
+    const pulse = (intensity = 1, duration = 2000) => {
+      setGlowIntensity(intensity);
+      setTimeout(() => setGlowIntensity(0), duration);
     };
 
     const handlers = {
-      "command:executed": () => setTemp("happy", "success", 3000),
-      "command:error": () => setTemp("frustrated", "error", 4000),
-      "window:opened": () => setTemp("excited", "opening_widget", 3000),
-      "window:closed": () => setTemp("neutral", "idle", 2000),
-      "task:created": () => setTemp("determined", "scheduling", 3000),
-      "task:completed": () => setTemp("proud", "complete", 4000),
-      "notification:created": () => setTemp("curious", "listening", 3000),
-      "theme:changed": () => setTemp("playful", "idle", 3000),
-      "system:boot": () => setTemp("happy", "greeting", 5000),
+      "command:executed": () => pulse(1, 2000),
+      "command:error": () => pulse(0.8, 3000),
+      "window:opened": () => pulse(0.6, 1500),
+      "window:closed": () => pulse(0.3, 1000),
+      "task:created": () => pulse(0.7, 2000),
+      "task:completed": () => pulse(1, 2500),
+      "notification:created": () => pulse(0.5, 2000),
+      "system:boot": () => pulse(1, 4000),
     };
 
     Object.entries(handlers).forEach(([ev, fn]) => eventBus.on(ev, fn));
     return () =>
       Object.entries(handlers).forEach(([ev, fn]) => eventBus.off(ev, fn));
   }, []);
-
-  // Sleepy after 60s idle
-  useEffect(() => {
-    if (action === "idle") {
-      const t = setTimeout(() => setEmotion("sleepy"), 60000);
-      return () => clearTimeout(t);
-    }
-  }, [action]);
 
   // ─── Dragging ────────────────────────────
   const handleDragStart = useCallback((e) => {
@@ -123,8 +109,11 @@ export default function OniWidget({ visible, onClose }) {
       style={style}
       onMouseDown={handleDragStart}
     >
-      <div className="oni-widget-bubble" onClick={openChat}>
-        <OniAvatar emotion={emotion} action={action} size={52} />
+      <div className="oni-widget-bubble oni-orb" onClick={openChat}>
+        <div
+          className={`oni-orb-core ${glowIntensity > 0 ? "oni-orb-active" : ""}`}
+          style={{ "--orb-glow": glowIntensity }}
+        />
       </div>
     </div>
   );

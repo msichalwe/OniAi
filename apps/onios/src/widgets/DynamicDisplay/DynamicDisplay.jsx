@@ -380,36 +380,40 @@ function ImageSection({ data, onSelect }) {
 }
 
 function VideoSection({ data }) {
-  if (data.youtube || (data.src && data.src.includes("youtube"))) {
+  const isYoutube = data.youtube || (data.src && data.src.includes("youtube"));
+  if (isYoutube) {
     const vid = data.youtube || data.src;
-    const embedUrl = vid.includes("embed")
-      ? vid
-      : `https://www.youtube.com/embed/${vid.split("v=").pop().split("&")[0]}`;
+    let embedUrl = vid;
+    if (!vid.includes("embed")) {
+      const videoId = vid.includes("youtu.be/")
+        ? vid.split("youtu.be/")[1]?.split("?")[0]
+        : vid.split("v=").pop()?.split("&")[0];
+      embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+    }
     return (
-      <div className="dd-video">
-        <iframe
-          src={embedUrl}
-          title={data.caption || "Video"}
-          style={{
-            width: "100%",
-            height: 220,
-            border: "none",
-            borderRadius: 10,
-          }}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
+      <div className="dd-video dd-video-player">
+        <div className="dd-video-frame">
+          <iframe
+            src={embedUrl}
+            title={data.caption || "Video"}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+            allowFullScreen
+          />
+        </div>
         {data.caption && <div className="dd-video-caption">{data.caption}</div>}
       </div>
     );
   }
   return (
-    <div className="dd-video">
+    <div className="dd-video dd-video-player">
       <video
         src={data.src}
         poster={data.poster}
         controls
-        style={data.width ? { width: data.width } : undefined}
+        controlsList="nodownload"
+        playsInline
+        preload="metadata"
+        className="dd-video-native"
       />
       {data.caption && <div className="dd-video-caption">{data.caption}</div>}
     </div>

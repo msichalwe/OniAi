@@ -129,10 +129,11 @@ const useWindowStore = create(
                     }
                 }
 
-                // Auto-close oldest window if at max capacity
-                if (existing.length >= MAX_WINDOWS) {
+                // Auto-close oldest windows until under max capacity
+                while (get().windows.length >= MAX_WINDOWS) {
+                    const currentWins = get().windows;
                     const focused = get().getFocusedWindow();
-                    const victim = pickWindowToClose(existing, focused?.id);
+                    const victim = pickWindowToClose(currentWins, focused?.id);
                     if (victim) {
                         set(state => ({
                             windows: state.windows.filter(w => w.id !== victim.id),
@@ -143,6 +144,8 @@ const useWindowStore = create(
                             title: victim.title,
                             reason: 'max_windows_reached',
                         });
+                    } else {
+                        break; // No candidate to close (shouldn't happen)
                     }
                 }
 
