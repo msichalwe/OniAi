@@ -21,6 +21,7 @@ import {
   XCircle,
   Zap,
   MessageSquarePlus,
+  Info,
 } from "lucide-react";
 import { eventBus } from "../../core/EventBus";
 import "./OniChat.css";
@@ -88,6 +89,16 @@ const markdownComponents = {
         {children}
       </a>
     );
+  },
+  // Collapse empty pre blocks (wraps fenced code blocks)
+  pre: ({ children }) => {
+    if (!children) return null;
+    // Check if the inner code element is empty
+    if (React.isValidElement(children)) {
+      const codeChildren = children.props?.children;
+      if (!codeChildren || String(codeChildren).trim() === "") return null;
+    }
+    return <pre>{children}</pre>;
   },
   // Collapse empty code blocks
   code: ({ children, className }) => {
@@ -281,6 +292,8 @@ export default function OniChat({
                   size={12}
                   className="oni-status-icon oni-status-success"
                 />
+              ) : msg.statusType === "info" ? (
+                <Info size={12} className="oni-status-icon oni-status-info" />
               ) : (
                 <XCircle
                   size={12}

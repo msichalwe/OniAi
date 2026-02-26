@@ -379,6 +379,11 @@
   color: rgba(255, 120, 120, 0.9);
 }
 
+.oni-chat-status-info {
+  background: rgba(120, 140, 180, 0.1);
+  color: rgba(160, 180, 210, 0.85);
+}
+
 .oni-status-icon {
   flex-shrink: 0;
 }
@@ -565,6 +570,9 @@
 
 /* Collapse empty elements from markdown */
 .oni-chat-msg-text p:empty,
+.oni-chat-msg-text pre:empty,
+.oni-chat-msg-text pre:has(code:empty),
+.oni-chat-msg-text code:empty,
 .oni-chat-msg-text img[src=""],
 .oni-chat-msg-text img:not([src]) {
   display: none;
