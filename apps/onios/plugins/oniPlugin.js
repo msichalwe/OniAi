@@ -230,17 +230,34 @@ MEDIA ROUTING: Video section has immersive glass player with dynamic background 
 Example: {"title":"Weather","sections":[{"type":"stats","items":[{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12 km/h"},{"label":"UV","value":"High","color":"#f87171"}]},{"type":"weather","title":"This Week","items":[{"day":"Mon","high":"29°C","low":"18°C"},{"day":"Tue","high":"26°C","low":"17°C"}]}]}
 For search results use search_results section. For stock data use stats+chart+table. For articles use article section. For media always use display widget with video/image/gallery sections — they have immersive glass designs.
 
-**drawing** — AI-driven whiteboard. Opens a Drawing Board widget and streams draw commands.
+**drawing** → /actions/drawing — AI-driven whiteboard. Opens Drawing Board and streams draw commands.
 Use for: architecture diagrams, flowcharts, workflows, brainstorming, data visualizations, explanations.
-Commands (JSON draw protocol via board.draw):
-- shape.add: {"type":"shape.add","payload":{"id":"api","shape":"rect|ellipse|diamond|text|sticky|note|container","x":100,"y":100,"w":200,"h":80,"text":"API Gateway","fill":"rgba(80,130,255,0.12)","stroke":"rgba(80,130,255,0.5)"}}
-- shape.update: {"type":"shape.update","payload":{"id":"api","text":"Updated"}}
-- shape.delete: {"type":"shape.delete","payload":{"id":"api"}}
-- edge.add: {"type":"edge.add","payload":{"id":"e1","from":"api","to":"db","label":"queries","arrow":true}}
-- board.clear: {"type":"board.clear"}
-- chart.create: {"type":"chart.create","payload":{"id":"c1","chartType":"bar|line","x":50,"y":300,"w":400,"h":200,"title":"Revenue","data":[{"label":"Q1","value":100},{"label":"Q2","value":150}]}}
-Send ARRAY of commands to draw step-by-step: [cmd1, cmd2, cmd3...] — widget animates them sequentially.
-Always label assumptions as note shapes. Use container shapes to group related nodes.
+- Open board: \`{"action":"open"}\`
+- Clear board: \`{"action":"clear"}\`
+- Draw: \`{"action":"draw","commands":[...]}\` — send array of draw protocol commands
+Draw command types:
+- shape.add: \`{"type":"shape.add","payload":{"id":"api","shape":"rect|ellipse|diamond|text|sticky|note|container","x":100,"y":100,"w":200,"h":80,"text":"API Gateway","fill":"rgba(80,130,255,0.12)","stroke":"rgba(80,130,255,0.5)"}}\`
+- shape.update: \`{"type":"shape.update","payload":{"id":"api","text":"Updated"}}\`
+- shape.delete: \`{"type":"shape.delete","payload":{"id":"api"}}\`
+- edge.add: \`{"type":"edge.add","payload":{"id":"e1","from":"api","to":"db","label":"queries","arrow":true}}\`
+- chart.create: \`{"type":"chart.create","payload":{"id":"c1","chartType":"bar|line","x":50,"y":300,"w":400,"h":200,"title":"Revenue","data":[{"label":"Q1","value":100},{"label":"Q2","value":150}]}}\`
+- layout.auto: \`{"type":"layout.auto","payload":{"algorithm":"grid|vertical|horizontal|force"}}\` — auto-arrange shapes
+- sim.create: \`{"type":"sim.create","payload":{"id":"s1","simType":"projectile|orbit|travel","params":{...}}}\`
+Commands animate sequentially (150ms between steps). Use container shapes to group nodes. Label assumptions as note shapes.
+
+**project** → /actions/project — Create and manage coding projects with organized file structure.
+- Create: \`{"action":"create","name":"my-website","type":"website","description":"A landing page","stack":"HTML/CSS/JS","files":{"index.html":"<!DOCTYPE html>...","style.css":"body{...}","script.js":"console.log('hello')"}}\`
+  Creates folder at ~/OniOS-Projects/my-website/ with all files + auto-generated context.md
+  Then opens the Code Editor with that project folder.
+- Open: \`{"action":"open","path":"/path/to/project"}\`
+- List: \`{"action":"list"}\` — lists all projects in ~/OniOS-Projects/
+- Write file: \`{"action":"write_file","path":"/project/path","filePath":"src/app.js","content":"..."}\`
+- Read context: \`{"action":"read_context","path":"/project/path"}\` — read context.md
+- Update context: \`{"action":"update_context","path":"/project/path","content":"# Updated..."}\`
+IMPORTANT: When user asks to code something (website, app, script), ALWAYS:
+1. Create the project via /actions/project with ALL files in the files object
+2. The code editor opens automatically with the project
+3. context.md is auto-generated for AI context preservation
 
 **task** — {"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}
 **note** — {"action":"create|list|read","title":"...","content":"..."}
@@ -274,7 +291,7 @@ You are embedded inside **OniOS**, a web-based desktop operating system powered 
 
 **How you work inside OniOS:**
 - You control the OS through its REST API at \`http://localhost:5173/api/oni/actions/{action}\`
-- Available actions: task, window, note, terminal, file, notification, search, storage, system, scheduler, workflow
+- Available actions: task, window, note, terminal, file, notification, search, storage, system, scheduler, workflow, drawing, project, display
 - NEVER run native system commands directly. ALWAYS use the OniOS action API.
 - NEVER hallucinate or pretend to do something. Actually call the API endpoint.
 - The user sees everything happen in real-time on their desktop.
@@ -293,13 +310,15 @@ const ONIOS_TOOLS_SECTION = `
 When running inside OniOS, ALL tool execution goes through the REST API:
 \`POST http://localhost:5173/api/oni/actions/{action}\`
 
-Actions: task, window, note, terminal, file, notification, search, storage, system, scheduler, workflow
+Actions: task, window, note, terminal, file, notification, search, storage, system, scheduler, workflow, drawing, project, display
 
 Examples:
 - Open terminal: \`{"action":"open","widgetType":"terminal"}\` → /actions/window
 - Create task: \`{"action":"create","title":"...","priority":"high"}\` → /actions/task
 - Run command: \`{"action":"run","command":"ls -la"}\` → /actions/terminal
 - Create note: \`{"action":"create","title":"...","content":"..."}\` → /actions/note
+- Draw diagram: \`{"action":"draw","commands":[{"type":"shape.add","payload":{"id":"s1","shape":"rect","x":100,"y":100,"text":"Node"}}]}\` → /actions/drawing
+- Create project: \`{"action":"create","name":"my-app","files":{"index.html":"<h1>Hi</h1>"}}\` → /actions/project
 
 NEVER run native commands. ALWAYS use the action API.
 `;
@@ -337,7 +356,7 @@ function syncWorkspaceIdentity() {
 function generateOniOSSkillMD(port = 5173) {
     return `---
 name: onios
-description: "OniOS desktop control. Use exec tool with curl to call http://localhost:${port}/api/oni/actions/{action}. Actions: task, window, note, terminal, file, notification, display, search, storage, system, scheduler, workflow, screen. All POST with JSON. ALWAYS use exec curl."
+description: "OniOS desktop control. Use exec tool with curl to call http://localhost:${port}/api/oni/actions/{action}. Actions: task, window, note, terminal, file, notification, display, drawing, project, search, storage, system, scheduler, workflow, screen. All POST with JSON. ALWAYS use exec curl."
 metadata: { "oni": { "emoji": "🖥️", "homepage": "http://localhost:${port}", "always": true } }
 ---
 
@@ -400,9 +419,28 @@ Section types: hero, stats, cards, table, list, text, image, video, gallery, emb
 **workflow** → /actions/workflow — \`{"action":"list|get|sync_to_oni","id":"..."}\`
 **screen** → /actions/screen — \`{"action":"screenshot"}\` takes a screenshot, \`{"action":"record_start"}\` starts recording, \`{"action":"record_stop"}\` stops recording. User selects screen/window.
 
+## Drawing Board → /actions/drawing
+Opens an AI-driven whiteboard. Send draw commands to create diagrams, charts, and animations.
+- Open: \`{"action":"open"}\`
+- Clear: \`{"action":"clear"}\`
+- Draw: \`{"action":"draw","commands":[{"type":"shape.add","payload":{"id":"s1","shape":"rect","x":100,"y":100,"w":200,"h":80,"text":"Node"}},{"type":"edge.add","payload":{"id":"e1","from":"s1","to":"s2","label":"flow"}}]}\`
+- Auto-layout: include \`{"type":"layout.auto","payload":{"algorithm":"grid|vertical|horizontal|force"}}\` in commands
+- Simulate: include \`{"type":"sim.create","payload":{"id":"sim1","simType":"projectile|travel","shapeId":"s1","params":{"startX":100,"startY":400,"vx":50,"vy":-80}}}\` then \`{"type":"sim.run","payload":{"id":"sim1"}}\`
+
+## Project Management → /actions/project
+Create and manage coding projects with organized file structure + context.md for AI memory.
+- Create: \`{"action":"create","name":"my-website","type":"website","description":"Landing page","stack":"HTML/CSS/JS","files":{"index.html":"<!DOCTYPE html>...","style.css":"body{...}","script.js":"console.log('hello')"}}\`
+- Open: \`{"action":"open","path":"/path/to/project"}\`
+- List: \`{"action":"list"}\`
+- Write file: \`{"action":"write_file","path":"/project/path","filePath":"src/app.js","content":"..."}\`
+- Read context: \`{"action":"read_context","path":"/project/path"}\`
+IMPORTANT: When user asks to code something, ALWAYS create a project via /actions/project with ALL files. Code editor opens automatically.
+
 ## Rules
 - ALWAYS use exec curl. NEVER hallucinate results.
 - Use **display** action for ANY visual content instead of just describing it in text.
+- Use **drawing** action for diagrams, architecture, flowcharts, brainstorming, simulations.
+- Use **project** action when user asks to code/build something (website, app, script).
 - Spawn multiple display widgets for rich dashboards.
 - Check window list before opening duplicates.
 - If a terminal is busy, open a new one.
@@ -801,6 +839,26 @@ export default function oniPlugin() {
                             result = { success: true, id, title: body.title, message: `Display "${body.title}" created (${id})` };
                             break;
                         }
+                        case 'drawing': {
+                            // Drawing board: accepts draw commands array or single command
+                            // body.commands = array of draw protocol commands
+                            // body.action = 'open' | 'clear' | 'draw'
+                            const drawAction = body.action || 'draw';
+                            if (drawAction === 'open') {
+                                result = { success: true, message: 'Drawing Board opened' };
+                            } else if (drawAction === 'clear') {
+                                result = { success: true, message: 'Board cleared' };
+                            } else {
+                                const cmds = body.commands || body.steps || [body];
+                                result = { success: true, commandCount: Array.isArray(cmds) ? cmds.length : 1, message: `${Array.isArray(cmds) ? cmds.length : 1} draw commands sent to board` };
+                            }
+                            break;
+                        }
+                        case 'project': {
+                            // Project management: create project folder, write files, open in editor
+                            result = await handleProjectAction(body);
+                            break;
+                        }
                         default: json(res, { error: `Unknown action: ${actionType}` }, 400); return;
                     }
 
@@ -867,6 +925,7 @@ const WIDGET_OPEN_COMMANDS = {
     'screen-capture': 'screen.open',
     'document-viewer': 'document.open',
     'tasks': 'taskManager.open',
+    'drawing': 'board.open',
 };
 
 function mapActionToCommand(actionType, body, result) {
@@ -930,6 +989,20 @@ function mapActionToCommand(actionType, body, result) {
             // Special: use the result.id that was just created
             if (result?.id) return `display.render("${result.id}")`;
             return null;
+        case 'drawing': {
+            const da = body.action || 'draw';
+            if (da === 'open') return 'board.open()';
+            if (da === 'clear') return 'board.clear()';
+            // For draw commands, pass the commands JSON to board.draw
+            const cmds = body.commands || body.steps || [body];
+            return `board.draw(${JSON.stringify(cmds)})`;
+        }
+        case 'project': {
+            const pa = body.action || 'create';
+            if (pa === 'create' && result?.path) return `code.openProject("${esc(result.path)}")`;
+            if (pa === 'open' && body.path) return `code.openProject("${esc(body.path)}")`;
+            return null;
+        }
         default:
             return null;
     }
@@ -1167,6 +1240,104 @@ async function handleSchedulerAction(body) {
         }
         default:
             return { error: `Unknown scheduler action: ${action}` };
+    }
+}
+
+async function handleProjectAction(body) {
+    const { action = 'create' } = body;
+    const PROJECTS_DIR = path.join(os.homedir(), 'OniOS-Projects');
+
+    switch (action) {
+        case 'create': {
+            const name = body.name || body.projectName || 'untitled-project';
+            const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase();
+            const projectDir = path.join(body.path || PROJECTS_DIR, safeName);
+
+            // Create project directory
+            if (!fs.existsSync(projectDir)) {
+                fs.mkdirSync(projectDir, { recursive: true });
+            }
+
+            // Write files if provided
+            const filesWritten = [];
+            if (body.files && typeof body.files === 'object') {
+                for (const [filePath, content] of Object.entries(body.files)) {
+                    const fullPath = path.join(projectDir, filePath);
+                    const dir = path.dirname(fullPath);
+                    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+                    fs.writeFileSync(fullPath, content, 'utf-8');
+                    filesWritten.push(filePath);
+                }
+            }
+
+            // Create context.md for AI context preservation
+            const contextPath = path.join(projectDir, 'context.md');
+            if (!fs.existsSync(contextPath)) {
+                const contextContent = `# ${name}\n\n## Project Info\n- Created: ${new Date().toISOString()}\n- Type: ${body.type || 'general'}\n\n## Description\n${body.description || 'No description provided.'}\n\n## Tech Stack\n${body.stack || 'Not specified'}\n\n## Notes\n- This file is auto-generated by OniOS to preserve project context.\n- The AI reads this file when working on this project.\n- Feel free to edit it to add more context.\n`;
+                fs.writeFileSync(contextPath, contextContent, 'utf-8');
+                filesWritten.push('context.md');
+            }
+
+            return {
+                success: true,
+                path: projectDir,
+                name: safeName,
+                filesWritten,
+                message: `Project "${name}" created at ${projectDir} with ${filesWritten.length} files`,
+            };
+        }
+        case 'open': {
+            const projectPath = body.path;
+            if (!projectPath) return { error: 'Project path required' };
+            if (!fs.existsSync(projectPath)) return { error: `Path not found: ${projectPath}` };
+            return { success: true, path: projectPath, message: `Opening project: ${projectPath}` };
+        }
+        case 'list': {
+            const baseDir = body.path || PROJECTS_DIR;
+            if (!fs.existsSync(baseDir)) return { success: true, projects: [] };
+            const dirs = fs.readdirSync(baseDir, { withFileTypes: true })
+                .filter(d => d.isDirectory() && !d.name.startsWith('.'))
+                .map(d => {
+                    const pPath = path.join(baseDir, d.name);
+                    const ctxPath = path.join(pPath, 'context.md');
+                    let description = '';
+                    if (fs.existsSync(ctxPath)) {
+                        const ctx = fs.readFileSync(ctxPath, 'utf-8');
+                        const descMatch = ctx.match(/## Description\n(.*?)(\n##|\n$)/s);
+                        if (descMatch) description = descMatch[1].trim();
+                    }
+                    return { name: d.name, path: pPath, description };
+                });
+            return { success: true, projects: dirs };
+        }
+        case 'write_file': {
+            const projectPath = body.path || body.projectPath;
+            if (!projectPath) return { error: 'Project path required' };
+            if (!body.filePath) return { error: 'filePath required' };
+            if (body.content === undefined) return { error: 'content required' };
+            const fullPath = path.join(projectPath, body.filePath);
+            const dir = path.dirname(fullPath);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(fullPath, body.content, 'utf-8');
+            return { success: true, path: fullPath, message: `Wrote ${body.filePath}` };
+        }
+        case 'read_context': {
+            const projectPath = body.path;
+            if (!projectPath) return { error: 'Project path required' };
+            const ctxPath = path.join(projectPath, 'context.md');
+            if (!fs.existsSync(ctxPath)) return { success: true, context: null, message: 'No context.md found' };
+            return { success: true, context: fs.readFileSync(ctxPath, 'utf-8') };
+        }
+        case 'update_context': {
+            const projectPath = body.path;
+            if (!projectPath) return { error: 'Project path required' };
+            const ctxPath = path.join(projectPath, 'context.md');
+            if (!body.content) return { error: 'content required' };
+            fs.writeFileSync(ctxPath, body.content, 'utf-8');
+            return { success: true, message: 'context.md updated' };
+        }
+        default:
+            return { error: `Unknown project action: ${action}` };
     }
 }
 

@@ -1,8 +1,8 @@
-/* ─── DynamicDisplay — OniOS Frosted Glass Design ──── */
+/* ─── DynamicDisplay — OniOS Clean Design ──── */
 
 /* Theme-aware surface tokens */
 .dd-widget {
-  --dd-bg: rgba(18, 18, 28, 0.55);
+  --dd-bg: rgba(18, 18, 28, 0.95);
   --dd-surface: rgba(255, 255, 255, 0.03);
   --dd-surface-hover: rgba(255, 255, 255, 0.06);
   --dd-border: rgba(255, 255, 255, 0.05);
@@ -29,8 +29,6 @@
   overflow-y: auto;
   overflow-x: hidden;
   background: var(--dd-bg);
-  -webkit-backdrop-filter: blur(40px) saturate(1.4);
-  backdrop-filter: blur(40px) saturate(1.4);
   color: var(--text-primary);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
@@ -74,11 +72,9 @@
   align-items: center;
   gap: 5px;
   padding: 5px 12px;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--dd-border-strong);
   border-radius: var(--radius-sm);
   background: var(--dd-code-header-bg);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
   color: var(--text-secondary);
   cursor: pointer;
   font-size: var(--text-xs);
@@ -145,9 +141,7 @@
   position: absolute;
   inset: 0;
   z-index: 100;
-  background: var(--dd-overlay-bg);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -168,9 +162,7 @@
   max-width: 380px;
   max-height: 90%;
   overflow-y: auto;
-  background: var(--dd-detail-bg);
-  -webkit-backdrop-filter: blur(40px) saturate(1.3);
-  backdrop-filter: blur(40px) saturate(1.3);
+  background: rgba(28, 28, 40, 0.97);
   border: 1px solid var(--dd-border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--dd-detail-shadow);
@@ -195,8 +187,6 @@
   border: none;
   border-radius: var(--radius-full);
   background: var(--dd-close-bg);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
   color: var(--dd-close-color);
   cursor: pointer;
   z-index: 2;
@@ -730,7 +720,7 @@
   inset: -20px;
   background-size: cover;
   background-position: center;
-  filter: blur(40px) saturate(1.4) brightness(0.35);
+  filter: blur(30px) saturate(1.2) brightness(0.25);
   z-index: 0;
 }
 
@@ -741,9 +731,7 @@
   flex-direction: column;
   align-items: center;
   padding: 20px 16px 16px;
-  background: rgba(0, 0, 0, 0.15);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .dd-image-main {
@@ -813,7 +801,7 @@
   inset: -30px;
   background-size: cover;
   background-position: center;
-  filter: blur(50px) saturate(1.5) brightness(0.3);
+  filter: blur(30px) saturate(1.2) brightness(0.2);
   z-index: 0;
 }
 
@@ -822,9 +810,7 @@
   z-index: 1;
   display: flex;
   flex-direction: column;
-  background: rgba(0, 0, 0, 0.12);
-  -webkit-backdrop-filter: blur(24px);
-  backdrop-filter: blur(24px);
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .dd-video-viewport {

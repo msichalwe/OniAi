@@ -156,6 +156,42 @@
     sans-serif;
 }
 
+/* ─── Layout Menu ─── */
+.dw-layout-menu {
+  position: absolute;
+  top: 34px;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  padding: 4px;
+  background: rgba(20, 20, 28, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.dw-layout-menu button {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.dw-layout-menu button:hover {
+  background: rgba(80, 130, 255, 0.15);
+  color: rgba(255, 255, 255, 0.95);
+}
+
 /* ─── Timeline ─── */
 .dw-timeline {
   display: flex;
