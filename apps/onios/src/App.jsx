@@ -3009,7 +3009,6 @@ export default function App() {
       <Taskbar />
       <CommandBar />
       <Notifications />
-      <OniWidget visible={oniVisible} onClose={() => setOniVisible(false)} />
     </>
   );
 }
