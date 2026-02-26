@@ -294,9 +294,10 @@ IMPORTANT: This is NOT a /actions/ endpoint — use the command registry instead
 - Call actions sequentially (one exec per action).
 - Check window list before opening duplicates.
 - If a terminal is busy, open a new terminal.
-- Use display action for ANY visual content: weather, search results, data, media, comparisons.
+- **ALWAYS SPAWN VISUAL WIDGETS.** For almost every response, create a display widget. Even for simple answers, render them visually with stats, cards, lists, or text sections. The user expects to SEE results, not just read chat text. If in doubt, use display action.
 - You can spawn multiple display widgets at once for split views (e.g. 3 weather cards).
 - Actions happen in REAL-TIME on the user's desktop.
+- **USE NOTIFICATIONS.** When completing tasks, confirming actions, warning about issues, or providing quick status updates, use the notification action: \`{"title":"...","message":"..."}\` via /actions/notification. Examples: "Task created!", "File saved", "Weather alert: rain expected", "Reminder: meeting in 30 min".
 - For file searching/listing: use terminal (ls, find, du) or file action. NEVER use spacelens for general file ops.
 - For notes: use the note action. Opens the Notes widget with Markdown editing.
 - For passwords: open password-manager via window action.
@@ -478,12 +479,14 @@ When user asks about passwords, logins, credentials → open password-manager.
 
 ## Rules
 - ALWAYS use exec curl. NEVER hallucinate results.
+- **ALWAYS SPAWN VISUAL WIDGETS.** For almost every response, create a display widget. Even simple answers should be rendered visually. The user expects to SEE results on screen, not just chat text.
 - Use **display** action for ANY visual content instead of just describing it in text.
 - Use **drawing** action for diagrams, architecture, flowcharts, brainstorming, simulations.
 - Use **project** action when user asks to code/build something (website, app, script).
 - Use **spacelens** ONLY for disk cleanup. For file search/list use terminal or file action.
 - Use **note** action when user wants to write/save notes.
 - Open **password-manager** via window action for credential management.
+- **USE NOTIFICATIONS** for confirmations, warnings, and quick status updates via /actions/notification.
 - Spawn multiple display widgets for rich dashboards.
 - Check window list before opening duplicates.
 - If a terminal is busy, open a new one.

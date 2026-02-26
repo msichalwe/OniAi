@@ -14,9 +14,12 @@ import {
   Unplug,
   Plug,
   Info,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import useThemeStore from "../../stores/themeStore";
 import { gateway } from "../../gateway/GatewayClient";
+import { voiceEngine } from "../../core/VoiceEngine";
 import "./Settings.css";
 
 const WALLPAPERS = [
@@ -445,6 +448,38 @@ export default function Settings() {
   const isDark = theme === "dark";
   const fileInputRef = useRef(null);
 
+  // Voice always-listening state
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    try {
+      return localStorage.getItem("onios_voice_enabled") !== "false";
+    } catch {
+      return true;
+    }
+  });
+  const [voiceState, setVoiceState] = useState(voiceEngine.state || "OFF");
+
+  useEffect(() => {
+    const unsub = voiceEngine.onStateChange((data) =>
+      setVoiceState(data.state),
+    );
+    return unsub;
+  }, []);
+
+  const toggleVoice = () => {
+    const next = !voiceEnabled;
+    setVoiceEnabled(next);
+    try {
+      localStorage.setItem("onios_voice_enabled", String(next));
+    } catch {
+      /* quota */
+    }
+    if (next) {
+      voiceEngine.start();
+    } else {
+      voiceEngine.stop();
+    }
+  };
+
   const handleCustomWallpaper = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -476,6 +511,33 @@ export default function Settings() {
           >
             <div className="settings-toggle-thumb">
               {isDark ? <Moon size={12} /> : <Sun size={12} />}
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Voice */}
+      <div className="settings-section">
+        <h3 className="settings-section-title">Voice Assistant</h3>
+        <div className="settings-row">
+          <div className="settings-row-info">
+            <span className="settings-row-label">Always Listening</span>
+            <span className="settings-row-desc">
+              Say "Oni" to activate —{" "}
+              {voiceEngine.isSupported
+                ? voiceState !== "OFF"
+                  ? `Active (${voiceState})`
+                  : "Off"
+                : "Not supported in this browser"}
+            </span>
+          </div>
+          <button
+            className={`settings-toggle ${voiceEnabled ? "active" : ""}`}
+            onClick={toggleVoice}
+            disabled={!voiceEngine.isSupported}
+          >
+            <div className="settings-toggle-thumb">
+              {voiceEnabled ? <Mic size={12} /> : <MicOff size={12} />}
             </div>
           </button>
         </div>

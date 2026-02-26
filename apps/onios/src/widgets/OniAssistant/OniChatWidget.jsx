@@ -442,10 +442,18 @@ export default function OniChatWidget() {
     prevStreamingRef.current = isStreaming;
   }, [isStreaming]);
 
-  // Auto-start voice engine on mount
+  // Auto-start voice engine on mount (respects Settings toggle)
   useEffect(() => {
     if (voiceEngine.isSupported) {
-      voiceEngine.start();
+      let enabled = true;
+      try {
+        enabled = localStorage.getItem("onios_voice_enabled") !== "false";
+      } catch {
+        /* default true */
+      }
+      if (enabled && voiceEngine.state === "OFF") {
+        voiceEngine.start();
+      }
     }
     return () => {
       // Don't stop on unmount — voice should persist

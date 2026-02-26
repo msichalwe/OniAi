@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Folder,
   Terminal,
@@ -17,12 +17,14 @@ import {
   ClipboardList,
   Database,
   HardDrive,
+  Mic,
 } from "lucide-react";
 import useWindowStore from "../../stores/windowStore";
 import useCommandStore from "../../stores/commandStore";
 import useThemeStore from "../../stores/themeStore";
 import { WIDGET_REGISTRY } from "../../core/widgetRegistry";
 import { commandRegistry } from "../../core/CommandRegistry";
+import { voiceEngine } from "../../core/VoiceEngine";
 import Window from "../Window/Window";
 import ContextMenu from "../ContextMenu/ContextMenu";
 import "./Desktop.css";
@@ -133,6 +135,27 @@ export default function Desktop() {
   const theme = useThemeStore((s) => s.theme);
 
   const [contextMenu, setContextMenu] = useState(null);
+  const [voiceState, setVoiceState] = useState({ state: "OFF" });
+
+  useEffect(() => {
+    const unsub = voiceEngine.onStateChange((data) =>
+      setVoiceState({ ...data }),
+    );
+    return unsub;
+  }, []);
+
+  const handleOrbClick = useCallback(() => {
+    if (voiceState.state === "OFF") {
+      voiceEngine.start();
+    } else if (
+      voiceState.state === "IDLE" ||
+      voiceState.state === "FOLLOW_UP"
+    ) {
+      voiceEngine.activateManual();
+    } else if (voiceState.state === "ACTIVATED") {
+      voiceEngine._finalizeCommand();
+    }
+  }, [voiceState.state]);
 
   const topZIndex =
     windows.length > 0 ? Math.max(...windows.map((w) => w.zIndex)) : 0;
@@ -294,6 +317,37 @@ export default function Desktop() {
             </Window>
           );
         })}
+      </div>
+
+      {/* Oni Voice Orb */}
+      <div
+        className={`oni-orb oni-orb-${voiceState.state.toLowerCase()}`}
+        onClick={handleOrbClick}
+        title={
+          voiceState.state === "OFF"
+            ? "Click to enable voice"
+            : voiceState.state === "IDLE"
+              ? 'Listening for "Oni"...'
+              : voiceState.state === "ACTIVATED"
+                ? "Listening... click to send"
+                : voiceState.state === "PROCESSING"
+                  ? "Processing..."
+                  : voiceState.state === "FOLLOW_UP"
+                    ? "Anything else?"
+                    : "Oni Voice"
+        }
+      >
+        <div className="oni-orb-ring" />
+        <div className="oni-orb-ring oni-orb-ring-2" />
+        <div className="oni-orb-core">
+          {voiceState.state === "ACTIVATED" ? <Mic size={18} /> : "O"}
+        </div>
+        {voiceState.state === "ACTIVATED" && voiceState.transcript && (
+          <div className="oni-orb-tooltip">{voiceState.transcript}</div>
+        )}
+        {voiceState.state === "FOLLOW_UP" && (
+          <div className="oni-orb-tooltip">Anything else?</div>
+        )}
       </div>
 
       {/* Context Menu */}

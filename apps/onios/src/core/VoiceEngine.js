@@ -27,9 +27,11 @@
 
 import { eventBus } from './EventBus.js';
 
-const SILENCE_TIMEOUT = 2000;      // ms of silence before finalizing command
-const FOLLOW_UP_TIMEOUT = 5000;    // ms to wait for follow-up after AI responds
-const WAKE_WORDS = ['oni', 'oney', 'onee', 'only', 'oh ni', 'o.n.i', 'on e'];
+const SILENCE_TIMEOUT = 2500;      // ms of silence before finalizing command
+const FOLLOW_UP_TIMEOUT = 12000;   // ms to wait for follow-up after AI responds
+const MIN_CONFIDENCE = 0.4;        // ignore low-confidence results (background noise)
+const MIN_WORD_LENGTH = 2;         // ignore single-character noise
+const WAKE_WORDS = ['oni', 'oney', 'onee', 'only', 'oh ni', 'o.n.i', 'on e', 'honey'];
 
 const SpeechRecognition = typeof window !== 'undefined'
   ? (window.SpeechRecognition || window.webkitSpeechRecognition)
@@ -185,9 +187,13 @@ class VoiceEngine {
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
+        const confidence = result[0].confidence || 0;
         const text = result[0].transcript;
 
         if (result.isFinal) {
+          // Filter out low-confidence noise and very short utterances
+          if (confidence < MIN_CONFIDENCE && text.trim().length < 4) continue;
+          if (text.trim().length < MIN_WORD_LENGTH) continue;
           final += text;
         } else {
           interim += text;
@@ -197,9 +203,21 @@ class VoiceEngine {
       if (final) {
         this._handleFinalTranscript(final);
       }
-      if (interim) {
+      if (interim && interim.trim().length >= MIN_WORD_LENGTH) {
         this.interimTranscript = interim;
         this._emit();
+        // Interim speech during follow-up resets the timeout
+        if (this.state === 'FOLLOW_UP' && this.followUpTimer) {
+          clearTimeout(this.followUpTimer);
+          this.followUpTimer = setTimeout(() => {
+            if (this.state === 'FOLLOW_UP') {
+              this.state = 'IDLE';
+              this.transcript = '';
+              this.interimTranscript = '';
+              this._emit();
+            }
+          }, FOLLOW_UP_TIMEOUT);
+        }
       }
     };
 
