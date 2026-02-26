@@ -31,7 +31,7 @@
  * widget. The AI can spawn multiple display instances simultaneously.
  */
 
-import { Folder, Terminal, Film, FileText, Clock, Calculator, Activity, BookOpen, Settings, Eye, Code, Map, FileSpreadsheet, CalendarDays, ListTodo, Shield, Workflow, Database, MessageSquare, Camera, Bot, LayoutDashboard, MonitorUp } from 'lucide-react';
+import { Folder, Terminal, Film, FileText, Clock, Calculator, Activity, BookOpen, Settings, Code, Map, FileSpreadsheet, Shield, Database, MessageSquare, Camera, LayoutDashboard, MonitorUp } from 'lucide-react';
 
 import FileExplorer from '../widgets/FileExplorer/FileExplorer';
 import TerminalWidget from '../widgets/Terminal/Terminal';
@@ -43,17 +43,12 @@ import CalculatorWidget from '../widgets/Calculator/Calculator';
 import ActivityLog from '../widgets/ActivityLog/ActivityLog';
 import Docs from '../widgets/Docs/Docs';
 import SettingsWidget from '../widgets/Settings/Settings';
-import FileViewer from '../widgets/FileViewer/FileViewer';
 import CodeEditor from '../widgets/CodeEditor/CodeEditor';
 import Maps from '../widgets/Maps/Maps';
 import DocumentViewer from '../widgets/DocumentViewer/DocumentViewer';
-import CalendarWidget from '../widgets/Calendar/Calendar';
-import TaskManager from '../widgets/TaskManager/TaskManager';
 import PasswordManager from '../widgets/PasswordManager/PasswordManager';
-import WorkflowBuilder from '../widgets/WorkflowBuilder/WorkflowBuilder';
 import StorageWidget from '../widgets/Storage/Storage';
 import CameraWidget from '../widgets/Camera/Camera';
-import AgentViewer from '../widgets/AgentViewer/AgentViewer';
 import OniChatWidget from '../widgets/OniAssistant/OniChatWidget';
 import ScreenCaptureWidget from '../widgets/ScreenCapture/ScreenCapture';
 
@@ -179,17 +174,6 @@ export const WIDGET_REGISTRY = {
         minHeight: 380,
         commands: ['system.settings.open', 'system.settings.toggleTheme'],
     },
-    'file-viewer': {
-        component: FileViewer,
-        title: 'File Viewer',
-        icon: Eye,
-        singleton: false,
-        defaultWidth: 680,
-        defaultHeight: 480,
-        minWidth: 400,
-        minHeight: 300,
-        commands: ['viewer.openFile'],
-    },
     'code-editor': {
         component: CodeEditor,
         title: 'Code Editor',
@@ -212,28 +196,6 @@ export const WIDGET_REGISTRY = {
         minHeight: 380,
         commands: ['document.open', 'document.find', 'document.search', 'document.create', 'document.getContent', 'document.index', 'document.list'],
     },
-    'calendar': {
-        component: CalendarWidget,
-        title: 'Calendar',
-        icon: CalendarDays,
-        singleton: true,
-        defaultWidth: 780,
-        defaultHeight: 520,
-        minWidth: 600,
-        minHeight: 400,
-        commands: ['calendar.open', 'task.add', 'task.list', 'event.add'],
-    },
-    'task-manager': {
-        component: TaskManager,
-        title: 'Task Manager',
-        icon: ListTodo,
-        singleton: true,
-        defaultWidth: 640,
-        defaultHeight: 520,
-        minWidth: 480,
-        minHeight: 380,
-        commands: ['task.add', 'task.list', 'task.complete', 'task.delete', 'schedule.add', 'schedule.list'],
-    },
     'password-manager': {
         component: PasswordManager,
         title: 'Password Manager',
@@ -244,17 +206,6 @@ export const WIDGET_REGISTRY = {
         minWidth: 460,
         minHeight: 380,
         commands: ['password.add', 'password.get', 'password.list', 'password.delete', 'password.generate', 'password.search'],
-    },
-    'workflow-builder': {
-        component: WorkflowBuilder,
-        title: 'Workflow Builder',
-        icon: Workflow,
-        singleton: true,
-        defaultWidth: 1000,
-        defaultHeight: 600,
-        minWidth: 700,
-        minHeight: 450,
-        commands: ['workflow.create', 'workflow.run', 'workflow.list', 'workflow.get', 'workflow.delete'],
     },
     'storage': {
         component: StorageWidget,
@@ -277,17 +228,6 @@ export const WIDGET_REGISTRY = {
         minWidth: 400,
         minHeight: 350,
         commands: ['camera.open', 'camera.capture'],
-    },
-    'agent-viewer': {
-        component: AgentViewer,
-        title: 'Agent Viewer',
-        icon: Bot,
-        singleton: false,
-        defaultWidth: 480,
-        defaultHeight: 420,
-        minWidth: 360,
-        minHeight: 300,
-        commands: ['agent.view'],
     },
     'screen-capture': {
         component: ScreenCaptureWidget,

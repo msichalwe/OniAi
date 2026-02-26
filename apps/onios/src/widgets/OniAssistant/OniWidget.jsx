@@ -109,12 +109,11 @@ export default function OniWidget({ visible, onClose }) {
       style={style}
       onMouseDown={handleDragStart}
     >
-      <div className="oni-widget-bubble oni-orb" onClick={openChat}>
-        <div
-          className={`oni-orb-core ${glowIntensity > 0 ? "oni-orb-active" : ""}`}
-          style={{ "--orb-glow": glowIntensity }}
-        />
-      </div>
+      <div
+        className={`oni-widget-bubble oni-orb ${glowIntensity > 0 ? "oni-orb-active" : ""}`}
+        style={{ "--orb-glow": glowIntensity }}
+        onClick={openChat}
+      />
     </div>
   );
 }

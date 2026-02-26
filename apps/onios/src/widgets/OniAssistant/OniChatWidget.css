@@ -3,37 +3,52 @@
    ═══════════════════════════════════════════════ */
 
 .oni-chat-widget {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background: var(--surface, #111114);
-    overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #111114;
+  overflow: hidden;
 }
 
 /* ─── Header with mini avatar ─── */
 .oni-chat-widget-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    background: rgba(0,0,0,0.2);
-    flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
 }
 
 .oni-chat-widget-header-info {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .oni-chat-widget-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: rgba(255,255,255,0.9);
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .oni-chat-widget-status {
-    font-size: 10px;
-    color: rgba(100,200,100,0.7);
+  font-size: 10px;
+  color: rgba(100, 200, 100, 0.7);
+}
+
+/* ─── Light mode ─── */
+[data-theme="light"] .oni-chat-widget {
+  background: #ffffff;
+}
+[data-theme="light"] .oni-chat-widget-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.02);
+}
+[data-theme="light"] .oni-chat-widget-name {
+  color: rgba(0, 0, 0, 0.85);
+}
+[data-theme="light"] .oni-chat-widget-status {
+  color: rgba(40, 140, 60, 0.8);
 }

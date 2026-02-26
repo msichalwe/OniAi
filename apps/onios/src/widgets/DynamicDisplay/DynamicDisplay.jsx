@@ -178,7 +178,6 @@ function HeroSection({ data }) {
   }
   return (
     <div className="dd-hero" style={style}>
-      {data.icon && <span className="dd-hero-icon">{data.icon}</span>}
       {data.title && <h1 className="dd-hero-title">{data.title}</h1>}
       {data.subtitle && <p className="dd-hero-subtitle">{data.subtitle}</p>}
       {data.description && <p className="dd-hero-desc">{data.description}</p>}
@@ -192,7 +191,6 @@ function StatsSection({ data }) {
     <div className="dd-stats">
       {items.map((item, i) => (
         <div key={i} className="dd-stat">
-          {item.icon && <span className="dd-stat-icon">{item.icon}</span>}
           <div
             className="dd-stat-value"
             style={item.color ? { color: item.color } : undefined}
@@ -235,7 +233,6 @@ function CardsSection({ data, onSelect }) {
             <Img src={card.image} alt={card.title} className="dd-card-img" />
           )}
           <div className="dd-card-body">
-            {card.icon && <span className="dd-card-icon">{card.icon}</span>}
             {card.title && <div className="dd-card-title">{card.title}</div>}
             {card.subtitle && (
               <div className="dd-card-subtitle">{card.subtitle}</div>
@@ -311,9 +308,24 @@ function ListSection({ data, onSelect }) {
     <div className="dd-list">
       {data.title && <div className="dd-section-title">{data.title}</div>}
       {items.map((item, i) => {
-        const title = item.title || item.label;
-        const desc = item.description || item.text || item.details;
+        // Handle string items
+        if (typeof item === "string") {
+          if (!item.trim()) return null;
+          return (
+            <div key={i} className="dd-list-item">
+              {ordered && <span className="dd-list-num">{i + 1}</span>}
+              <div className="dd-list-content">
+                <div className="dd-list-title">{item}</div>
+              </div>
+            </div>
+          );
+        }
+        const title = item.title || item.label || item.name;
+        const desc = item.description || item.text;
+        const val = item.value;
         const hasDetail = item.details && typeof item.details === "object";
+        // Skip empty items
+        if (!title && !desc && !val && !item.image && !hasDetail) return null;
         return (
           <div
             key={i}
@@ -321,9 +333,6 @@ function ListSection({ data, onSelect }) {
             onClick={() => hasDetail && onSelect(item)}
           >
             {ordered && <span className="dd-list-num">{i + 1}</span>}
-            {item.icon && !ordered && (
-              <span className="dd-list-icon">{item.icon}</span>
-            )}
             {item.image && (
               <Img src={item.image} alt={title} className="dd-list-img" />
             )}
@@ -614,7 +623,6 @@ function AlertSection({ data }) {
   const typeClass = data.variant || data.level || "info";
   return (
     <div className={`dd-alert dd-alert-${typeClass}`}>
-      {data.icon && <span className="dd-alert-icon">{data.icon}</span>}
       <div>
         {data.title && <div className="dd-alert-title">{data.title}</div>}
         <div className="dd-alert-text">
@@ -682,6 +690,114 @@ function ChartSection({ data }) {
   );
 }
 
+function SearchResultsSection({ data }) {
+  const results = data.items || data.results || [];
+  return (
+    <div className="dd-search-results">
+      {data.title && <div className="dd-section-title">{data.title}</div>}
+      {data.query && (
+        <div className="dd-search-query">
+          Results for <strong>{data.query}</strong>
+        </div>
+      )}
+      {results.length === 0 && (
+        <div className="dd-search-empty">No results found</div>
+      )}
+      {results.map((r, i) => {
+        const title = r.title || r.name;
+        const desc = r.description || r.snippet || r.text;
+        const url = r.url || r.link;
+        const source =
+          r.source || (url ? new URL(url).hostname.replace("www.", "") : null);
+        if (!title && !desc) return null;
+        return (
+          <div key={i} className="dd-search-result">
+            {source && <div className="dd-search-source">{source}</div>}
+            {title &&
+              (url ? (
+                <a
+                  className="dd-search-title"
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {title}
+                </a>
+              ) : (
+                <div className="dd-search-title">{title}</div>
+              ))}
+            {desc && <div className="dd-search-desc">{desc}</div>}
+            {r.date && <div className="dd-search-date">{r.date}</div>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ArticleSection({ data }) {
+  const content = data.content || data.body || "";
+  const html = content
+    .replace(/^#### (.+)$/gm, "<h5>$1</h5>")
+    .replace(/^### (.+)$/gm, "<h4>$1</h4>")
+    .replace(/^## (.+)$/gm, "<h3>$1</h3>")
+    .replace(/^# (.+)$/gm, "<h2>$1</h2>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/`(.+?)`/g, "<code>$1</code>")
+    .replace(/^- (.+)$/gm, "<li>$1</li>")
+    .replace(/(<li>.*<\/li>\n?)+/g, (m) => `<ul>${m}</ul>`)
+    .replace(/^\d+\. (.+)$/gm, "<li>$1</li>")
+    .replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>")
+    .replace(/\n{2,}/g, "</p><p>")
+    .replace(/\n/g, "<br/>");
+  return (
+    <div className="dd-article">
+      {data.title && <h1 className="dd-article-title">{data.title}</h1>}
+      {data.subtitle && <p className="dd-article-subtitle">{data.subtitle}</p>}
+      {data.author && (
+        <div className="dd-article-meta">
+          {data.author}
+          {data.date && <span className="dd-article-date">{data.date}</span>}
+          {data.source && (
+            <span className="dd-article-source">{data.source}</span>
+          )}
+        </div>
+      )}
+      {data.image && (
+        <Img
+          src={data.image}
+          alt={data.title}
+          className="dd-article-hero-img"
+        />
+      )}
+      <div
+        className="dd-article-body"
+        dangerouslySetInnerHTML={{ __html: `<p>${html}</p>` }}
+      />
+      {data.tags && (
+        <div className="dd-article-tags">
+          {data.tags.map((t, i) => (
+            <span key={i} className="dd-tag">
+              {t}
+            </span>
+          ))}
+        </div>
+      )}
+      {data.source_url && (
+        <a
+          className="dd-article-source-link"
+          href={data.source_url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Read original <ExternalLink size={11} />
+        </a>
+      )}
+    </div>
+  );
+}
+
 function DividerSection({ data }) {
   return (
     <hr className="dd-divider" style={data?.label ? undefined : undefined} />
@@ -731,6 +847,11 @@ function RenderSection({ section, onSelect }) {
     case "chart":
     case "bar_chart":
       return <ChartSection data={section} />;
+    case "search_results":
+    case "search":
+      return <SearchResultsSection data={section} />;
+    case "article":
+      return <ArticleSection data={section} />;
     case "divider":
       return <DividerSection data={section} />;
     default:

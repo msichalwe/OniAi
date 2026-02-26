@@ -224,9 +224,10 @@ IMPORTANT: When you need to run a terminal command but a terminal is busy (insta
 **display** — Dynamic rich content widget (weather, search results, data, media, etc.)
 Post JSON with title + sections array. A new widget window opens with the rendered content.
 You can spawn MULTIPLE display widgets at once (e.g. current weather + weekly forecast).
-Section types: hero, stats, cards, table, list, text, image, video, gallery, embed, progress, quote, code, kv, timeline, alert, weather, chart, divider
-Example: {"title":"Weather","background":"linear-gradient(135deg,#1a3a5c,#0a1628)","sections":[{"type":"hero","title":"Lusaka","subtitle":"28°C Sunny","icon":"☀️"},{"type":"stats","items":[{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12 km/h"},{"label":"UV","value":"High","color":"#f87171"}]},{"type":"weather","title":"This Week","items":[{"day":"Mon","icon":"☀️","high":"29°C","low":"18°C"},{"day":"Tue","icon":"⛅","high":"26°C","low":"17°C"}]}]}
-For search results use cards section. For stock data use stats+chart+table. For media use image/video sections.
+Section types: hero, stats, cards, table, list, text, image, video, gallery, embed, progress, quote, code, kv, timeline, alert, weather, chart, search_results, article, divider
+NEVER use emojis in icons or headings. Use article section for detailed content. Use search_results for web search.
+Example: {"title":"Weather","sections":[{"type":"stats","items":[{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12 km/h"},{"label":"UV","value":"High","color":"#f87171"}]},{"type":"weather","title":"This Week","items":[{"day":"Mon","high":"29°C","low":"18°C"},{"day":"Tue","high":"26°C","low":"17°C"}]}]}
+For search results use search_results section. For stock data use stats+chart+table. For media use image/video sections. For articles use article section.
 
 **task** — {"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}
 **note** — {"action":"create|list|read","title":"...","content":"..."}
@@ -342,11 +343,13 @@ Base: \`POST http://localhost:${port}/api/oni/actions/{action}\` with JSON body.
 
 ## Display Widget → /actions/display (USE FOR ALL VISUAL CONTENT)
 Posts JSON \`{"title":"...","sections":[...]}\` → opens a rich content widget. Multiple simultaneous widgets supported.
-Section types: hero, stats, cards, table, list, text, image, video, gallery, embed, progress, quote, code, kv, timeline, alert, weather, chart, divider
+Section types: hero, stats, cards, table, list, text, image, video, gallery, embed, progress, quote, code, kv, timeline, alert, weather, chart, search_results, article, divider
 
 **DESIGN RULES:**
 - Hero section is OPTIONAL. Only use it when a prominent title/banner makes sense (e.g. weather, profiles). Skip it for image grids, search results, data tables.
-- Never use random emojis as hero icons. Only use relevant, meaningful icons sparingly.
+- NEVER use emojis in hero icons, stat icons, list icons, card icons, or headings. Keep it clean and professional.
+- Use \`article\` section for detailed write-ups, news articles, or when user asks for more detail. Fields: title, subtitle, author, date, source, image, content (markdown), tags, source_url.
+- Use \`search_results\` section for web search results. Fields: query, items[{title, description/snippet, url, source, date}].
 - Cards with \`image\` field are clickable — user can tap to see detail overlay. Add \`description\`, \`details\` (object), \`price\`, \`link\` for the expanded view.
 - List items with \`details\` (object) are also clickable for expanded view.
 - Gallery images are clickable for full preview. Use \`gallery\` for image-heavy results (shoes, products, photos).
@@ -356,7 +359,9 @@ Section types: hero, stats, cards, table, list, text, image, video, gallery, emb
 - Use \`code\` section to show generated code/websites with \`language\` field.
 
 **Examples:**
-- Weather: \`{"title":"Lusaka Weather","sections":[{"type":"stats","items":[{"label":"Now","value":"28°C","icon":"☀️"},{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12km/h"}]},{"type":"weather","title":"This Week","items":[{"day":"Mon","icon":"☀️","high":"29°C","low":"18°C"}]}]}\`
+- Weather: \`{"title":"Lusaka Weather","sections":[{"type":"stats","items":[{"label":"Now","value":"28°C"},{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12km/h"}]},{"type":"weather","title":"This Week","items":[{"day":"Mon","high":"29°C","low":"18°C"}]}]}\`
+- Article: \`{"title":"AI Deep Dive","sections":[{"type":"article","title":"How LLMs Work","subtitle":"A comprehensive guide","author":"OniAI","date":"2026-02-26","content":"# Introduction\\nLarge language models...","tags":["AI","LLM"]}]}\`
+- Search: \`{"title":"Search Results","sections":[{"type":"search_results","query":"best laptops 2026","items":[{"title":"Top 10 Laptops","description":"Our picks for...","url":"https://example.com","source":"TechReview","date":"Feb 2026"}]}]}\`
 - Image search: \`{"title":"Nike Shoes","sections":[{"type":"gallery","columns":2,"images":[{"src":"url","caption":"Air Max 90","title":"Air Max 90","price":"$120","description":"Classic runner","link":"url"}]}]}\`
 - Recipe: \`{"title":"Pasta Carbonara","sections":[{"type":"list","title":"Ingredients","items":[{"title":"Spaghetti","value":"400g"}]},{"type":"list","title":"Steps","ordered":true,"items":[{"title":"Boil pasta","description":"Cook until al dente"}]}]}\`
 - Data: \`{"title":"Stock Overview","sections":[{"type":"stats","items":[{"label":"AAPL","value":"$178","change":"+2.3%"}]},{"type":"table","headers":["Stock","Price","Change"],"rows":[["AAPL","$178","+2.3%"]]}]}\`

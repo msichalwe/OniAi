@@ -181,92 +181,84 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
-/* ─── Warm Nude/Brown Orb ─── */
+/* ─── Single Warm Nude Orb (animated gradient) ─── */
 .oni-orb {
-  background: radial-gradient(
-    circle at 40% 35%,
-    rgba(210, 180, 155, 0.5) 0%,
-    rgba(180, 145, 115, 0.4) 30%,
-    rgba(140, 105, 80, 0.55) 60%,
-    rgba(60, 42, 30, 0.85) 100%
-  );
-  border: 1.5px solid rgba(200, 170, 140, 0.15);
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      rgba(240, 218, 195, 0.9) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 65% 70%,
+      rgba(190, 155, 125, 0.7) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(210, 180, 155, 0.85) 0%,
+      rgba(165, 130, 100, 0.7) 50%,
+      rgba(120, 88, 62, 0.5) 100%
+    );
+  background-size:
+    200% 200%,
+    200% 200%,
+    100% 100%;
+  animation: oni-orb-gradient 8s ease-in-out infinite;
+  border: 1.5px solid rgba(210, 185, 160, 0.2);
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.35),
-    0 0 20px rgba(180, 140, 100, 0.08),
-    inset 0 0 20px rgba(210, 175, 140, 0.06);
+    0 4px 20px rgba(0, 0, 0, 0.25),
+    0 0 16px rgba(200, 165, 130, 0.12),
+    inset 0 -4px 12px rgba(120, 88, 60, 0.15),
+    inset 0 4px 12px rgba(240, 220, 200, 0.2);
+  transition:
+    box-shadow 0.4s ease,
+    border-color 0.4s ease,
+    transform 0.2s ease;
 }
 
 .oni-orb:hover {
-  border-color: rgba(210, 175, 140, 0.3);
+  border-color: rgba(220, 190, 160, 0.35);
   box-shadow:
-    0 4px 28px rgba(0, 0, 0, 0.45),
-    0 0 36px rgba(200, 160, 120, 0.15),
-    inset 0 0 24px rgba(220, 185, 150, 0.1);
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    0 0 28px rgba(210, 175, 140, 0.18),
+    inset 0 -4px 12px rgba(120, 88, 60, 0.15),
+    inset 0 4px 12px rgba(240, 220, 200, 0.25);
 }
 
-.oni-orb-core {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 38% 32%,
-    rgba(240, 218, 195, 0.85) 0%,
-    rgba(215, 185, 158, 0.7) 30%,
-    rgba(190, 155, 125, 0.55) 55%,
-    rgba(155, 120, 90, 0.4) 75%,
-    rgba(120, 88, 62, 0.2) 100%
-  );
+.oni-orb.oni-orb-active {
   box-shadow:
-    0 0 10px rgba(200, 165, 130, 0.25),
-    0 0 22px rgba(180, 145, 110, 0.12);
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  animation: oni-orb-breathe 4s ease-in-out infinite;
+    0 4px 24px rgba(0, 0, 0, 0.25),
+    0 0 20px rgba(210, 175, 140, calc(0.2 * var(--orb-glow, 0.5))),
+    0 0 40px rgba(190, 155, 120, calc(0.15 * var(--orb-glow, 0.5))),
+    inset 0 -4px 12px rgba(120, 88, 60, 0.12),
+    inset 0 4px 12px rgba(250, 230, 210, 0.3);
+  animation: oni-orb-gradient 4s ease-in-out infinite;
 }
 
-.oni-orb-core.oni-orb-active {
-  width: 42px;
-  height: 42px;
-  background: radial-gradient(
-    circle at 38% 32%,
-    rgba(250, 230, 210, 0.95) 0%,
-    rgba(230, 200, 172, 0.8) 28%,
-    rgba(205, 170, 140, 0.65) 52%,
-    rgba(175, 140, 108, 0.45) 75%,
-    rgba(140, 105, 75, 0.25) 100%
-  );
-  box-shadow:
-    0 0 14px rgba(210, 175, 140, calc(0.3 * var(--orb-glow, 0.5))),
-    0 0 36px rgba(190, 155, 120, calc(0.2 * var(--orb-glow, 0.5))),
-    0 0 55px rgba(170, 135, 100, calc(0.1 * var(--orb-glow, 0.5)));
-  animation: oni-orb-pulse 1.2s ease-in-out infinite;
-}
-
-@keyframes oni-orb-breathe {
-  0%,
+@keyframes oni-orb-gradient {
+  0% {
+    background-position:
+      30% 30%,
+      70% 70%,
+      center;
+  }
+  33% {
+    background-position:
+      60% 40%,
+      40% 60%,
+      center;
+  }
+  66% {
+    background-position:
+      40% 60%,
+      60% 40%,
+      center;
+  }
   100% {
-    transform: scale(1);
-    opacity: 0.88;
-  }
-  50% {
-    transform: scale(1.04);
-    opacity: 1;
-  }
-}
-
-@keyframes oni-orb-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    box-shadow:
-      0 0 14px rgba(210, 175, 140, 0.35),
-      0 0 36px rgba(190, 155, 120, 0.15);
-  }
-  50% {
-    transform: scale(1.1);
-    box-shadow:
-      0 0 18px rgba(220, 185, 150, 0.5),
-      0 0 45px rgba(200, 165, 130, 0.3),
-      0 0 70px rgba(180, 145, 110, 0.12);
+    background-position:
+      30% 30%,
+      70% 70%,
+      center;
   }
 }

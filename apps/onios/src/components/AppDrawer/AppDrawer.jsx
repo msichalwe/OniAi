@@ -4,20 +4,24 @@ import { WIDGET_REGISTRY } from "../../core/widgetRegistry";
 import "./AppDrawer.css";
 
 const WIDGET_GRADIENTS = {
-  "file-explorer": "linear-gradient(135deg, #2196F3, #1565C0)",
-  terminal: "linear-gradient(135deg, #1B1B1B, #333333)",
-  weather: "linear-gradient(135deg, #4FC3F7, #0288D1)",
-  browser: "linear-gradient(135deg, #4285F4, #34A853, #FBBC05, #EA4335)",
-  "web-search": "linear-gradient(135deg, #FF7043, #F4511E)",
-  maps: "linear-gradient(135deg, #66BB6A, #2E7D32)",
-  "media-player": "linear-gradient(135deg, #E91E63, #AD1457)",
-  notes: "linear-gradient(135deg, #FFCA28, #FFB300)",
-  clock: "linear-gradient(135deg, #1A1A2E, #16213E)",
-  calculator: "linear-gradient(135deg, #78909C, #546E7A)",
-  "activity-log": "linear-gradient(135deg, #AB47BC, #7B1FA2)",
-  docs: "linear-gradient(135deg, #FF7043, #E64A19)",
-  settings: "linear-gradient(135deg, #78909C, #455A64)",
-  "code-editor": "linear-gradient(135deg, #007ACC, #1E9DE7)",
+  "file-explorer": "linear-gradient(135deg, #3B82F6, #1D4ED8)",
+  terminal: "linear-gradient(135deg, #1E1E2E, #2D2D3D)",
+  display: "linear-gradient(135deg, #8B5CF6, #6D28D9)",
+  maps: "linear-gradient(135deg, #10B981, #059669)",
+  "media-player": "linear-gradient(135deg, #EC4899, #BE185D)",
+  notes: "linear-gradient(135deg, #F59E0B, #D97706)",
+  clock: "linear-gradient(135deg, #1E293B, #0F172A)",
+  calculator: "linear-gradient(135deg, #64748B, #475569)",
+  "activity-log": "linear-gradient(135deg, #A855F7, #7C3AED)",
+  docs: "linear-gradient(135deg, #F97316, #EA580C)",
+  settings: "linear-gradient(135deg, #6B7280, #4B5563)",
+  "code-editor": "linear-gradient(135deg, #0EA5E9, #0284C7)",
+  "document-viewer": "linear-gradient(135deg, #6366F1, #4F46E5)",
+  "password-manager": "linear-gradient(135deg, #14B8A6, #0D9488)",
+  storage: "linear-gradient(135deg, #8B5CF6, #6D28D9)",
+  camera: "linear-gradient(135deg, #EF4444, #DC2626)",
+  "screen-capture": "linear-gradient(135deg, #06B6D4, #0891B2)",
+  "oni-chat": "linear-gradient(135deg, #6B7280, #374151)",
 };
 
 export default function AppDrawer({ onClose }) {
@@ -41,15 +45,13 @@ export default function AppDrawer({ onClose }) {
     onClose();
   };
 
-  const widgets = Object.entries(WIDGET_REGISTRY)
-    .filter(([key]) => key !== "file-viewer") // hide internal viewers
-    .map(([key, val]) => ({
-      type: key,
-      title: val.title,
-      icon: val.icon,
-      gradient:
-        WIDGET_GRADIENTS[key] || "linear-gradient(135deg, #667eea, #764ba2)",
-    }));
+  const widgets = Object.entries(WIDGET_REGISTRY).map(([key, val]) => ({
+    type: key,
+    title: val.title,
+    icon: val.icon,
+    gradient:
+      WIDGET_GRADIENTS[key] || "linear-gradient(135deg, #667eea, #764ba2)",
+  }));
 
   return (
     <div className="app-drawer-overlay" onClick={onClose}>
