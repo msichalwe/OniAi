@@ -1,0 +1,401 @@
+/* ═══════════════════════════════════════════════
+   ScreenCapture — Screenshot & Recording widget
+   ═══════════════════════════════════════════════ */
+
+.screen-capture {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary, #111114);
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
+  font-family: "Inter", -apple-system, sans-serif;
+  overflow: hidden;
+}
+
+/* ─── Toolbar ─── */
+.sc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.sc-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sc-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 4px;
+}
+
+.sc-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.sc-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sc-btn:active {
+  transform: scale(0.97);
+}
+
+.sc-btn-primary {
+  background: rgba(80, 130, 255, 0.2);
+  border-color: rgba(80, 130, 255, 0.3);
+  color: rgba(140, 180, 255, 0.9);
+}
+
+.sc-btn-primary:hover {
+  background: rgba(80, 130, 255, 0.3);
+  border-color: rgba(80, 130, 255, 0.45);
+  color: #fff;
+}
+
+.sc-btn-danger {
+  background: rgba(255, 70, 70, 0.15);
+  border-color: rgba(255, 70, 70, 0.25);
+  color: rgba(255, 130, 130, 0.9);
+}
+
+.sc-btn-danger:hover {
+  background: rgba(255, 70, 70, 0.25);
+  border-color: rgba(255, 70, 70, 0.4);
+}
+
+.sc-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.sc-mode-toggle {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sc-mode-toggle button {
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.sc-mode-toggle button:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sc-mode-toggle button.active {
+  background: rgba(80, 130, 255, 0.15);
+  color: rgba(140, 180, 255, 0.9);
+}
+
+.sc-mode-toggle button:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ─── Source selector ─── */
+.sc-source-select {
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  outline: none;
+  max-width: 180px;
+}
+
+.sc-source-select option {
+  background: #1a1a1e;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* ─── Preview area ─── */
+.sc-preview {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  background: #0a0a0c;
+}
+
+.sc-preview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px;
+}
+
+.sc-preview-empty-icon {
+  font-size: 40px;
+  opacity: 0.5;
+}
+
+.sc-preview-empty-hint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.15);
+  max-width: 240px;
+}
+
+.sc-preview img,
+.sc-preview video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* Recording indicator */
+.sc-recording-indicator {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(255, 40, 40, 0.2);
+  border: 1px solid rgba(255, 40, 40, 0.3);
+  border-radius: 20px;
+  font-size: 11px;
+  color: rgba(255, 100, 100, 0.9);
+  animation: sc-rec-blink 1.2s ease-in-out infinite;
+}
+
+.sc-rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff4040;
+}
+
+@keyframes sc-rec-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ─── Gallery strip ─── */
+.sc-gallery {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.sc-gallery::-webkit-scrollbar {
+  height: 4px;
+}
+
+.sc-gallery::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+.sc-gallery-item {
+  flex-shrink: 0;
+  width: 80px;
+  height: 52px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.sc-gallery-item:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.sc-gallery-item.active {
+  border-color: rgba(80, 130, 255, 0.5);
+}
+
+.sc-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sc-gallery-item-video::after {
+  content: "▶";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.sc-gallery-empty {
+  color: rgba(255, 255, 255, 0.2);
+  font-size: 11px;
+  padding: 12px;
+  text-align: center;
+  width: 100%;
+}
+
+/* ─── Status bar ─── */
+.sc-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+.sc-status-recording {
+  color: rgba(255, 100, 100, 0.8);
+}
+
+/* ─── Countdown overlay ─── */
+.sc-countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  font-size: 64px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  z-index: 10;
+  animation: sc-countdown-pop 0.3s ease;
+}
+
+@keyframes sc-countdown-pop {
+  from { transform: scale(1.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ─── Flash ─── */
+.sc-flash {
+  position: absolute;
+  inset: 0;
+  background: white;
+  z-index: 20;
+  animation: sc-flash-anim 0.25s ease-out forwards;
+}
+
+@keyframes sc-flash-anim {
+  from { opacity: 0.8; }
+  to { opacity: 0; }
+}
+
+/* ─── Light mode ─── */
+[data-theme="light"] .screen-capture {
+  background: #fafbfc;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="light"] .sc-toolbar {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .sc-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] .sc-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.14);
+  color: rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="light"] .sc-btn-primary {
+  background: rgba(60, 100, 220, 0.1);
+  border-color: rgba(60, 100, 220, 0.2);
+  color: rgba(40, 80, 200, 0.9);
+}
+
+[data-theme="light"] .sc-btn-danger {
+  background: rgba(220, 60, 60, 0.08);
+  border-color: rgba(220, 60, 60, 0.15);
+  color: rgba(200, 50, 50, 0.8);
+}
+
+[data-theme="light"] .sc-mode-toggle {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .sc-mode-toggle button {
+  background: rgba(0, 0, 0, 0.02);
+  color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .sc-mode-toggle button.active {
+  background: rgba(60, 100, 220, 0.1);
+  color: rgba(40, 80, 200, 0.9);
+}
+
+[data-theme="light"] .sc-preview {
+  background: #f0f1f3;
+}
+
+[data-theme="light"] .sc-preview-empty {
+  color: rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="light"] .sc-gallery {
+  border-top-color: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .sc-status {
+  color: rgba(0, 0, 0, 0.3);
+  border-top-color: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .sc-source-select {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.7);
+}

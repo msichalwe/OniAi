@@ -677,39 +677,39 @@ body,
   border-top-color: rgba(0, 0, 0, 0.08);
 }
 
-/* ===== Light Theme — OniWidget Orb ===== */
+/* ===== Light Theme — OniWidget Orb (warm nude/brown) ===== */
 [data-theme="light"] .oni-widget-bubble.oni-orb {
   background: radial-gradient(
-    circle at 38% 35%,
-    rgba(100, 140, 220, 0.25) 0%,
-    rgba(60, 100, 200, 0.15) 30%,
-    rgba(40, 70, 160, 0.3) 60%,
-    rgba(240, 242, 248, 0.85) 100%
+    circle at 40% 35%,
+    rgba(210, 185, 160, 0.35) 0%,
+    rgba(185, 155, 128, 0.25) 30%,
+    rgba(155, 125, 100, 0.35) 60%,
+    rgba(248, 244, 240, 0.85) 100%
   );
-  border: 1.5px solid rgba(60, 100, 200, 0.15);
+  border: 1.5px solid rgba(190, 160, 130, 0.18);
   box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.08),
-    0 0 20px rgba(60, 100, 200, 0.08),
-    inset 0 0 20px rgba(80, 120, 220, 0.05);
+    0 4px 24px rgba(0, 0, 0, 0.06),
+    0 0 20px rgba(190, 155, 120, 0.06),
+    inset 0 0 20px rgba(210, 180, 150, 0.04);
 }
 [data-theme="light"] .oni-widget-bubble.oni-orb:hover {
-  border-color: rgba(60, 100, 200, 0.3);
+  border-color: rgba(200, 170, 140, 0.3);
   box-shadow:
-    0 4px 28px rgba(0, 0, 0, 0.12),
-    0 0 36px rgba(60, 100, 200, 0.15),
-    inset 0 0 24px rgba(80, 120, 220, 0.08);
+    0 4px 28px rgba(0, 0, 0, 0.1),
+    0 0 36px rgba(200, 165, 130, 0.12),
+    inset 0 0 24px rgba(215, 185, 155, 0.08);
 }
 [data-theme="light"] .oni-orb-core {
   background: radial-gradient(
-    circle at 40% 38%,
-    rgba(120, 160, 240, 0.6) 0%,
-    rgba(80, 120, 220, 0.4) 40%,
-    rgba(50, 80, 180, 0.25) 70%,
-    rgba(40, 60, 140, 0.1) 100%
+    circle at 38% 32%,
+    rgba(230, 210, 190, 0.7) 0%,
+    rgba(205, 180, 155, 0.5) 35%,
+    rgba(180, 150, 125, 0.35) 65%,
+    rgba(155, 125, 100, 0.15) 100%
   );
   box-shadow:
-    0 0 12px rgba(60, 100, 200, 0.2),
-    0 0 24px rgba(60, 100, 200, 0.1);
+    0 0 10px rgba(200, 170, 140, 0.18),
+    0 0 22px rgba(185, 155, 125, 0.08);
 }
 
 /* ===== Light Theme — OniWidget Expanded Panel ===== */

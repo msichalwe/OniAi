@@ -323,7 +323,7 @@ function syncWorkspaceIdentity() {
 function generateOniOSSkillMD(port = 5173) {
     return `---
 name: onios
-description: "OniOS desktop control. Use exec tool with curl to call http://localhost:${port}/api/oni/actions/{action}. Actions: task, window, note, terminal, file, notification, display, search, storage, system, scheduler, workflow. All POST with JSON. ALWAYS use exec curl."
+description: "OniOS desktop control. Use exec tool with curl to call http://localhost:${port}/api/oni/actions/{action}. Actions: task, window, note, terminal, file, notification, display, search, storage, system, scheduler, workflow, screen. All POST with JSON. ALWAYS use exec curl."
 metadata: { "oni": { "emoji": "🖥️", "homepage": "http://localhost:${port}", "always": true } }
 ---
 
@@ -333,7 +333,7 @@ Base: \`POST http://localhost:${port}/api/oni/actions/{action}\` with JSON body.
 
 ## Window Management → /actions/window
 \`{"action":"list"}\` → returns open windows with IDs, types, focused/minimized state
-\`{"action":"open","widgetType":"terminal|notes|calendar|settings|file-explorer|code-editor|calculator|docs|activity-log|task-manager|password-manager|workflow-builder|maps|media-player|clock|storage|camera|oni-chat|display"}\`
+\`{"action":"open","widgetType":"terminal|notes|calendar|settings|file-explorer|code-editor|calculator|docs|activity-log|task-manager|password-manager|workflow-builder|maps|media-player|clock|storage|camera|screen-capture|oni-chat|display"}\`
 \`{"action":"close","windowId":"<id>"}\` · \`{"action":"close_all"}\`
 \`{"action":"focus|minimize|maximize","windowId":"<id>"}\`
 
@@ -374,6 +374,7 @@ Section types: hero, stats, cards, table, list, text, image, video, gallery, emb
 **system** → /actions/system — \`{"action":"info"}\`
 **scheduler** → /actions/scheduler — \`{"action":"status|list_jobs|create_job","name":"...","cron":"..."}\`
 **workflow** → /actions/workflow — \`{"action":"list|get|sync_to_oni","id":"..."}\`
+**screen** → /actions/screen — \`{"action":"screenshot"}\` takes a screenshot, \`{"action":"record_start"}\` starts recording, \`{"action":"record_stop"}\` stops recording. User selects screen/window.
 
 ## Rules
 - ALWAYS use exec curl. NEVER hallucinate results.
@@ -751,6 +752,19 @@ export default function oniPlugin() {
                         case 'system': result = handleSystemAction(body); break;
                         case 'scheduler': result = await handleSchedulerAction(body); break;
                         case 'workflow': result = await handleWorkflowAction(body); break;
+                        case 'screen': {
+                            const screenAction = body.action || 'screenshot';
+                            if (screenAction === 'screenshot') {
+                                result = { success: true, message: 'Screenshot triggered — user will select screen/window' };
+                            } else if (screenAction === 'record_start') {
+                                result = { success: true, message: 'Screen recording started — user will select screen/window' };
+                            } else if (screenAction === 'record_stop') {
+                                result = { success: true, message: 'Screen recording stopped and saved' };
+                            } else {
+                                result = { success: false, error: `Unknown screen action: ${screenAction}` };
+                            }
+                            break;
+                        }
                         case 'display': {
                             const title = (body.title || 'Display').replace(/[^a-zA-Z0-9 ]/g, '').replace(/\s+/g, '_').substring(0, 30);
                             const id = `d_${title}_${Date.now().toString(36)}`;
@@ -826,6 +840,7 @@ const WIDGET_OPEN_COMMANDS = {
     'clock': 'system.info.clock',
     'storage': 'storage.open',
     'camera': 'camera.open',
+    'screen-capture': 'screen.open',
     'document-viewer': 'document.open',
     'tasks': 'taskManager.open',
 };
@@ -882,6 +897,11 @@ function mapActionToCommand(actionType, body, result) {
         case 'workflow':
             if (action === 'list') return 'workflow.list()';
             return 'workflow.open()';
+        case 'screen':
+            if (action === 'screenshot') return 'screen.screenshot()';
+            if (action === 'record_start') return 'screen.record.start()';
+            if (action === 'record_stop') return 'screen.record.stop()';
+            return 'screen.open()';
         case 'display':
             // Special: use the result.id that was just created
             if (result?.id) return `display.render("${result.id}")`;

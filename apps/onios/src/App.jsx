@@ -1594,6 +1594,55 @@ function registerAllCommands() {
     { description: "List captured photos" },
   );
 
+  // === screen capture commands ===
+  commandRegistry.register(
+    "screen.open",
+    () => {
+      openWidget("screen-capture");
+      return "Screen Capture opened";
+    },
+    { description: "Open the screen capture widget", widget: "screen-capture" },
+  );
+
+  commandRegistry.register(
+    "screen.screenshot",
+    async () => {
+      const wins = useWindowStore.getState().windows || [];
+      const scWin = wins.find((w) => w.widgetType === "screen-capture");
+      if (!scWin) {
+        openWidget("screen-capture");
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      eventBus.emit("screen:screenshot");
+      return "Screenshot triggered — select screen or window to capture";
+    },
+    { description: "Take a screenshot of the screen or a specific window" },
+  );
+
+  commandRegistry.register(
+    "screen.record.start",
+    async () => {
+      const wins = useWindowStore.getState().windows || [];
+      const scWin = wins.find((w) => w.widgetType === "screen-capture");
+      if (!scWin) {
+        openWidget("screen-capture");
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      eventBus.emit("screen:record:start");
+      return "Screen recording started — select screen or window to record";
+    },
+    { description: "Start screen recording" },
+  );
+
+  commandRegistry.register(
+    "screen.record.stop",
+    () => {
+      eventBus.emit("screen:record:stop");
+      return "Screen recording stopped and saved";
+    },
+    { description: "Stop screen recording and save the file" },
+  );
+
   // === sub-agent commands ===
   commandRegistry.register(
     "agent.spawn",

@@ -1159,6 +1159,45 @@ const SKILLS = [
     },
 
     // ═══════════════════════════════════════════════
+    // SCREEN CAPTURE
+    // ═══════════════════════════════════════════════
+    {
+        id: 'open_screen_capture',
+        group: 'screen',
+        description: 'Open the screen capture widget for screenshots and screen recording',
+        parameters: { type: 'object', properties: {} },
+        command: 'screen.open',
+        buildArgs: () => [],
+        opensWidget: 'screen-capture',
+    },
+    {
+        id: 'take_screenshot',
+        group: 'screen',
+        description: 'Take a screenshot of the entire screen or a specific window. The user will be prompted to select what to capture.',
+        parameters: { type: 'object', properties: {} },
+        command: 'screen.screenshot',
+        buildArgs: () => [],
+        opensWidget: 'screen-capture',
+    },
+    {
+        id: 'start_screen_recording',
+        group: 'screen',
+        description: 'Start recording the screen or a specific window. The user will be prompted to select what to record.',
+        parameters: { type: 'object', properties: {} },
+        command: 'screen.record.start',
+        buildArgs: () => [],
+        opensWidget: 'screen-capture',
+    },
+    {
+        id: 'stop_screen_recording',
+        group: 'screen',
+        description: 'Stop the current screen recording and save the video file.',
+        parameters: { type: 'object', properties: {} },
+        command: 'screen.record.stop',
+        buildArgs: () => [],
+    },
+
+    // ═══════════════════════════════════════════════
     // SUB-AGENTS
     // ═══════════════════════════════════════════════
     {

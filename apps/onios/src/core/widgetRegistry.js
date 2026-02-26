@@ -17,6 +17,7 @@
  *   code-editor     — Code editing (multiple instances)
  *   document-viewer — Document reader (multiple instances)
  *   camera          — Camera capture (singleton)
+ *   screen-capture  — Screenshots & screen recording (singleton)
  *   oni-chat        — Main AI chat (singleton)
  *
  * ── Dynamic Widget (catch-all for everything else) ──────────
@@ -30,7 +31,7 @@
  * widget. The AI can spawn multiple display instances simultaneously.
  */
 
-import { Folder, Terminal, Film, FileText, Clock, Calculator, Activity, BookOpen, Settings, Eye, Code, Map, FileSpreadsheet, CalendarDays, ListTodo, Shield, Workflow, Database, MessageSquare, Camera, Bot, LayoutDashboard } from 'lucide-react';
+import { Folder, Terminal, Film, FileText, Clock, Calculator, Activity, BookOpen, Settings, Eye, Code, Map, FileSpreadsheet, CalendarDays, ListTodo, Shield, Workflow, Database, MessageSquare, Camera, Bot, LayoutDashboard, MonitorUp } from 'lucide-react';
 
 import FileExplorer from '../widgets/FileExplorer/FileExplorer';
 import TerminalWidget from '../widgets/Terminal/Terminal';
@@ -54,6 +55,7 @@ import StorageWidget from '../widgets/Storage/Storage';
 import CameraWidget from '../widgets/Camera/Camera';
 import AgentViewer from '../widgets/AgentViewer/AgentViewer';
 import OniChatWidget from '../widgets/OniAssistant/OniChatWidget';
+import ScreenCaptureWidget from '../widgets/ScreenCapture/ScreenCapture';
 
 export const WIDGET_REGISTRY = {
     'file-explorer': {
@@ -286,6 +288,17 @@ export const WIDGET_REGISTRY = {
         minWidth: 360,
         minHeight: 300,
         commands: ['agent.view'],
+    },
+    'screen-capture': {
+        component: ScreenCaptureWidget,
+        title: 'Screen Capture',
+        icon: MonitorUp,
+        singleton: true,
+        defaultWidth: 720,
+        defaultHeight: 520,
+        minWidth: 480,
+        minHeight: 380,
+        commands: ['screen.open', 'screen.screenshot', 'screen.record.start', 'screen.record.stop'],
     },
     'oni-chat': {
         component: OniChatWidget,
