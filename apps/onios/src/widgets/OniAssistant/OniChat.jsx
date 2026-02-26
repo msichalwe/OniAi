@@ -22,6 +22,8 @@ import {
   Zap,
   MessageSquarePlus,
   Info,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import { eventBus } from "../../core/EventBus";
 import "./OniChat.css";
@@ -184,6 +186,9 @@ export default function OniChat({
   streamingText = "",
   onStop,
   onNewChat,
+  voiceState = null,
+  onVoiceToggle,
+  onVoiceMic,
 }) {
   const [input, setInput] = useState("");
   const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -397,18 +402,62 @@ export default function OniChat({
         </button>
       )}
 
+      {/* Voice indicator bar */}
+      {voiceState && voiceState.state !== "OFF" && (
+        <div
+          className={`oni-voice-bar oni-voice-${voiceState.state.toLowerCase()}`}
+        >
+          <div className="oni-voice-pulse" />
+          <span className="oni-voice-label">
+            {voiceState.state === "IDLE" && 'Listening for "Oni"...'}
+            {voiceState.state === "ACTIVATED" &&
+              (voiceState.transcript ||
+                voiceState.interimTranscript ||
+                "Listening...")}
+            {voiceState.state === "PROCESSING" && "Processing..."}
+            {voiceState.state === "FOLLOW_UP" && "Anything else?"}
+          </span>
+          {voiceState.state === "ACTIVATED" && voiceState.transcript && (
+            <span className="oni-voice-transcript">
+              "{voiceState.transcript}"
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Input */}
       <div className="oni-chat-input-wrap">
         <textarea
           ref={inputRef}
           className="oni-chat-input"
-          placeholder="Ask Oni anything..."
+          placeholder={
+            voiceState?.state === "ACTIVATED"
+              ? "Listening..."
+              : "Ask Oni anything..."
+          }
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           rows={1}
           disabled={isStreaming}
         />
+        {onVoiceMic && (
+          <button
+            className={`oni-chat-mic-btn ${voiceState?.state === "ACTIVATED" ? "oni-mic-active" : ""} ${voiceState?.state !== "OFF" && voiceState ? "oni-mic-on" : ""}`}
+            onClick={onVoiceMic}
+            title={
+              voiceState?.state === "ACTIVATED"
+                ? "Stop listening"
+                : "Speak to Oni"
+            }
+          >
+            {voiceState?.state === "ACTIVATED" ? (
+              <MicOff size={14} />
+            ) : (
+              <Mic size={14} />
+            )}
+          </button>
+        )}
         {isStreaming ? (
           <button
             className="oni-chat-send-btn oni-chat-stop-btn"

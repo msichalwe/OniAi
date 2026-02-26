@@ -590,3 +590,154 @@
   border-color: rgba(40, 80, 200, 0.3);
   color: rgba(20, 50, 160, 1);
 }
+
+/* ═══════════════════════════════════════════════
+   Voice UI — Mic button, voice bar, animations
+   ═══════════════════════════════════════════════ */
+
+/* Mic button in input row */
+.oni-chat-mic-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.oni-chat-mic-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.oni-chat-mic-btn.oni-mic-on {
+  color: rgba(99, 102, 241, 0.7);
+}
+
+.oni-chat-mic-btn.oni-mic-active {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  animation: oni-mic-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes oni-mic-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.15);
+  }
+}
+
+/* Voice indicator bar */
+.oni-voice-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin: 0 8px 4px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.12);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  animation: oni-voice-slide-in 0.2s ease;
+  overflow: hidden;
+}
+
+@keyframes oni-voice-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.oni-voice-bar.oni-voice-idle {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.oni-voice-bar.oni-voice-activated {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.oni-voice-bar.oni-voice-processing {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+.oni-voice-bar.oni-voice-follow_up {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.15);
+}
+
+/* Pulsing dot */
+.oni-voice-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.8);
+  flex-shrink: 0;
+  animation: oni-voice-dot 1.5s ease-in-out infinite;
+}
+
+.oni-voice-idle .oni-voice-pulse {
+  background: rgba(255, 255, 255, 0.3);
+  animation: oni-voice-dot 3s ease-in-out infinite;
+}
+
+.oni-voice-activated .oni-voice-pulse {
+  background: #6366f1;
+  animation: oni-voice-dot 0.8s ease-in-out infinite;
+}
+
+.oni-voice-processing .oni-voice-pulse {
+  background: #f59e0b;
+  animation: oni-voice-dot 0.5s ease-in-out infinite;
+}
+
+.oni-voice-follow_up .oni-voice-pulse {
+  background: #22c55e;
+  animation: oni-voice-dot 1.2s ease-in-out infinite;
+}
+
+@keyframes oni-voice-dot {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.oni-voice-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oni-voice-transcript {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  font-style: italic;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

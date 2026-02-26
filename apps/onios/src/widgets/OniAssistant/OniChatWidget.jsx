@@ -19,6 +19,7 @@ import OniChat from "./OniChat";
 import { gateway } from "../../gateway/GatewayClient";
 import { commandRegistry } from "../../core/CommandRegistry";
 import { eventBus } from "../../core/EventBus";
+import { voiceEngine } from "../../core/VoiceEngine";
 import useWindowStore from "../../stores/windowStore";
 import useThemeStore from "../../stores/themeStore";
 import { widgetContext } from "../../core/WidgetContextProvider";
@@ -404,6 +405,67 @@ export default function OniChatWidget() {
     setEmotion("relieved");
   }, []);
 
+  // ─── Voice Integration ──────────────────────────────────
+
+  const [voiceState, setVoiceState] = useState({
+    state: "OFF",
+    transcript: "",
+    interimTranscript: "",
+  });
+
+  // Subscribe to voice state changes
+  useEffect(() => {
+    const unsub = voiceEngine.onStateChange((data) => {
+      setVoiceState({ ...data });
+    });
+    return unsub;
+  }, []);
+
+  // Wire voice commands to handleSend
+  useEffect(() => {
+    voiceEngine.setCommandHandler((text) => {
+      if (text && handleSendRef.current) {
+        handleSendRef.current(text);
+      }
+    });
+  }, []);
+
+  // Notify voice engine when AI starts/finishes processing
+  const prevStreamingRef = useRef(false);
+  useEffect(() => {
+    if (isStreaming && !prevStreamingRef.current) {
+      voiceEngine.onProcessingStart();
+    }
+    if (!isStreaming && prevStreamingRef.current) {
+      voiceEngine.onProcessingEnd();
+    }
+    prevStreamingRef.current = isStreaming;
+  }, [isStreaming]);
+
+  // Auto-start voice engine on mount
+  useEffect(() => {
+    if (voiceEngine.isSupported) {
+      voiceEngine.start();
+    }
+    return () => {
+      // Don't stop on unmount — voice should persist
+    };
+  }, []);
+
+  const handleVoiceToggle = useCallback(() => {
+    voiceEngine.toggle();
+  }, []);
+
+  const handleVoiceMic = useCallback(() => {
+    if (voiceState.state === "ACTIVATED") {
+      // Already listening — stop and finalize
+      voiceEngine._finalizeCommand();
+    } else {
+      // Manual activation — bypass wake word
+      voiceEngine.activateManual();
+    }
+  }, [voiceState.state]);
+
   return (
     <div className="oni-chat-widget">
       <OniChat
@@ -413,6 +475,9 @@ export default function OniChatWidget() {
         streamingText={streamingText}
         onStop={handleStop}
         onNewChat={handleNewChat}
+        voiceState={voiceState}
+        onVoiceToggle={handleVoiceToggle}
+        onVoiceMic={handleVoiceMic}
       />
     </div>
   );
