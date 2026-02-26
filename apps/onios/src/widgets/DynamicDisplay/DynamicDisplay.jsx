@@ -29,6 +29,16 @@ import {
   ImageOff,
   Copy,
   Check,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  SkipBack,
+  SkipForward,
+  Expand,
+  Download,
+  Share2,
 } from "lucide-react";
 import hljs from "highlight.js/lib/core";
 import javascript from "highlight.js/lib/languages/javascript";
@@ -421,92 +431,326 @@ function TextSection({ data }) {
 }
 
 function ImageSection({ data, onSelect }) {
+  const handleOpen = () => {
+    eventBus.emit("command:execute", `system.media.playVideo("${data.src}")`);
+  };
   return (
-    <div
-      className="dd-image"
-      onClick={() =>
-        onSelect && onSelect({ image: data.src, title: data.caption })
-      }
-    >
-      <Img
-        src={data.src}
-        alt={data.caption}
-        style={data.width ? { maxWidth: data.width } : undefined}
+    <div className="dd-image-immersive">
+      <div
+        className="dd-image-bg"
+        style={{ backgroundImage: `url(${data.src})` }}
       />
-      {data.caption && <div className="dd-image-caption">{data.caption}</div>}
+      <div className="dd-image-glass">
+        <div
+          className="dd-image-main"
+          onClick={() => onSelect?.({ image: data.src, title: data.caption })}
+        >
+          <Img
+            src={data.src}
+            alt={data.caption}
+            style={data.width ? { maxWidth: data.width } : undefined}
+          />
+        </div>
+        {(data.caption || data.title || data.description) && (
+          <div className="dd-image-info">
+            {(data.caption || data.title) && (
+              <div className="dd-image-title">{data.caption || data.title}</div>
+            )}
+            {data.description && (
+              <div className="dd-image-desc">{data.description}</div>
+            )}
+            <div className="dd-image-actions">
+              <button
+                className="dd-media-btn"
+                onClick={handleOpen}
+                title="Open full size"
+              >
+                <Expand size={13} /> Open
+              </button>
+              {data.source && (
+                <span className="dd-image-source">{data.source}</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 function VideoSection({ data }) {
-  const isYoutube = data.youtube || (data.src && data.src.includes("youtube"));
-  if (isYoutube) {
+  const videoRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+
+  const isYoutube =
+    data.youtube ||
+    (data.src &&
+      (data.src.includes("youtube") || data.src.includes("youtu.be")));
+  const isVimeo = data.src && data.src.includes("vimeo.com");
+  const isEmbed = isYoutube || isVimeo || data.embed;
+
+  // Extract YouTube embed URL
+  const getYoutubeEmbed = () => {
     const vid = data.youtube || data.src;
-    let embedUrl = vid;
-    if (!vid.includes("embed")) {
-      const videoId = vid.includes("youtu.be/")
-        ? vid.split("youtu.be/")[1]?.split("?")[0]
-        : vid.split("v=").pop()?.split("&")[0];
-      embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
-    }
-    return (
-      <div className="dd-video dd-video-player">
-        <div className="dd-video-frame">
-          <iframe
-            src={embedUrl}
-            title={data.caption || "Video"}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-            allowFullScreen
-          />
-        </div>
-        {data.caption && <div className="dd-video-caption">{data.caption}</div>}
-      </div>
-    );
-  }
+    if (vid.includes("embed/")) return vid;
+    const videoId = vid.includes("youtu.be/")
+      ? vid.split("youtu.be/")[1]?.split("?")[0]
+      : vid.split("v=").pop()?.split("&")[0];
+    return `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1`;
+  };
+
+  // Extract YouTube thumbnail
+  const getYoutubeThumbnail = () => {
+    const vid = data.youtube || data.src || "";
+    const videoId = vid.includes("youtu.be/")
+      ? vid.split("youtu.be/")[1]?.split("?")[0]
+      : vid.split("v=").pop()?.split("&")[0];
+    return videoId
+      ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+      : null;
+  };
+
+  const thumbnail =
+    data.poster || data.thumbnail || (isYoutube ? getYoutubeThumbnail() : null);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const onTime = () => setCurrentTime(v.currentTime);
+    const onMeta = () => setDuration(v.duration);
+    const onEnd = () => setIsPlaying(false);
+    v.addEventListener("timeupdate", onTime);
+    v.addEventListener("loadedmetadata", onMeta);
+    v.addEventListener("ended", onEnd);
+    return () => {
+      v.removeEventListener("timeupdate", onTime);
+      v.removeEventListener("loadedmetadata", onMeta);
+      v.removeEventListener("ended", onEnd);
+    };
+  }, [data.src]);
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (isPlaying) v.pause();
+    else v.play();
+    setIsPlaying(!isPlaying);
+  };
+
+  const seek = (e) => {
+    const v = videoRef.current;
+    if (!v || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    v.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
+  };
+
+  const fmtTime = (t) => {
+    if (!t || isNaN(t)) return "0:00";
+    const m = Math.floor(t / 60);
+    const s = Math.floor(t % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  const openExternal = () => {
+    const url = data.youtube || data.src;
+    if (url) window.open(url, "_blank");
+  };
+
   return (
-    <div className="dd-video dd-video-player">
-      <video
-        src={data.src}
-        poster={data.poster}
-        controls
-        controlsList="nodownload"
-        playsInline
-        preload="metadata"
-        className="dd-video-native"
-      />
-      {data.caption && <div className="dd-video-caption">{data.caption}</div>}
+    <div className="dd-video-immersive">
+      {thumbnail && (
+        <div
+          className="dd-video-bg"
+          style={{ backgroundImage: `url(${thumbnail})` }}
+        />
+      )}
+      <div className="dd-video-glass">
+        <div className="dd-video-viewport">
+          {isEmbed ? (
+            <iframe
+              src={isYoutube ? getYoutubeEmbed() : data.src}
+              title={data.title || data.caption || "Video"}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+              allowFullScreen
+              className="dd-video-iframe"
+            />
+          ) : (
+            <>
+              <video
+                ref={videoRef}
+                src={data.src}
+                poster={thumbnail}
+                playsInline
+                preload="metadata"
+                className="dd-video-element"
+                onClick={togglePlay}
+              />
+              {!isPlaying && (
+                <button className="dd-video-play-overlay" onClick={togglePlay}>
+                  <Play size={36} fill="white" />
+                </button>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="dd-video-info-bar">
+          <div className="dd-video-meta">
+            {(data.title || data.caption) && (
+              <div className="dd-video-title">{data.title || data.caption}</div>
+            )}
+            {data.channel && (
+              <div className="dd-video-channel">{data.channel}</div>
+            )}
+            {data.description && (
+              <div className="dd-video-desc">{data.description}</div>
+            )}
+            {(data.views || data.date || data.duration) && (
+              <div className="dd-video-stats">
+                {data.views && <span>{data.views} views</span>}
+                {data.date && <span>{data.date}</span>}
+                {data.duration && <span>{data.duration}</span>}
+              </div>
+            )}
+          </div>
+
+          {!isEmbed && (
+            <div className="dd-video-controls">
+              <div className="dd-video-progress" onClick={seek}>
+                <div
+                  className="dd-video-progress-fill"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className="dd-video-ctrl-row">
+                <button
+                  className="dd-ctrl-btn"
+                  onClick={() => {
+                    if (videoRef.current) videoRef.current.currentTime -= 10;
+                  }}
+                >
+                  <SkipBack size={14} />
+                </button>
+                <button
+                  className="dd-ctrl-btn dd-ctrl-play"
+                  onClick={togglePlay}
+                >
+                  {isPlaying ? (
+                    <Pause size={16} />
+                  ) : (
+                    <Play size={16} fill="white" />
+                  )}
+                </button>
+                <button
+                  className="dd-ctrl-btn"
+                  onClick={() => {
+                    if (videoRef.current) videoRef.current.currentTime += 10;
+                  }}
+                >
+                  <SkipForward size={14} />
+                </button>
+                <span className="dd-video-time">
+                  {fmtTime(currentTime)} / {fmtTime(duration)}
+                </span>
+                <div style={{ flex: 1 }} />
+                <button
+                  className="dd-ctrl-btn"
+                  onClick={() => {
+                    const v = videoRef.current;
+                    if (v) {
+                      v.muted = !isMuted;
+                      setIsMuted(!isMuted);
+                    }
+                  }}
+                >
+                  {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                </button>
+                <button
+                  className="dd-ctrl-btn"
+                  onClick={() => {
+                    if (videoRef.current?.requestFullscreen)
+                      videoRef.current.requestFullscreen();
+                  }}
+                >
+                  <Maximize size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="dd-video-action-row">
+            {(data.youtube || data.src) && (
+              <button className="dd-media-btn" onClick={openExternal}>
+                <ExternalLink size={12} /> Open
+              </button>
+            )}
+            {data.url && (
+              <a
+                className="dd-media-btn"
+                href={data.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink size={12} /> Source
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 function GallerySection({ data, onSelect }) {
   const images = data.images || data.items || [];
+  const [activeIdx, setActiveIdx] = useState(null);
+
   const cols =
     data.columns ||
     (images.length <= 2 ? images.length : images.length <= 4 ? 2 : 3);
+
+  const handleClick = (img, i) => {
+    const src = typeof img === "string" ? img : img.src || img.url || img.image;
+    const item =
+      typeof img === "string" ? { image: img } : { ...img, image: src };
+    setActiveIdx(i);
+    onSelect?.(item);
+  };
+
   return (
-    <div
-      className="dd-gallery"
-      style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-    >
-      {images.map((img, i) => {
-        const src =
-          typeof img === "string" ? img : img.src || img.url || img.image;
-        const caption =
-          typeof img === "string" ? null : img.caption || img.title;
-        const item =
-          typeof img === "string" ? { image: img } : { ...img, image: src };
-        return (
-          <div
-            key={i}
-            className="dd-gallery-item"
-            onClick={() => onSelect(item)}
-          >
-            <Img src={src} alt={caption} />
-            {caption && <div className="dd-gallery-caption">{caption}</div>}
-          </div>
-        );
-      })}
+    <div className="dd-gallery-immersive">
+      {data.title && <div className="dd-gallery-header">{data.title}</div>}
+      <div
+        className="dd-gallery-grid"
+        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+      >
+        {images.map((img, i) => {
+          const src =
+            typeof img === "string" ? img : img.src || img.url || img.image;
+          const caption =
+            typeof img === "string" ? null : img.caption || img.title;
+          return (
+            <div
+              key={i}
+              className={`dd-gallery-card ${activeIdx === i ? "dd-gallery-active" : ""}`}
+              onClick={() => handleClick(img, i)}
+            >
+              <div className="dd-gallery-img-wrap">
+                <Img src={src} alt={caption} />
+                <div className="dd-gallery-hover">
+                  <Expand size={18} />
+                </div>
+              </div>
+              {caption && <div className="dd-gallery-label">{caption}</div>}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

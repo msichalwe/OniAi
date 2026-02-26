@@ -226,8 +226,9 @@ Post JSON with title + sections array. A new widget window opens with the render
 You can spawn MULTIPLE display widgets at once (e.g. current weather + weekly forecast).
 Section types: hero, stats, cards, table, list, text, image, video, gallery, embed, progress, quote, code, kv, timeline, alert, weather, chart, search_results, article, divider
 NEVER use emojis in icons or headings. Use article section for detailed content. Use search_results for web search.
+MEDIA ROUTING: Video section has immersive glass player with dynamic background blur. For YouTube/Vimeo, set {"type":"video","src":"https://youtube.com/...","title":"...","channel":"...","views":"...","date":"..."}. For local videos use media-player widget directly. Image section has immersive glass design with blurred bg. Gallery section has glass grid with hover expand overlays.
 Example: {"title":"Weather","sections":[{"type":"stats","items":[{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12 km/h"},{"label":"UV","value":"High","color":"#f87171"}]},{"type":"weather","title":"This Week","items":[{"day":"Mon","high":"29°C","low":"18°C"},{"day":"Tue","high":"26°C","low":"17°C"}]}]}
-For search results use search_results section. For stock data use stats+chart+table. For media use image/video sections. For articles use article section.
+For search results use search_results section. For stock data use stats+chart+table. For articles use article section. For media always use display widget with video/image/gallery sections — they have immersive glass designs.
 
 **task** — {"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}
 **note** — {"action":"create|list|read","title":"...","content":"..."}

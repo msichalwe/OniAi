@@ -152,11 +152,60 @@ function registerAllCommands() {
   );
 
   // === system.media ===
+  // Smart media routing — local files go to media-player widget, online URLs
+  // (YouTube, Vimeo, etc.) open as display widgets with the immersive video section
   commandRegistry.register(
     "system.media.playVideo",
-    (src) => openWidget("media-player", { src }),
+    (src) => {
+      if (!src) return openWidget("media-player");
+      const isOnline = /^https?:\/\//i.test(src);
+      const isYoutube = /youtu\.?be/i.test(src);
+      const isVimeo = /vimeo\.com/i.test(src);
+
+      if (isYoutube || isVimeo) {
+        // Online video — open as immersive display widget
+        const title = isYoutube ? "YouTube" : "Vimeo";
+        openWidget("display", {}, { title: `${title} Player` });
+        // Post display data via API
+        setTimeout(async () => {
+          try {
+            const wins = useWindowStore.getState().windows || [];
+            const displayWin = [...wins]
+              .reverse()
+              .find((w) => w.widgetType === "display");
+            if (displayWin) {
+              await fetch(
+                `/api/oni/display/${displayWin.props?.displayId || displayWin.id}`,
+                {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    title: `${title} Player`,
+                    sections: [
+                      {
+                        type: "video",
+                        src,
+                        youtube: isYoutube ? src : undefined,
+                      },
+                    ],
+                  }),
+                },
+              );
+            }
+          } catch {
+            /* best effort */
+          }
+        }, 500);
+        return `Opening ${title} video`;
+      }
+
+      // Local or direct video file — use media player widget
+      openWidget("media-player", { src });
+      return `Playing: ${src}`;
+    },
     {
-      description: "Play a video",
+      description:
+        "Play a video — routes YouTube/Vimeo to display widget, local files to media player",
       widget: "media-player",
     },
   );
@@ -167,6 +216,38 @@ function registerAllCommands() {
       description: "Open media player",
       widget: "media-player",
     },
+  );
+  commandRegistry.register(
+    "system.media.openImage",
+    (src, caption) => {
+      if (!src) return "Usage: system.media.openImage(url, caption?)";
+      openWidget("display", {}, { title: caption || "Image Viewer" });
+      setTimeout(async () => {
+        try {
+          const wins = useWindowStore.getState().windows || [];
+          const displayWin = [...wins]
+            .reverse()
+            .find((w) => w.widgetType === "display");
+          if (displayWin) {
+            await fetch(
+              `/api/oni/display/${displayWin.props?.displayId || displayWin.id}`,
+              {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: caption || "Image",
+                  sections: [{ type: "image", src, caption }],
+                }),
+              },
+            );
+          }
+        } catch {
+          /* best effort */
+        }
+      }, 500);
+      return `Opening image: ${caption || src}`;
+    },
+    { description: "Open an image in the immersive viewer" },
   );
 
   // === document ===
