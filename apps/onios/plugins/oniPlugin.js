@@ -279,6 +279,25 @@ IMPORTANT: This is NOT a /actions/ endpoint — use the command registry instead
 - It stores credentials locally with encryption.
 - When user asks about passwords, logins, credentials, or saving a password, open the Password Manager.
 
+**device** → /actions/device — **MACHINE CONTROL.** Full access to the host machine. Screenshot + vision, running apps, automation, email, browser, documents.
+Phase 1 — Context:
+- Full context: \`{"action":"context"}\` → running apps, focused window, system info, clipboard
+- Screenshot: \`{"action":"screenshot","analyze":true,"prompt":"what am I looking at?"}\` → captures screen as base64 for vision AI analysis
+- Running apps: \`{"action":"apps"}\` → list all running applications
+- Focused window: \`{"action":"focused"}\` → current app name + window title
+- Installed apps: \`{"action":"installed"}\` → all apps on the machine
+- Clipboard: \`{"action":"clipboard"}\` (read) or \`{"action":"clipboard","write":"text"}\` (write)
+- System state: \`{"action":"system"}\` → OS, memory, CPU, battery, wifi, volume
+Phase 2 — App Control:
+- Open app: \`{"action":"open_app","app":"Microsoft Outlook"}\`
+- Automation: \`{"action":"automate","script":"tell app \\\\"Finder\\\\" to get name of every file of desktop"}\` — runs AppleScript (macOS), PowerShell (Windows), or shell (Linux)
+- Keystrokes: \`{"action":"keystroke","keys":"cmd+n"}\` or \`{"action":"keystroke","text":"Hello world"}\`
+Phase 3 — App-Specific:
+- Email (Mail/Outlook): \`{"action":"email","subaction":"inbox"}\` · \`{"action":"email","subaction":"send","to":"x@y.com","subject":"Hi","body":"..."}\` · \`{"action":"email","subaction":"outlook_inbox"}\`
+- Browser (Safari/Chrome): \`{"action":"browser","subaction":"tabs"}\` · \`{"action":"browser","subaction":"url"}\` · \`{"action":"browser","subaction":"content"}\` · \`{"action":"browser","subaction":"navigate","url":"..."}\`
+- Documents: \`{"action":"document","subaction":"create","name":"Report","content":"..."}\` · \`{"action":"document","subaction":"open","path":"..."}\`
+USE DEVICE when: user asks "what am I looking at?", "reply to that email", "open Word", "check my emails", "what apps are running?", "what's on my screen?", "copy this", etc. Take a screenshot to understand context, then use automation to act.
+
 **task** — {"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}
 **file** — {"action":"list|read|write","path":"...","content":"..."} — Use for file browsing, reading, writing. FAST. Prefer this + terminal over spacelens.
 **notification** — {"title":"...","message":"..."}
@@ -477,12 +496,27 @@ Open via: \`{"action":"open","widgetType":"password-manager"}\` → /actions/win
 Encrypted local vault. Users can add, view, search, copy, delete passwords.
 When user asks about passwords, logins, credentials → open password-manager.
 
+## Device Bridge → /actions/device (MACHINE CONTROL)
+Full access to the host machine. Screenshot + vision, app automation, email, browser, documents.
+- Context: \`{"action":"context"}\` — running apps, focused window, system, clipboard
+- Screenshot: \`{"action":"screenshot","analyze":true,"prompt":"what is on screen?"}\`
+- Apps: \`{"action":"apps"}\` · \`{"action":"focused"}\` · \`{"action":"installed"}\`
+- Clipboard: \`{"action":"clipboard"}\` (read) · \`{"action":"clipboard","write":"text"}\`
+- Open app: \`{"action":"open_app","app":"Microsoft Outlook"}\`
+- Automate: \`{"action":"automate","script":"tell app \\\\"Mail\\\\" to get subject of every message of inbox"}\`
+- Keystrokes: \`{"action":"keystroke","keys":"cmd+n"}\` · \`{"action":"keystroke","text":"Hello"}\`
+- Email: \`{"action":"email","subaction":"inbox|send|outlook_inbox"}\`
+- Browser: \`{"action":"browser","subaction":"tabs|url|content|navigate"}\`
+- Document: \`{"action":"document","subaction":"create|open","name":"Report","content":"..."}\`
+When user asks about their screen, emails, apps, or wants to control the machine → use device.
+
 ## Rules
 - ALWAYS use exec curl. NEVER hallucinate results.
 - **ALWAYS SPAWN VISUAL WIDGETS.** For almost every response, create a display widget. Even simple answers should be rendered visually. The user expects to SEE results on screen, not just chat text.
 - Use **display** action for ANY visual content instead of just describing it in text.
 - Use **drawing** action for diagrams, architecture, flowcharts, brainstorming, simulations.
 - Use **project** action when user asks to code/build something (website, app, script).
+- Use **device** action to understand and control the real machine (screenshot, apps, email, browser, automation).
 - Use **spacelens** ONLY for disk cleanup. For file search/list use terminal or file action.
 - Use **note** action when user wants to write/save notes.
 - Open **password-manager** via window action for credential management.
@@ -908,6 +942,10 @@ export default function oniPlugin() {
                             result = await handleSpaceLensAction(body);
                             break;
                         }
+                        case 'device': {
+                            result = await handleDeviceAction(body);
+                            break;
+                        }
                         default: json(res, { error: `Unknown action: ${actionType}` }, 400); return;
                     }
 
@@ -1059,6 +1097,8 @@ function mapActionToCommand(actionType, body, result) {
             if (pa === 'open' && body.path) return `code.openProject("${esc(body.path)}")`;
             return null;
         }
+        case 'device':
+            return null; // Device actions are data-only, no frontend command needed
         default:
             return null;
     }
@@ -1597,5 +1637,387 @@ async function handleSpaceLensAction(body) {
         }
         default:
             return { error: `Unknown spacelens action: ${action}` };
+    }
+}
+
+// ─── Device Bridge Handler (All Phases) ─────────────
+
+const SCREENSHOT_DIR = path.join(os.tmpdir(), 'onios-screenshots');
+const platform = os.platform(); // 'darwin' | 'win32' | 'linux'
+
+async function handleDeviceAction(body) {
+    const { action = 'context' } = body;
+    switch (action) {
+
+        // ═══ PHASE 1: CONTEXT ═══════════════════════════
+
+        case 'context': {
+            const [apps, focused, sysInfo, clip] = await Promise.all([
+                _getRunningApps(),
+                _getFocusedWindow(),
+                _getSystemState(),
+                _getClipboard(),
+            ]);
+            return { success: true, platform, apps, focused, system: sysInfo, clipboard: clip };
+        }
+
+        case 'screenshot': {
+            ensureDir(SCREENSHOT_DIR);
+            const filePath = path.join(SCREENSHOT_DIR, `screen_${Date.now()}.png`);
+            try {
+                if (platform === 'darwin') {
+                    execSync(`screencapture -x -C "${filePath}"`, { timeout: 10000 });
+                } else if (platform === 'win32') {
+                    execSync(`powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::PrimaryScreen | ForEach-Object { $bmp = New-Object System.Drawing.Bitmap($_.Bounds.Width, $_.Bounds.Height); [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($_.Bounds.Location, [System.Drawing.Point]::Empty, $_.Bounds.Size); $bmp.Save('${filePath}') }"`, { timeout: 10000 });
+                } else {
+                    execSync(`import -window root "${filePath}" 2>/dev/null || scrot "${filePath}" 2>/dev/null`, { timeout: 10000 });
+                }
+                // Read as base64 for vision analysis
+                const base64 = fs.readFileSync(filePath).toString('base64');
+                const sizeKB = Math.round(fs.statSync(filePath).size / 1024);
+                // Auto-delete after 60s
+                setTimeout(() => { try { fs.unlinkSync(filePath); } catch {} }, 60000);
+                return {
+                    success: true,
+                    path: filePath,
+                    base64: body.includeBase64 !== false ? base64 : undefined,
+                    mimeType: 'image/png',
+                    sizeKB,
+                    message: `Screenshot captured (${sizeKB}KB)`,
+                    prompt: body.prompt || body.analyze ? 'Describe what you see on this screen in detail.' : undefined,
+                };
+            } catch (err) {
+                return { error: `Screenshot failed: ${err.message}` };
+            }
+        }
+
+        case 'apps': {
+            const apps = await _getRunningApps();
+            return { success: true, apps, count: apps.length };
+        }
+
+        case 'focused': {
+            const focused = await _getFocusedWindow();
+            return { success: true, ...focused };
+        }
+
+        case 'installed': {
+            const installed = _getInstalledApps();
+            return { success: true, apps: installed, count: installed.length };
+        }
+
+        case 'clipboard': {
+            if (body.write !== undefined) {
+                _setClipboard(String(body.write));
+                return { success: true, message: 'Clipboard updated' };
+            }
+            const content = _getClipboard();
+            return { success: true, content };
+        }
+
+        case 'system': {
+            const sysInfo = _getSystemState();
+            return { success: true, ...sysInfo };
+        }
+
+        // ═══ PHASE 2: APP CONTROL ═══════════════════════
+
+        case 'open_app': {
+            if (!body.app) return { error: 'app name required' };
+            try {
+                if (platform === 'darwin') {
+                    execSync(`open -a "${body.app}" 2>/dev/null`, { timeout: 10000 });
+                } else if (platform === 'win32') {
+                    execSync(`start "" "${body.app}"`, { timeout: 10000, shell: true });
+                } else {
+                    execSync(`${body.app} &`, { timeout: 5000, shell: true });
+                }
+                return { success: true, message: `Opened ${body.app}` };
+            } catch (err) {
+                return { error: `Failed to open ${body.app}: ${err.message}` };
+            }
+        }
+
+        case 'automate': {
+            if (!body.script) return { error: 'script required' };
+            try {
+                let output;
+                if (platform === 'darwin') {
+                    output = execSync(`osascript -e '${body.script.replace(/'/g, "'\\''")}'`, { encoding: 'utf-8', timeout: 30000 });
+                } else if (platform === 'win32') {
+                    output = execSync(`powershell -Command "${body.script.replace(/"/g, '\\"')}"`, { encoding: 'utf-8', timeout: 30000 });
+                } else {
+                    output = execSync(body.script, { encoding: 'utf-8', timeout: 30000 });
+                }
+                return { success: true, output: output.trim(), message: 'Script executed' };
+            } catch (err) {
+                return { error: `Automation failed: ${err.message}`, output: err.stdout?.toString().trim() || '' };
+            }
+        }
+
+        case 'keystroke': {
+            try {
+                if (platform === 'darwin') {
+                    if (body.text) {
+                        execSync(`osascript -e 'tell application "System Events" to keystroke "${body.text.replace(/"/g, '\\"')}"'`, { timeout: 5000 });
+                    }
+                    if (body.keys) {
+                        // Convert "cmd+n" → 'keystroke "n" using {command down}'
+                        const script = _buildKeystrokeScript(body.keys);
+                        execSync(`osascript -e '${script}'`, { timeout: 5000 });
+                    }
+                } else if (platform === 'win32') {
+                    if (body.text) {
+                        execSync(`powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('${body.text}')"`, { timeout: 5000 });
+                    }
+                } else {
+                    if (body.text) execSync(`xdotool type -- "${body.text}"`, { timeout: 5000 });
+                    if (body.keys) execSync(`xdotool key ${body.keys.replace(/\+/g, '+')}`, { timeout: 5000 });
+                }
+                return { success: true, message: `Keystrokes sent` };
+            } catch (err) {
+                return { error: `Keystroke failed: ${err.message}` };
+            }
+        }
+
+        // ═══ PHASE 3: APP-SPECIFIC INTEGRATIONS ═════════
+
+        case 'email': {
+            return await _handleEmail(body);
+        }
+
+        case 'browser': {
+            return await _handleBrowser(body);
+        }
+
+        case 'document': {
+            return await _handleDocument(body);
+        }
+
+        default:
+            return { error: `Unknown device action: ${action}` };
+    }
+}
+
+// ─── Device Helpers ─────────────────────────────────
+
+function _getRunningApps() {
+    try {
+        if (platform === 'darwin') {
+            const raw = execSync(`osascript -e 'tell application "System Events" to get name of every application process whose background only is false'`, { encoding: 'utf-8', timeout: 5000 });
+            return raw.trim().split(', ').filter(Boolean).map(name => ({ name }));
+        } else if (platform === 'win32') {
+            const raw = execSync('tasklist /FO CSV /NH', { encoding: 'utf-8', timeout: 5000 });
+            const seen = new Set();
+            return raw.trim().split('\n').map(line => {
+                const name = line.split(',')[0]?.replace(/"/g, '').trim();
+                if (!name || seen.has(name)) return null;
+                seen.add(name);
+                return { name };
+            }).filter(Boolean).slice(0, 50);
+        } else {
+            const raw = execSync("wmctrl -l 2>/dev/null || xdotool search --name '' getwindowname 2>/dev/null", { encoding: 'utf-8', timeout: 5000 });
+            return raw.trim().split('\n').filter(Boolean).map(name => ({ name: name.trim() }));
+        }
+    } catch { return []; }
+}
+
+function _getFocusedWindow() {
+    try {
+        if (platform === 'darwin') {
+            const app = execSync(`osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true'`, { encoding: 'utf-8', timeout: 3000 }).trim();
+            let title = '';
+            try {
+                title = execSync(`osascript -e 'tell application "System Events" to get title of front window of first application process whose frontmost is true'`, { encoding: 'utf-8', timeout: 3000 }).trim();
+            } catch { /* some apps don't expose window title */ }
+            return { app, title, platform: 'macOS' };
+        } else if (platform === 'win32') {
+            const title = execSync('powershell -Command "(Get-Process | Where-Object {$_.MainWindowTitle} | Select-Object -First 1).MainWindowTitle"', { encoding: 'utf-8', timeout: 3000 }).trim();
+            return { app: title.split(' - ').pop() || title, title, platform: 'Windows' };
+        } else {
+            const title = execSync("xdotool getactivewindow getwindowname 2>/dev/null", { encoding: 'utf-8', timeout: 3000 }).trim();
+            return { app: title, title, platform: 'Linux' };
+        }
+    } catch { return { app: 'unknown', title: '', platform }; }
+}
+
+function _getInstalledApps() {
+    try {
+        if (platform === 'darwin') {
+            const raw = execSync('ls /Applications/ 2>/dev/null | grep ".app$"', { encoding: 'utf-8', timeout: 5000 });
+            return raw.trim().split('\n').filter(Boolean).map(name => ({ name: name.replace('.app', '') }));
+        } else if (platform === 'win32') {
+            const raw = execSync('powershell -Command "Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* | Select-Object DisplayName | Format-Table -HideTableHeaders"', { encoding: 'utf-8', timeout: 10000 });
+            return raw.trim().split('\n').filter(Boolean).map(name => ({ name: name.trim() })).filter(a => a.name);
+        } else {
+            const raw = execSync('ls /usr/share/applications/ 2>/dev/null | grep ".desktop$"', { encoding: 'utf-8', timeout: 5000 });
+            return raw.trim().split('\n').filter(Boolean).map(name => ({ name: name.replace('.desktop', '') }));
+        }
+    } catch { return []; }
+}
+
+function _getClipboard() {
+    try {
+        if (platform === 'darwin') return execSync('pbpaste 2>/dev/null', { encoding: 'utf-8', timeout: 3000, maxBuffer: 1024 * 100 }).substring(0, 5000);
+        if (platform === 'win32') return execSync('powershell -Command "Get-Clipboard"', { encoding: 'utf-8', timeout: 3000 }).substring(0, 5000);
+        return execSync('xclip -selection clipboard -o 2>/dev/null || xsel --clipboard --output 2>/dev/null', { encoding: 'utf-8', timeout: 3000 }).substring(0, 5000);
+    } catch { return ''; }
+}
+
+function _setClipboard(text) {
+    try {
+        if (platform === 'darwin') execSync(`echo "${text.replace(/"/g, '\\"')}" | pbcopy`, { timeout: 3000 });
+        else if (platform === 'win32') execSync(`powershell -Command "Set-Clipboard -Value '${text.replace(/'/g, "''")}'"`  , { timeout: 3000 });
+        else execSync(`echo "${text.replace(/"/g, '\\"')}" | xclip -selection clipboard`, { timeout: 3000 });
+    } catch { /* ignore */ }
+}
+
+function _getSystemState() {
+    const info = { platform: os.platform(), arch: os.arch(), hostname: os.hostname(), uptime: Math.round(os.uptime()), cpus: os.cpus().length, totalMemory: os.totalmem(), freeMemory: os.freemem() };
+    try {
+        if (platform === 'darwin') {
+            try { info.battery = JSON.parse(execSync('pmset -g batt 2>/dev/null | grep -o "[0-9]*%" | head -1', { encoding: 'utf-8', timeout: 3000 }).trim() || '""'); } catch { /* no battery */ }
+            try { info.volume = execSync('osascript -e "output volume of (get volume settings)"', { encoding: 'utf-8', timeout: 3000 }).trim(); } catch {}
+            try { info.wifi = execSync('/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport -I 2>/dev/null | grep " SSID" | awk \'{print $2}\'', { encoding: 'utf-8', timeout: 3000 }).trim(); } catch {}
+            try { info.displays = execSync('system_profiler SPDisplaysDataType 2>/dev/null | grep Resolution', { encoding: 'utf-8', timeout: 5000 }).trim(); } catch {}
+        }
+    } catch {}
+    return info;
+}
+
+function _buildKeystrokeScript(keys) {
+    const parts = keys.toLowerCase().split('+').map(k => k.trim());
+    const key = parts.pop();
+    const modifiers = [];
+    if (parts.includes('cmd') || parts.includes('command')) modifiers.push('command down');
+    if (parts.includes('shift')) modifiers.push('shift down');
+    if (parts.includes('alt') || parts.includes('option')) modifiers.push('option down');
+    if (parts.includes('ctrl') || parts.includes('control')) modifiers.push('control down');
+    const using = modifiers.length > 0 ? ` using {${modifiers.join(', ')}}` : '';
+    return `tell application "System Events" to keystroke "${key}"${using}`;
+}
+
+// ─── Phase 3: App-Specific Helpers ──────────────────
+
+async function _handleEmail(body) {
+    const emailAction = body.subaction || 'inbox';
+    if (platform !== 'darwin') return { error: 'Email automation currently macOS only (AppleScript)' };
+    try {
+        switch (emailAction) {
+            case 'inbox': {
+                const script = `
+                    tell application "Mail"
+                        set msgList to {}
+                        repeat with msg in (messages of inbox)
+                            set end of msgList to {subject:subject of msg, sender:sender of msg, dateReceived:date received of msg as string, readStatus:read status of msg}
+                            if (count of msgList) >= ${body.limit || 10} then exit repeat
+                        end repeat
+                        return msgList
+                    end tell`;
+                const output = execSync(`osascript -e '${script.replace(/'/g, "'\\''")}'`, { encoding: 'utf-8', timeout: 15000 });
+                return { success: true, emails: output.trim(), message: 'Inbox retrieved' };
+            }
+            case 'send': {
+                if (!body.to || !body.subject || !body.body) return { error: 'to, subject, body required' };
+                const script = `
+                    tell application "Mail"
+                        set newMsg to make new outgoing message with properties {subject:"${body.subject}", content:"${body.body}", visible:true}
+                        tell newMsg to make new to recipient at end of to recipients with properties {address:"${body.to}"}
+                        ${body.sendNow ? 'send newMsg' : ''}
+                    end tell`;
+                execSync(`osascript -e '${script.replace(/'/g, "'\\''")}'`, { timeout: 10000 });
+                return { success: true, message: body.sendNow ? `Email sent to ${body.to}` : `Email draft created for ${body.to}` };
+            }
+            case 'outlook_inbox': {
+                const script = `tell application "Microsoft Outlook" to get {subject, sender} of first ${body.limit || 10} messages of inbox`;
+                const output = execSync(`osascript -e '${script}'`, { encoding: 'utf-8', timeout: 15000 });
+                return { success: true, emails: output.trim(), message: 'Outlook inbox retrieved' };
+            }
+            default:
+                return { error: `Unknown email action: ${emailAction}` };
+        }
+    } catch (err) {
+        return { error: `Email automation failed: ${err.message}` };
+    }
+}
+
+async function _handleBrowser(body) {
+    const browserAction = body.subaction || 'tabs';
+    if (platform !== 'darwin') return { error: 'Browser automation currently macOS only (AppleScript)' };
+    try {
+        const app = body.browser || 'Safari';
+        switch (browserAction) {
+            case 'tabs': {
+                const script = app === 'Safari'
+                    ? 'tell application "Safari" to get {name, URL} of every tab of every window'
+                    : 'tell application "Google Chrome" to get {title, URL} of every tab of every window';
+                const output = execSync(`osascript -e '${script}'`, { encoding: 'utf-8', timeout: 10000 });
+                return { success: true, tabs: output.trim(), message: `${app} tabs retrieved` };
+            }
+            case 'url': {
+                const script = app === 'Safari'
+                    ? 'tell application "Safari" to get URL of front document'
+                    : 'tell application "Google Chrome" to get URL of active tab of front window';
+                const output = execSync(`osascript -e '${script}'`, { encoding: 'utf-8', timeout: 5000 });
+                return { success: true, url: output.trim() };
+            }
+            case 'navigate': {
+                if (!body.url) return { error: 'url required' };
+                const script = app === 'Safari'
+                    ? `tell application "Safari" to set URL of front document to "${body.url}"`
+                    : `tell application "Google Chrome" to set URL of active tab of front window to "${body.url}"`;
+                execSync(`osascript -e '${script}'`, { timeout: 5000 });
+                return { success: true, message: `Navigated to ${body.url}` };
+            }
+            case 'content': {
+                const script = app === 'Safari'
+                    ? 'tell application "Safari" to do JavaScript "document.body.innerText.substring(0,3000)" in front document'
+                    : 'tell application "Google Chrome" to execute front window\'s active tab javascript "document.body.innerText.substring(0,3000)"';
+                const output = execSync(`osascript -e '${script}'`, { encoding: 'utf-8', timeout: 10000 });
+                return { success: true, content: output.trim().substring(0, 3000) };
+            }
+            default:
+                return { error: `Unknown browser action: ${browserAction}` };
+        }
+    } catch (err) {
+        return { error: `Browser automation failed: ${err.message}` };
+    }
+}
+
+async function _handleDocument(body) {
+    const docAction = body.subaction || 'create';
+    if (platform !== 'darwin') return { error: 'Document automation currently macOS only (AppleScript)' };
+    try {
+        switch (docAction) {
+            case 'create': {
+                const app = body.app || 'TextEdit';
+                const content = body.content || '';
+                const filePath = body.path || path.join(os.homedir(), 'Documents', `${body.name || 'Untitled'}.${body.ext || 'txt'}`);
+                fs.writeFileSync(filePath, content, 'utf-8');
+                execSync(`open "${filePath}"`, { timeout: 5000 });
+                return { success: true, path: filePath, message: `Document created and opened: ${path.basename(filePath)}` };
+            }
+            case 'open': {
+                if (!body.path) return { error: 'path required' };
+                execSync(`open "${body.path}"`, { timeout: 5000 });
+                return { success: true, message: `Opened ${path.basename(body.path)}` };
+            }
+            case 'pages_create': {
+                const script = `
+                    tell application "Pages"
+                        activate
+                        set newDoc to make new document
+                        tell newDoc
+                            set body text to "${(body.content || '').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"
+                        end tell
+                    end tell`;
+                execSync(`osascript -e '${script.replace(/'/g, "'\\''")}'`, { timeout: 10000 });
+                return { success: true, message: 'Pages document created' };
+            }
+            default:
+                return { error: `Unknown document action: ${docAction}` };
+        }
+    } catch (err) {
+        return { error: `Document automation failed: ${err.message}` };
     }
 }

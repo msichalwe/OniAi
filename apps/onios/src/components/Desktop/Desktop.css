@@ -204,7 +204,7 @@
   transform: scale(0.93);
 }
 
-/* Core — warm nude brown gradient sphere */
+/* Core — warm nude sphere (light, 3D, matches original OniWidget orb) */
 .oni-orb-core {
   width: 56px;
   height: 56px;
@@ -212,29 +212,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.85);
   z-index: 2;
   position: relative;
   transition: all 0.4s ease;
-  /* Nude brown sphere with highlight/shadow for 3D look */
   background:
     radial-gradient(
-      circle at 35% 30%,
-      rgba(240, 218, 195, 0.9) 0%,
-      transparent 50%
+      circle at 38% 32%,
+      rgba(255, 240, 225, 1) 0%,
+      rgba(245, 225, 205, 0.95) 20%,
+      transparent 55%
     ),
     radial-gradient(
-      circle at 65% 70%,
-      rgba(190, 155, 125, 0.7) 0%,
-      transparent 50%
+      circle at 62% 68%,
+      rgba(210, 180, 155, 0.8) 0%,
+      transparent 45%
     ),
     radial-gradient(
       circle at 50% 50%,
-      rgba(210, 180, 155, 0.85) 0%,
-      rgba(165, 130, 100, 0.7) 50%,
-      rgba(120, 88, 62, 0.5) 100%
+      rgba(228, 205, 185, 1) 0%,
+      rgba(205, 178, 155, 0.95) 40%,
+      rgba(180, 150, 125, 0.85) 100%
     );
   background-size:
     200% 200%,

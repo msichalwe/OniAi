@@ -340,7 +340,9 @@ export default function Desktop() {
         <div className="oni-orb-ring" />
         <div className="oni-orb-ring oni-orb-ring-2" />
         <div className="oni-orb-core">
-          {voiceState.state === "ACTIVATED" ? <Mic size={18} /> : "O"}
+          {voiceState.state === "ACTIVATED" && (
+            <Mic size={16} color="rgba(120,88,62,0.8)" />
+          )}
         </div>
         {voiceState.state === "ACTIVATED" && voiceState.transcript && (
           <div className="oni-orb-tooltip">{voiceState.transcript}</div>

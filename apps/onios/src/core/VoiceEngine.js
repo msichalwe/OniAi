@@ -222,19 +222,22 @@ class VoiceEngine {
     };
 
     rec.onerror = (event) => {
-      if (event.error === 'aborted' || event.error === 'no-speech') return;
-      console.warn('[VoiceEngine] Error:', event.error);
-      // Auto-restart on recoverable errors
-      if (event.error === 'network' || event.error === 'audio-capture') {
-        this._scheduleRestart();
+      if (event.error === 'aborted') return;
+      if (event.error === 'no-speech') {
+        // No speech detected — just restart silently
+        this._scheduleRestart(100);
+        return;
       }
+      console.warn('[VoiceEngine] Error:', event.error);
+      // Auto-restart on all recoverable errors
+      this._scheduleRestart(event.error === 'network' ? 2000 : 500);
     };
 
     rec.onend = () => {
       // Auto-restart if we're supposed to be listening
       if (this._manualStop) return;
       if (this.state !== 'OFF') {
-        this._scheduleRestart();
+        this._scheduleRestart(150);
       }
     };
 
@@ -247,7 +250,7 @@ class VoiceEngine {
     }
   }
 
-  _scheduleRestart() {
+  _scheduleRestart(delay = 300) {
     if (this._manualStop) return;
     if (this._restartTimeout) return;
     this._restartTimeout = setTimeout(() => {
@@ -255,7 +258,7 @@ class VoiceEngine {
       if (this.state !== 'OFF' && !this._manualStop) {
         this._startRecognition();
       }
-    }, 300);
+    }, delay);
   }
 
   _handleFinalTranscript(text) {
