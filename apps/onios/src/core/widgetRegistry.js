@@ -1,6 +1,33 @@
 /**
  * widgetRegistry — Maps widget type strings to React components and metadata.
  * Adding a new widget is just adding an entry here + creating the component.
+ *
+ * ── Core Widgets (dedicated UI, purpose-built) ──────────────
+ *   file-explorer   — Browse and manage files
+ *   terminal        — Shell sessions (multiple instances)
+ *   maps            — Location / mapping (singleton)
+ *   media-player    — Audio/video playback, YouTube (multiple instances)
+ *   notes           — AI-managed notes (singleton)
+ *   clock           — Clock & system info (singleton)
+ *   calculator      — Calculator (singleton)
+ *   activity-log    — Gateway activity feed (singleton)
+ *   docs            — Documentation viewer (singleton)
+ *   settings        — App settings (singleton)
+ *   storage         — Storage manager (singleton)
+ *   code-editor     — Code editing (multiple instances)
+ *   document-viewer — Document reader (multiple instances)
+ *   camera          — Camera capture (singleton)
+ *   oni-chat        — Main AI chat (singleton)
+ *
+ * ── Dynamic Widget (catch-all for everything else) ──────────
+ *   display         — Universal JSON renderer (multiple instances)
+ *                     Handles: weather, stocks, sports, news, search results,
+ *                     forex, lists, tables, code, quotes, timelines, alerts,
+ *                     charts, progress bars, galleries, videos, embeds, etc.
+ *                     AI sends structured JSON sections → widget renders them.
+ *
+ * All use cases NOT covered by a core widget should use the dynamic 'display'
+ * widget. The AI can spawn multiple display instances simultaneously.
  */
 
 import { Folder, Terminal, Film, FileText, Clock, Calculator, Activity, BookOpen, Settings, Eye, Code, Map, FileSpreadsheet, CalendarDays, ListTodo, Shield, Workflow, Database, MessageSquare, Camera, Bot, LayoutDashboard } from 'lucide-react';
