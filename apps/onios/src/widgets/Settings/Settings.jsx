@@ -16,6 +16,8 @@ import {
   Info,
   Mic,
   MicOff,
+  Monitor,
+  Tablet,
 } from "lucide-react";
 import useThemeStore from "../../stores/themeStore";
 import { gateway } from "../../gateway/GatewayClient";
@@ -445,7 +447,11 @@ export default function Settings() {
   const setWallpaper = useThemeStore((s) => s.setWallpaper);
   const setCustomWallpaper = useThemeStore((s) => s.setCustomWallpaper);
   const clearCustomWallpaper = useThemeStore((s) => s.clearCustomWallpaper);
+  const layoutMode = useThemeStore((s) => s.layoutMode);
+  const layoutSwitching = useThemeStore((s) => s.layoutSwitching);
+  const setLayoutMode = useThemeStore((s) => s.setLayoutMode);
   const isDark = theme === "dark";
+  const isTablet = layoutMode === "tablet";
   const fileInputRef = useRef(null);
 
   // Voice always-listening state
@@ -513,6 +519,68 @@ export default function Settings() {
               {isDark ? <Moon size={12} /> : <Sun size={12} />}
             </div>
           </button>
+        </div>
+      </div>
+
+      {/* Layout Mode */}
+      <div className="settings-section">
+        <h3 className="settings-section-title">Layout Mode</h3>
+        <div className="settings-row">
+          <div className="settings-row-info">
+            <span className="settings-row-label">
+              {isTablet ? "Tablet Mode" : "Desktop Mode"}
+            </span>
+            <span className="settings-row-desc">
+              {isTablet
+                ? "Full-screen tiles with persistent AI chat"
+                : "Free-form draggable windows"}
+            </span>
+          </div>
+          <button
+            className={`settings-toggle ${isTablet ? "active" : ""}`}
+            onClick={() => setLayoutMode(isTablet ? "desktop" : "tablet")}
+            disabled={layoutSwitching}
+          >
+            <div className="settings-toggle-thumb">
+              {layoutSwitching ? (
+                <Loader2 size={12} className="oni-spin" />
+              ) : isTablet ? (
+                <Tablet size={12} />
+              ) : (
+                <Monitor size={12} />
+              )}
+            </div>
+          </button>
+        </div>
+        <div className="settings-layout-preview">
+          <div
+            className={`settings-layout-card ${!isTablet ? "selected" : ""}`}
+            onClick={() =>
+              !layoutSwitching &&
+              layoutMode !== "desktop" &&
+              setLayoutMode("desktop")
+            }
+          >
+            <div className="settings-layout-icon">
+              <Monitor size={20} />
+            </div>
+            <span className="settings-layout-label">Desktop</span>
+            <span className="settings-layout-desc">Windows & taskbar</span>
+          </div>
+          <div
+            className={`settings-layout-card ${isTablet ? "selected" : ""}`}
+            onClick={() =>
+              !layoutSwitching &&
+              layoutMode !== "tablet" &&
+              setLayoutMode("tablet")
+            }
+          >
+            <div className="settings-layout-icon">
+              <Tablet size={20} />
+            </div>
+            <span className="settings-layout-label">Tablet</span>
+            <span className="settings-layout-desc">Tiles + AI chat</span>
+          </div>
         </div>
       </div>
 

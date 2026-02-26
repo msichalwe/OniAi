@@ -1,0 +1,475 @@
+/**
+ * TabletDesktop.css — Netflix-style tablet/kiosk layout.
+ *
+ * Full-screen layout:
+ *   - Top status bar (40px)
+ *   - Left chat panel (~32%)
+ *   - Right tile grid (~68%)
+ */
+
+/* ─── Root Container ─────────────────────────────────── */
+
+.tablet-desktop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+
+/* ─── Top Status Bar ─────────────────────────────────── */
+
+.tablet-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 20px;
+  background: rgba(0, 0, 0, 0.25);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.tablet-status-left {
+  display: flex;
+  align-items: center;
+}
+
+.tablet-status-logo {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.tablet-status-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.tablet-status-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.02em;
+}
+
+.tablet-status-date {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.tablet-status-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Voice indicator in status bar */
+.tablet-voice-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tablet-voice-indicator:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.tablet-voice-indicator.tablet-voice-activated {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  animation: tablet-mic-pulse 1.5s ease-in-out infinite;
+}
+
+.tablet-voice-indicator.tablet-voice-processing {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.tablet-voice-indicator.tablet-voice-follow_up {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+@keyframes tablet-mic-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+  }
+}
+
+/* ─── Main Content ───────────────────────────────────── */
+
+.tablet-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ─── Left: Chat Panel ───────────────────────────────── */
+
+.tablet-chat-panel {
+  width: 34%;
+  min-width: 320px;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.2);
+  -webkit-backdrop-filter: blur(30px);
+  backdrop-filter: blur(30px);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.tablet-chat-panel > * {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── Right: Tiles Panel ─────────────────────────────── */
+
+.tablet-tiles-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 20px;
+  gap: 16px;
+}
+
+/* Scrollbar */
+.tablet-tiles-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tablet-tiles-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tablet-tiles-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+/* ─── Welcome/Greeting ───────────────────────────────── */
+
+.tablet-tiles-welcome {
+  padding: 20px 0 8px 0;
+}
+
+.tablet-tiles-greeting {
+  font-size: 26px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 6px 0;
+}
+
+.tablet-tiles-sub {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+}
+
+/* ─── Active Widget Tiles ────────────────────────────── */
+
+.tablet-tile {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+}
+
+.tablet-tile-active {
+  min-height: 280px;
+  max-height: 500px;
+}
+
+.tablet-tile:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.tablet-tile-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-shrink: 0;
+}
+
+.tablet-tile-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.tablet-tile-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tablet-tile-close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  color: rgba(239, 68, 68, 0.8);
+}
+
+.tablet-tile-content {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+/* ─── Quick-Launch Grid ──────────────────────────────── */
+
+.tablet-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+}
+
+.tablet-quick-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 10px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tablet-quick-tile:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.tablet-quick-tile:active {
+  transform: translateY(0);
+}
+
+.tablet-quick-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tablet-quick-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════
+   Layout Mode Transition Overlay
+   ═══════════════════════════════════════════════ */
+
+.layout-switch-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: rgba(0, 0, 0, 0.85);
+  -webkit-backdrop-filter: blur(30px);
+  backdrop-filter: blur(30px);
+  animation: layout-fade-in 0.3s ease;
+}
+
+.layout-switch-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: rgba(129, 140, 248, 0.8);
+  border-radius: 50%;
+  animation: layout-spin 0.8s linear infinite;
+}
+
+.layout-switch-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+}
+
+@keyframes layout-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes layout-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   Light Theme Overrides
+   ═══════════════════════════════════════════════ */
+
+[data-theme="light"] .tablet-status-bar {
+  background: rgba(255, 255, 255, 0.6);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .tablet-status-logo {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] .tablet-status-time {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="light"] .tablet-status-date {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .tablet-voice-indicator {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .tablet-voice-indicator:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="light"] .tablet-chat-panel {
+  background: rgba(255, 255, 255, 0.5);
+  border-right-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .tablet-tiles-panel::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .tablet-tiles-greeting {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+[data-theme="light"] .tablet-tiles-sub {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .tablet-tile {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .tablet-tile:hover {
+  background: rgba(255, 255, 255, 0.75);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .tablet-tile-header {
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom-color: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .tablet-tile-title {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="light"] .tablet-tile-close {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .tablet-tile-close:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: rgba(239, 68, 68, 0.7);
+}
+
+[data-theme="light"] .tablet-quick-tile {
+  background: rgba(255, 255, 255, 0.5);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .tablet-quick-tile:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .tablet-quick-label {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="light"] .layout-switch-overlay {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+[data-theme="light"] .layout-switch-spinner {
+  border-color: rgba(0, 0, 0, 0.1);
+  border-top-color: rgba(79, 70, 229, 0.8);
+}
+
+[data-theme="light"] .layout-switch-text {
+  color: rgba(0, 0, 0, 0.5);
+}

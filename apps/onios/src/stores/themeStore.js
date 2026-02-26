@@ -11,6 +11,19 @@ const useThemeStore = create((set, get) => ({
     wallpaper: localStorage.getItem('onios-wallpaper') || 'gradient-dusk',
     // Custom wallpaper is a data URL (base64 image)
     customWallpaper: localStorage.getItem('onios-custom-wallpaper') || null,
+    // Layout mode: 'desktop' (free-form windows) or 'tablet' (Netflix-style tiles)
+    layoutMode: localStorage.getItem('onios-layout-mode') || 'desktop',
+    layoutSwitching: false,
+
+    setLayoutMode: (mode) => {
+        set({ layoutSwitching: true });
+        setTimeout(() => {
+            localStorage.setItem('onios-layout-mode', mode);
+            set({ layoutMode: mode, layoutSwitching: false });
+            document.documentElement.setAttribute('data-layout', mode);
+            eventBus.emit('layout:changed', { mode });
+        }, 800);
+    },
 
     setTheme: (theme) => {
         localStorage.setItem('onios-theme', theme);

@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState } from "react";
 import Desktop from "./components/Desktop/Desktop";
+import TabletDesktop from "./components/TabletDesktop/TabletDesktop";
 import CommandBar from "./components/CommandBar/CommandBar";
 import Taskbar from "./components/Taskbar/Taskbar";
 import Notifications from "./components/Notifications/Notifications";
@@ -2923,6 +2924,8 @@ export default function App() {
   const isCommandBarOpen = useCommandStore((s) => s.isCommandBarOpen);
   const toggleCommandBar = useCommandStore((s) => s.toggleCommandBar);
   const theme = useThemeStore((s) => s.theme);
+  const layoutMode = useThemeStore((s) => s.layoutMode);
+  const layoutSwitching = useThemeStore((s) => s.layoutSwitching);
   const [oniVisible, setOniVisible] = useState(true);
 
   useEffect(() => {
@@ -3028,12 +3031,36 @@ export default function App() {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
+  // Set data-layout attribute on mount and mode change
+  useEffect(() => {
+    document.documentElement.setAttribute("data-layout", layoutMode);
+  }, [layoutMode]);
+
   return (
     <>
-      <Desktop />
-      <Taskbar />
-      <CommandBar />
-      <Notifications />
+      {layoutSwitching && (
+        <div className="layout-switch-overlay">
+          <div className="layout-switch-spinner" />
+          <span className="layout-switch-text">
+            Switching to {layoutMode === "desktop" ? "Tablet" : "Desktop"}{" "}
+            mode...
+          </span>
+        </div>
+      )}
+      {layoutMode === "tablet" ? (
+        <>
+          <TabletDesktop />
+          <CommandBar />
+          <Notifications />
+        </>
+      ) : (
+        <>
+          <Desktop />
+          <Taskbar />
+          <CommandBar />
+          <Notifications />
+        </>
+      )}
     </>
   );
 }

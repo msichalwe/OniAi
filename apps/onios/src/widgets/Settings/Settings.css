@@ -447,6 +447,98 @@ select.settings-api-key-input {
   line-height: 1.5;
 }
 
+/* Layout Mode Cards */
+.settings-layout-preview {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.settings-layout-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.settings-layout-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.settings-layout-card.selected {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.settings-layout-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.settings-layout-card.selected .settings-layout-icon {
+  background: rgba(99, 102, 241, 0.15);
+  color: rgba(129, 140, 248, 0.9);
+}
+
+.settings-layout-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.settings-layout-desc {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* Light theme overrides for layout cards */
+[data-theme="light"] .settings-layout-card {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .settings-layout-card:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .settings-layout-card.selected {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+[data-theme="light"] .settings-layout-icon {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="light"] .settings-layout-card.selected .settings-layout-icon {
+  background: rgba(99, 102, 241, 0.12);
+  color: rgba(79, 70, 229, 0.85);
+}
+
+[data-theme="light"] .settings-layout-label {
+  color: rgba(0, 0, 0, 0.75);
+}
+
+[data-theme="light"] .settings-layout-desc {
+  color: rgba(0, 0, 0, 0.4);
+}
+
 @keyframes oni-spin-anim {
   from {
     transform: rotate(0deg);
