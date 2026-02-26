@@ -13,18 +13,85 @@
  * - Multiple instances can be open simultaneously
  */
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Loader2, ExternalLink, RefreshCw, X, ChevronRight, ImageOff } from "lucide-react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import {
+  Loader2,
+  ExternalLink,
+  RefreshCw,
+  X,
+  ChevronRight,
+  ImageOff,
+  Copy,
+  Check,
+} from "lucide-react";
+import hljs from "highlight.js/lib/core";
+import javascript from "highlight.js/lib/languages/javascript";
+import typescript from "highlight.js/lib/languages/typescript";
+import python from "highlight.js/lib/languages/python";
+import sql from "highlight.js/lib/languages/sql";
+import json from "highlight.js/lib/languages/json";
+import bash from "highlight.js/lib/languages/bash";
+import css from "highlight.js/lib/languages/css";
+import xml from "highlight.js/lib/languages/xml";
+import yaml from "highlight.js/lib/languages/yaml";
+import diff from "highlight.js/lib/languages/diff";
+import markdown from "highlight.js/lib/languages/markdown";
+import graphql from "highlight.js/lib/languages/graphql";
+import nginx from "highlight.js/lib/languages/nginx";
 import "./DynamicDisplay.css";
+
+hljs.registerLanguage("javascript", javascript);
+hljs.registerLanguage("js", javascript);
+hljs.registerLanguage("jsx", javascript);
+hljs.registerLanguage("typescript", typescript);
+hljs.registerLanguage("ts", typescript);
+hljs.registerLanguage("tsx", typescript);
+hljs.registerLanguage("python", python);
+hljs.registerLanguage("py", python);
+hljs.registerLanguage("sql", sql);
+hljs.registerLanguage("json", json);
+hljs.registerLanguage("bash", bash);
+hljs.registerLanguage("shell", bash);
+hljs.registerLanguage("sh", bash);
+hljs.registerLanguage("css", css);
+hljs.registerLanguage("html", xml);
+hljs.registerLanguage("xml", xml);
+hljs.registerLanguage("yaml", yaml);
+hljs.registerLanguage("yml", yaml);
+hljs.registerLanguage("diff", diff);
+hljs.registerLanguage("markdown", markdown);
+hljs.registerLanguage("md", markdown);
+hljs.registerLanguage("graphql", graphql);
+hljs.registerLanguage("gql", graphql);
+hljs.registerLanguage("nginx", nginx);
 
 // ─── Helpers ──────────────────────────────────────────
 
 function Img({ src, alt, className, style, onClick }) {
   const [status, setStatus] = useState("loading");
   return (
-    <div className={`dd-img-wrap ${className || ""}`} style={style} onClick={onClick}>
-      {status === "loading" && <div className="dd-img-placeholder"><Loader2 size={16} className="dd-spin" /></div>}
-      {status === "error" && <div className="dd-img-placeholder"><ImageOff size={18} strokeWidth={1.5} /><span>No image</span></div>}
+    <div
+      className={`dd-img-wrap ${className || ""}`}
+      style={style}
+      onClick={onClick}
+    >
+      {status === "loading" && (
+        <div className="dd-img-placeholder">
+          <Loader2 size={16} className="dd-spin" />
+        </div>
+      )}
+      {status === "error" && (
+        <div className="dd-img-placeholder">
+          <ImageOff size={18} strokeWidth={1.5} />
+          <span>No image</span>
+        </div>
+      )}
       <img
         src={src}
         alt={alt || ""}
@@ -44,16 +111,32 @@ function DetailOverlay({ item, onClose }) {
   return (
     <div className="dd-overlay" onClick={onClose}>
       <div className="dd-detail" onClick={(e) => e.stopPropagation()}>
-        <button className="dd-detail-close" onClick={onClose}><X size={16} /></button>
-        {item.image && <Img src={item.image} alt={item.title} className="dd-detail-img" />}
+        <button className="dd-detail-close" onClick={onClose}>
+          <X size={16} />
+        </button>
+        {item.image && (
+          <Img src={item.image} alt={item.title} className="dd-detail-img" />
+        )}
         <div className="dd-detail-body">
           {item.title && <h2 className="dd-detail-title">{item.title}</h2>}
-          {item.subtitle && <p className="dd-detail-subtitle">{item.subtitle}</p>}
+          {item.subtitle && (
+            <p className="dd-detail-subtitle">{item.subtitle}</p>
+          )}
           {item.price && <div className="dd-detail-price">{item.price}</div>}
-          {item.value && !item.price && <div className="dd-detail-price">{item.value}</div>}
-          {item.description && <p className="dd-detail-desc">{item.description}</p>}
+          {item.value && !item.price && (
+            <div className="dd-detail-price">{item.value}</div>
+          )}
+          {item.description && (
+            <p className="dd-detail-desc">{item.description}</p>
+          )}
           {item.tags && (
-            <div className="dd-card-tags">{item.tags.map((t, j) => <span key={j} className="dd-tag">{t}</span>)}</div>
+            <div className="dd-card-tags">
+              {item.tags.map((t, j) => (
+                <span key={j} className="dd-tag">
+                  {t}
+                </span>
+              ))}
+            </div>
           )}
           {item.details && (
             <div className="dd-detail-extra">
@@ -66,7 +149,12 @@ function DetailOverlay({ item, onClose }) {
             </div>
           )}
           {item.link && (
-            <a className="dd-detail-link" href={item.link} target="_blank" rel="noopener noreferrer">
+            <a
+              className="dd-detail-link"
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Open Link <ExternalLink size={12} />
             </a>
           )}
@@ -105,12 +193,17 @@ function StatsSection({ data }) {
       {items.map((item, i) => (
         <div key={i} className="dd-stat">
           {item.icon && <span className="dd-stat-icon">{item.icon}</span>}
-          <div className="dd-stat-value" style={item.color ? { color: item.color } : undefined}>
+          <div
+            className="dd-stat-value"
+            style={item.color ? { color: item.color } : undefined}
+          >
             {item.value}
           </div>
           <div className="dd-stat-label">{item.label}</div>
           {item.change && (
-            <div className={`dd-stat-change ${item.change.startsWith("+") || item.change.startsWith("↑") ? "positive" : "negative"}`}>
+            <div
+              className={`dd-stat-change ${item.change.startsWith("+") || item.change.startsWith("↑") ? "positive" : "negative"}`}
+            >
               {item.change}
             </div>
           )}
@@ -122,30 +215,53 @@ function StatsSection({ data }) {
 
 function CardsSection({ data, onSelect }) {
   const items = data.items || [];
-  const cols = data.columns || (items.length <= 2 ? items.length : items.length <= 4 ? 2 : 3);
+  const cols =
+    data.columns ||
+    (items.length <= 2 ? items.length : items.length <= 4 ? 2 : 3);
   return (
-    <div className="dd-cards" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+    <div
+      className="dd-cards"
+      style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+    >
       {items.map((card, i) => (
         <div
           key={i}
           className={`dd-card ${card.image || card.description || card.details ? "dd-card-clickable" : ""}`}
-          onClick={() => (card.image || card.description || card.details) && onSelect(card)}
+          onClick={() =>
+            (card.image || card.description || card.details) && onSelect(card)
+          }
         >
-          {card.image && <Img src={card.image} alt={card.title} className="dd-card-img" />}
+          {card.image && (
+            <Img src={card.image} alt={card.title} className="dd-card-img" />
+          )}
           <div className="dd-card-body">
             {card.icon && <span className="dd-card-icon">{card.icon}</span>}
             {card.title && <div className="dd-card-title">{card.title}</div>}
-            {card.subtitle && <div className="dd-card-subtitle">{card.subtitle}</div>}
-            {card.description && <div className="dd-card-desc">{card.description}</div>}
+            {card.subtitle && (
+              <div className="dd-card-subtitle">{card.subtitle}</div>
+            )}
+            {card.description && (
+              <div className="dd-card-desc">{card.description}</div>
+            )}
             {card.tags && (
               <div className="dd-card-tags">
-                {card.tags.map((t, j) => <span key={j} className="dd-tag">{t}</span>)}
+                {card.tags.map((t, j) => (
+                  <span key={j} className="dd-tag">
+                    {t}
+                  </span>
+                ))}
               </div>
             )}
             {card.value && <div className="dd-card-value">{card.value}</div>}
             {card.price && <div className="dd-card-price">{card.price}</div>}
             {card.link && !card.details && (
-              <a className="dd-card-link" href={card.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+              <a
+                className="dd-card-link"
+                href={card.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
                 View <ExternalLink size={10} />
               </a>
             )}
@@ -164,14 +280,22 @@ function TableSection({ data }) {
       {data.title && <div className="dd-section-title">{data.title}</div>}
       <table className="dd-table">
         {headers.length > 0 && (
-          <thead><tr>{headers.map((h, i) => <th key={i}>{h}</th>)}</tr></thead>
+          <thead>
+            <tr>
+              {headers.map((h, i) => (
+                <th key={i}>{h}</th>
+              ))}
+            </tr>
+          </thead>
         )}
         <tbody>
           {rows.map((row, i) => (
             <tr key={i}>
-              {(Array.isArray(row) ? row : Object.values(row)).map((cell, j) => (
-                <td key={j}>{cell}</td>
-              ))}
+              {(Array.isArray(row) ? row : Object.values(row)).map(
+                (cell, j) => (
+                  <td key={j}>{cell}</td>
+                ),
+              )}
             </tr>
           ))}
         </tbody>
@@ -182,29 +306,40 @@ function TableSection({ data }) {
 
 function ListSection({ data, onSelect }) {
   const items = data.items || [];
-  const ordered = data.ordered;
+  const ordered = data.ordered || data.type === "ordered_list";
   return (
     <div className="dd-list">
       {data.title && <div className="dd-section-title">{data.title}</div>}
-      {items.map((item, i) => (
-        <div
-          key={i}
-          className={`dd-list-item ${item.details ? "dd-list-clickable" : ""}`}
-          onClick={() => item.details && onSelect(item)}
-        >
-          {ordered && <span className="dd-list-num">{i + 1}</span>}
-          {item.icon && !ordered && <span className="dd-list-icon">{item.icon}</span>}
-          {item.image && <Img src={item.image} alt={item.title} className="dd-list-img" />}
-          <div className="dd-list-content">
-            {item.title && <div className="dd-list-title">{item.title}</div>}
-            {item.description && <div className="dd-list-desc">{item.description}</div>}
-            {item.meta && <div className="dd-list-meta">{item.meta}</div>}
+      {items.map((item, i) => {
+        const title = item.title || item.label;
+        const desc = item.description || item.text || item.details;
+        const hasDetail = item.details && typeof item.details === "object";
+        return (
+          <div
+            key={i}
+            className={`dd-list-item ${hasDetail ? "dd-list-clickable" : ""}`}
+            onClick={() => hasDetail && onSelect(item)}
+          >
+            {ordered && <span className="dd-list-num">{i + 1}</span>}
+            {item.icon && !ordered && (
+              <span className="dd-list-icon">{item.icon}</span>
+            )}
+            {item.image && (
+              <Img src={item.image} alt={title} className="dd-list-img" />
+            )}
+            <div className="dd-list-content">
+              {title && <div className="dd-list-title">{title}</div>}
+              {desc && <div className="dd-list-desc">{desc}</div>}
+              {item.meta && <div className="dd-list-meta">{item.meta}</div>}
+            </div>
+            {item.value && <div className="dd-list-value">{item.value}</div>}
+            {item.badge && <span className="dd-list-badge">{item.badge}</span>}
+            {hasDetail && (
+              <ChevronRight size={14} className="dd-list-chevron" />
+            )}
           </div>
-          {item.value && <div className="dd-list-value">{item.value}</div>}
-          {item.badge && <span className="dd-list-badge">{item.badge}</span>}
-          {item.details && <ChevronRight size={14} className="dd-list-chevron" />}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -228,8 +363,17 @@ function TextSection({ data }) {
 
 function ImageSection({ data, onSelect }) {
   return (
-    <div className="dd-image" onClick={() => onSelect && onSelect({ image: data.src, title: data.caption })}>
-      <Img src={data.src} alt={data.caption} style={data.width ? { maxWidth: data.width } : undefined} />
+    <div
+      className="dd-image"
+      onClick={() =>
+        onSelect && onSelect({ image: data.src, title: data.caption })
+      }
+    >
+      <Img
+        src={data.src}
+        alt={data.caption}
+        style={data.width ? { maxWidth: data.width } : undefined}
+      />
       {data.caption && <div className="dd-image-caption">{data.caption}</div>}
     </div>
   );
@@ -238,17 +382,35 @@ function ImageSection({ data, onSelect }) {
 function VideoSection({ data }) {
   if (data.youtube || (data.src && data.src.includes("youtube"))) {
     const vid = data.youtube || data.src;
-    const embedUrl = vid.includes("embed") ? vid : `https://www.youtube.com/embed/${vid.split("v=").pop().split("&")[0]}`;
+    const embedUrl = vid.includes("embed")
+      ? vid
+      : `https://www.youtube.com/embed/${vid.split("v=").pop().split("&")[0]}`;
     return (
       <div className="dd-video">
-        <iframe src={embedUrl} title={data.caption || "Video"} style={{ width: "100%", height: 220, border: "none", borderRadius: 10 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+        <iframe
+          src={embedUrl}
+          title={data.caption || "Video"}
+          style={{
+            width: "100%",
+            height: 220,
+            border: "none",
+            borderRadius: 10,
+          }}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
         {data.caption && <div className="dd-video-caption">{data.caption}</div>}
       </div>
     );
   }
   return (
     <div className="dd-video">
-      <video src={data.src} poster={data.poster} controls style={data.width ? { width: data.width } : undefined} />
+      <video
+        src={data.src}
+        poster={data.poster}
+        controls
+        style={data.width ? { width: data.width } : undefined}
+      />
       {data.caption && <div className="dd-video-caption">{data.caption}</div>}
     </div>
   );
@@ -256,15 +418,27 @@ function VideoSection({ data }) {
 
 function GallerySection({ data, onSelect }) {
   const images = data.images || data.items || [];
-  const cols = data.columns || (images.length <= 2 ? images.length : images.length <= 4 ? 2 : 3);
+  const cols =
+    data.columns ||
+    (images.length <= 2 ? images.length : images.length <= 4 ? 2 : 3);
   return (
-    <div className="dd-gallery" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+    <div
+      className="dd-gallery"
+      style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+    >
       {images.map((img, i) => {
-        const src = typeof img === "string" ? img : img.src || img.url || img.image;
-        const caption = typeof img === "string" ? null : img.caption || img.title;
-        const item = typeof img === "string" ? { image: img } : { ...img, image: src };
+        const src =
+          typeof img === "string" ? img : img.src || img.url || img.image;
+        const caption =
+          typeof img === "string" ? null : img.caption || img.title;
+        const item =
+          typeof img === "string" ? { image: img } : { ...img, image: src };
         return (
-          <div key={i} className="dd-gallery-item" onClick={() => onSelect(item)}>
+          <div
+            key={i}
+            className="dd-gallery-item"
+            onClick={() => onSelect(item)}
+          >
             <Img src={src} alt={caption} />
             {caption && <div className="dd-gallery-caption">{caption}</div>}
           </div>
@@ -281,7 +455,12 @@ function EmbedSection({ data }) {
       <iframe
         src={data.url || data.src}
         title={data.title || "Embed"}
-        style={{ width: "100%", height: data.height || 400, border: "none", borderRadius: 10 }}
+        style={{
+          width: "100%",
+          height: data.height || 400,
+          border: "none",
+          borderRadius: 10,
+        }}
         sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
       />
     </div>
@@ -289,20 +468,35 @@ function EmbedSection({ data }) {
 }
 
 function ProgressSection({ data }) {
-  const items = data.items || [{ label: data.label, value: data.value, max: data.max }];
+  const items = data.items || [
+    { label: data.label, value: data.value, max: data.max },
+  ];
   return (
     <div className="dd-progress-section">
       {data.title && <div className="dd-section-title">{data.title}</div>}
       {items.map((item, i) => {
-        const pct = Math.min(100, Math.max(0, ((item.value || 0) / (item.max || 100)) * 100));
+        const pct = Math.min(
+          100,
+          Math.max(0, ((item.value || 0) / (item.max || 100)) * 100),
+        );
         return (
           <div key={i} className="dd-progress">
             <div className="dd-progress-header">
               <span>{item.label}</span>
-              <span>{item.value}{item.unit || ""} / {item.max}{item.unit || ""}</span>
+              <span>
+                {item.value}
+                {item.unit || ""} / {item.max}
+                {item.unit || ""}
+              </span>
             </div>
             <div className="dd-progress-bar">
-              <div className="dd-progress-fill" style={{ width: `${pct}%`, background: item.color || undefined }} />
+              <div
+                className="dd-progress-fill"
+                style={{
+                  width: `${pct}%`,
+                  background: item.color || undefined,
+                }}
+              />
             </div>
           </div>
         );
@@ -321,15 +515,47 @@ function QuoteSection({ data }) {
 }
 
 function CodeSection({ data }) {
+  const [copied, setCopied] = useState(false);
+  const code = data.code || data.content || "";
+  const lang = (data.language || "").toLowerCase();
+
+  const highlighted = useMemo(() => {
+    try {
+      if (lang && hljs.getLanguage(lang)) {
+        return hljs.highlight(code, { language: lang }).value;
+      }
+      const auto = hljs.highlightAuto(code);
+      if (auto.relevance > 4) return auto.value;
+    } catch {}
+    return null;
+  }, [code, lang]);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard?.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }, [code]);
+
   return (
     <div className="dd-code">
-      {(data.title || data.language) && (
+      {(data.title || lang) && (
         <div className="dd-code-header">
-          <span>{data.title || data.language}</span>
-          {data.title && data.language && <span className="dd-code-lang">{data.language}</span>}
+          <span>{data.title || lang}</span>
+          <div className="dd-code-header-right">
+            {data.title && lang && <span className="dd-code-lang">{lang}</span>}
+            <button className="dd-code-copy" onClick={handleCopy} title="Copy">
+              {copied ? <Check size={12} /> : <Copy size={12} />}
+            </button>
+          </div>
         </div>
       )}
-      <pre className="dd-code-block"><code>{data.code || data.content}</code></pre>
+      <pre className="dd-code-block">
+        {highlighted ? (
+          <code dangerouslySetInnerHTML={{ __html: highlighted }} />
+        ) : (
+          <code>{code}</code>
+        )}
+      </pre>
     </div>
   );
 }
@@ -342,7 +568,12 @@ function KeyValueSection({ data }) {
       {items.map((item, i) => (
         <div key={i} className="dd-kv-row">
           <span className="dd-kv-key">{item.key || item.label}</span>
-          <span className="dd-kv-value" style={item.color ? { color: item.color } : undefined}>{item.value}</span>
+          <span
+            className="dd-kv-value"
+            style={item.color ? { color: item.color } : undefined}
+          >
+            {item.value}
+          </span>
         </div>
       ))}
     </div>
@@ -356,11 +587,18 @@ function TimelineSection({ data }) {
       {data.title && <div className="dd-section-title">{data.title}</div>}
       {items.map((item, i) => (
         <div key={i} className="dd-timeline-item">
-          <div className="dd-timeline-dot" style={item.color ? { background: item.color } : undefined} />
+          <div
+            className="dd-timeline-dot"
+            style={item.color ? { background: item.color } : undefined}
+          />
           <div className="dd-timeline-content">
             {item.time && <div className="dd-timeline-time">{item.time}</div>}
-            {item.title && <div className="dd-timeline-title">{item.title}</div>}
-            {item.description && <div className="dd-timeline-desc">{item.description}</div>}
+            {item.title && (
+              <div className="dd-timeline-title">{item.title}</div>
+            )}
+            {item.description && (
+              <div className="dd-timeline-desc">{item.description}</div>
+            )}
           </div>
         </div>
       ))}
@@ -375,7 +613,9 @@ function AlertSection({ data }) {
       {data.icon && <span className="dd-alert-icon">{data.icon}</span>}
       <div>
         {data.title && <div className="dd-alert-title">{data.title}</div>}
-        <div className="dd-alert-text">{data.text || data.content || data.message}</div>
+        <div className="dd-alert-text">
+          {data.text || data.content || data.message}
+        </div>
       </div>
     </div>
   );
@@ -439,34 +679,60 @@ function ChartSection({ data }) {
 }
 
 function DividerSection({ data }) {
-  return <hr className="dd-divider" style={data?.label ? undefined : undefined} />;
+  return (
+    <hr className="dd-divider" style={data?.label ? undefined : undefined} />
+  );
 }
 
 // ─── Section Router ───────────────────────────────────
 
 function RenderSection({ section, onSelect }) {
   switch (section.type) {
-    case "hero": return <HeroSection data={section} />;
-    case "stats": return <StatsSection data={section} />;
-    case "cards": return <CardsSection data={section} onSelect={onSelect} />;
-    case "table": return <TableSection data={section} />;
-    case "list": return <ListSection data={section} onSelect={onSelect} />;
-    case "text": return <TextSection data={section} />;
-    case "image": return <ImageSection data={section} onSelect={onSelect} />;
-    case "video": return <VideoSection data={section} />;
-    case "gallery": return <GallerySection data={section} onSelect={onSelect} />;
-    case "embed": return <EmbedSection data={section} />;
-    case "progress": return <ProgressSection data={section} />;
-    case "quote": return <QuoteSection data={section} />;
-    case "code": return <CodeSection data={section} />;
-    case "kv": case "key_value": return <KeyValueSection data={section} />;
-    case "timeline": return <TimelineSection data={section} />;
-    case "alert": return <AlertSection data={section} />;
-    case "weather": return <WeatherSection data={section} />;
-    case "chart": case "bar_chart": return <ChartSection data={section} />;
-    case "divider": return <DividerSection data={section} />;
+    case "hero":
+      return <HeroSection data={section} />;
+    case "stats":
+      return <StatsSection data={section} />;
+    case "cards":
+      return <CardsSection data={section} onSelect={onSelect} />;
+    case "table":
+      return <TableSection data={section} />;
+    case "list":
+    case "ordered_list":
+      return <ListSection data={section} onSelect={onSelect} />;
+    case "text":
+      return <TextSection data={section} />;
+    case "image":
+      return <ImageSection data={section} onSelect={onSelect} />;
+    case "video":
+      return <VideoSection data={section} />;
+    case "gallery":
+      return <GallerySection data={section} onSelect={onSelect} />;
+    case "embed":
+      return <EmbedSection data={section} />;
+    case "progress":
+      return <ProgressSection data={section} />;
+    case "quote":
+      return <QuoteSection data={section} />;
+    case "code":
+      return <CodeSection data={section} />;
+    case "kv":
+    case "key_value":
+      return <KeyValueSection data={section} />;
+    case "timeline":
+      return <TimelineSection data={section} />;
+    case "alert":
+      return <AlertSection data={section} />;
+    case "weather":
+      return <WeatherSection data={section} />;
+    case "chart":
+    case "bar_chart":
+      return <ChartSection data={section} />;
+    case "divider":
+      return <DividerSection data={section} />;
     default:
-      return <div className="dd-unknown">Unknown section type: {section.type}</div>;
+      return (
+        <div className="dd-unknown">Unknown section type: {section.type}</div>
+      );
   }
 }
 
