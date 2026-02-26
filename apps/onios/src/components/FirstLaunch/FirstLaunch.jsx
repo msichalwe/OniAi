@@ -2,10 +2,11 @@
  * FirstLaunch — Multi-step setup wizard for OniOS.
  *
  * Steps:
- *   1. Welcome  — intro + gateway type selection (oni / openclaw)
- *   2. Connect  — enter gateway URL + test connection
- *   3. Skills   — check required skills, install if missing
- *   4. Complete — success, launch into OniOS
+ *   1. Welcome     — intro + gateway type selection (oni / openclaw)
+ *   2. Connect     — enter gateway URL + test connection
+ *   3. Skills      — check required skills, install if missing
+ *   4. Personalize — wallpaper, dark mode, mic on/off, custom wallpaper upload
+ *   5. Complete    — success, launch into OniOS
  */
 
 import React, { useState, useCallback, useEffect, useRef } from "react";
@@ -24,10 +25,67 @@ import {
   Zap,
   Server,
   Terminal,
+  Palette,
+  Sun,
+  Moon,
+  Mic,
+  MicOff,
+  Upload,
+  X,
+  Image,
 } from "lucide-react";
+import useThemeStore from "../../stores/themeStore";
 import "./FirstLaunch.css";
 
-const STEPS = ["welcome", "connect", "skills", "complete"];
+const STEPS = ["welcome", "connect", "skills", "personalize", "complete"];
+
+const WALLPAPERS = [
+  {
+    id: "gradient-dusk",
+    label: "Dusk",
+    color: "linear-gradient(135deg, #0a0a1a, #1a0a2e)",
+  },
+  {
+    id: "gradient-ocean",
+    label: "Ocean",
+    color: "linear-gradient(135deg, #0a1628, #1a5276)",
+  },
+  {
+    id: "gradient-aurora",
+    label: "Aurora",
+    color: "linear-gradient(135deg, #0f2027, #2c5364)",
+  },
+  {
+    id: "gradient-sunset",
+    label: "Sunset",
+    color: "linear-gradient(135deg, #1a0a1e, #4a2040)",
+  },
+  {
+    id: "gradient-forest",
+    label: "Forest",
+    color: "linear-gradient(135deg, #0a1a0f, #2a4a2f)",
+  },
+  {
+    id: "gradient-light",
+    label: "Light",
+    color: "linear-gradient(135deg, #e8ecf1, #c8d0da)",
+  },
+  {
+    id: "gradient-warm",
+    label: "Warm",
+    color: "linear-gradient(135deg, #f5f0e8, #ddd0c0)",
+  },
+  {
+    id: "gradient-sky",
+    label: "Sky",
+    color: "linear-gradient(135deg, #dce8f5, #89b0d8)",
+  },
+  {
+    id: "gradient-lavender",
+    label: "Lavender",
+    color: "linear-gradient(135deg, #e8e0f0, #b8a8d8)",
+  },
+];
 
 const GATEWAY_TYPES = [
   {
@@ -64,7 +122,16 @@ export default function FirstLaunch({ onComplete }) {
   const [skillsChecked, setSkillsChecked] = useState(false);
   const [allSkillsReady, setAllSkillsReady] = useState(false);
   const [launching, setLaunching] = useState(false);
+  const [selectedWallpaper, setSelectedWallpaper] = useState("gradient-warm");
+  const [customWallpaper, setCustomWallpaper] = useState(null);
+  const [isDark, setIsDark] = useState(false);
+  const [micEnabled, setMicEnabled] = useState(false);
   const inputRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const setTheme = useThemeStore((s) => s.setTheme);
+  const setWallpaper = useThemeStore((s) => s.setWallpaper);
+  const setCustomWallpaperStore = useThemeStore((s) => s.setCustomWallpaper);
 
   const currentStep = STEPS[step];
 
@@ -110,7 +177,9 @@ export default function FirstLaunch({ onComplete }) {
       });
 
       // Test gateway health
-      const res = await fetch("/api/oni/status", { signal: AbortSignal.timeout(8000) });
+      const res = await fetch("/api/oni/status", {
+        signal: AbortSignal.timeout(8000),
+      });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = await res.json();
 
@@ -210,9 +279,7 @@ export default function FirstLaunch({ onComplete }) {
     } catch (err) {
       setSkills((prev) =>
         prev.map((s) =>
-          s.installed
-            ? s
-            : { ...s, installing: false, error: err.message },
+          s.installed ? s : { ...s, installing: false, error: err.message },
         ),
       );
     }
@@ -222,6 +289,20 @@ export default function FirstLaunch({ onComplete }) {
 
   const handleLaunch = useCallback(() => {
     setLaunching(true);
+
+    // Apply personalize choices to stores
+    setTheme(isDark ? "dark" : "light");
+    if (selectedWallpaper === "custom" && customWallpaper) {
+      setCustomWallpaperStore(customWallpaper);
+    } else {
+      setWallpaper(selectedWallpaper);
+    }
+    try {
+      localStorage.setItem("onios_voice_enabled", String(micEnabled));
+    } catch {
+      /* quota */
+    }
+
     // Mark setup as complete in localStorage
     localStorage.setItem("onios-setup-complete", "1");
     localStorage.setItem("onios-gateway-type", gatewayType);
@@ -230,14 +311,55 @@ export default function FirstLaunch({ onComplete }) {
     setTimeout(() => {
       onComplete();
     }, 1200);
-  }, [onComplete, gatewayType, gatewayUrl]);
+  }, [
+    onComplete,
+    gatewayType,
+    gatewayUrl,
+    isDark,
+    selectedWallpaper,
+    customWallpaper,
+    micEnabled,
+    setTheme,
+    setWallpaper,
+    setCustomWallpaperStore,
+  ]);
 
   // ─── Navigation ─────────────────────────────────────
+
+  // ─── Personalize Handlers ─────────────────────────────
+
+  const handleWallpaperSelect = useCallback((id) => {
+    setSelectedWallpaper(id);
+    setCustomWallpaper(null);
+  }, []);
+
+  const handleCustomUpload = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image must be under 5 MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      setCustomWallpaper(evt.target.result);
+      setSelectedWallpaper("custom");
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const clearCustom = useCallback(() => {
+    setCustomWallpaper(null);
+    setSelectedWallpaper("gradient-dusk");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, []);
 
   const canGoNext = () => {
     if (currentStep === "welcome") return true;
     if (currentStep === "connect") return connectionStatus === "success";
     if (currentStep === "skills") return allSkillsReady;
+    if (currentStep === "personalize") return true;
     return false;
   };
 
@@ -295,10 +417,7 @@ export default function FirstLaunch({ onComplete }) {
                       <span className="fl-gw-desc">{desc}</span>
                     </div>
                     {gatewayType === id && (
-                      <CheckCircle2
-                        size={18}
-                        className="fl-gw-check"
-                      />
+                      <CheckCircle2 size={18} className="fl-gw-check" />
                     )}
                   </div>
                 ))}
@@ -320,8 +439,8 @@ export default function FirstLaunch({ onComplete }) {
             </div>
             <h2 className="fl-step-title">Connect to Gateway</h2>
             <p className="fl-step-desc">
-              Enter your {gatewayType === "oni" ? "Oni" : "OpenClaw"} gateway URL
-              and test the connection.
+              Enter your {gatewayType === "oni" ? "Oni" : "OpenClaw"} gateway
+              URL and test the connection.
             </p>
 
             <div className="fl-input-group">
@@ -342,7 +461,9 @@ export default function FirstLaunch({ onComplete }) {
                 <button
                   className={`fl-btn fl-btn-test ${connectionStatus === "testing" ? "fl-btn-loading" : ""}`}
                   onClick={testConnection}
-                  disabled={connectionStatus === "testing" || !gatewayUrl.trim()}
+                  disabled={
+                    connectionStatus === "testing" || !gatewayUrl.trim()
+                  }
                 >
                   {connectionStatus === "testing" ? (
                     <Loader2 size={16} className="fl-spin" />
@@ -478,7 +599,125 @@ export default function FirstLaunch({ onComplete }) {
           </div>
         )}
 
-        {/* ─── Step 4: Complete ─────────────────── */}
+        {/* ─── Step 4: Personalize ─────────────── */}
+        {currentStep === "personalize" && (
+          <div className="fl-step fl-step-personalize">
+            <div className="fl-icon-circle">
+              <Palette size={28} />
+            </div>
+            <h2 className="fl-step-title">Make it yours</h2>
+            <p className="fl-step-desc">
+              Choose your wallpaper, theme, and preferences.
+            </p>
+
+            {/* Wallpaper Grid */}
+            <div className="fl-pref-section">
+              <span className="fl-section-label">Wallpaper</span>
+              <div className="fl-wallpaper-grid">
+                {WALLPAPERS.map(({ id, label, color }) => (
+                  <div
+                    key={id}
+                    className={`fl-wp-swatch ${selectedWallpaper === id ? "fl-wp-selected" : ""}`}
+                    style={{ background: color }}
+                    onClick={() => handleWallpaperSelect(id)}
+                    title={label}
+                  >
+                    {selectedWallpaper === id && (
+                      <CheckCircle2 size={14} className="fl-wp-check" />
+                    )}
+                  </div>
+                ))}
+                {/* Custom upload swatch */}
+                <div
+                  className={`fl-wp-swatch fl-wp-upload ${selectedWallpaper === "custom" ? "fl-wp-selected" : ""}`}
+                  onClick={() => fileInputRef.current?.click()}
+                  style={
+                    customWallpaper
+                      ? {
+                          backgroundImage: `url(${customWallpaper})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : {}
+                  }
+                  title="Upload custom wallpaper"
+                >
+                  {!customWallpaper && <Upload size={14} />}
+                  {selectedWallpaper === "custom" && customWallpaper && (
+                    <CheckCircle2 size={14} className="fl-wp-check" />
+                  )}
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleCustomUpload}
+              />
+              {customWallpaper && (
+                <button
+                  className="fl-btn fl-btn-ghost fl-btn-sm"
+                  onClick={clearCustom}
+                >
+                  <X size={12} />
+                  <span>Remove custom wallpaper</span>
+                </button>
+              )}
+            </div>
+
+            {/* Dark Mode Toggle */}
+            <div className="fl-pref-section">
+              <div className="fl-pref-row">
+                <div className="fl-pref-info">
+                  <span className="fl-pref-label">Dark Mode</span>
+                  <span className="fl-pref-desc">Always-on dark theme</span>
+                </div>
+                <button
+                  className={`fl-toggle ${isDark ? "fl-toggle-on" : ""}`}
+                  onClick={() => setIsDark(!isDark)}
+                >
+                  <div className="fl-toggle-thumb">
+                    {isDark ? <Moon size={11} /> : <Sun size={11} />}
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Mic Toggle */}
+            <div className="fl-pref-section">
+              <div className="fl-pref-row">
+                <div className="fl-pref-info">
+                  <span className="fl-pref-label">Always Listening</span>
+                  <span className="fl-pref-desc">
+                    Say "Oni" to activate voice
+                  </span>
+                </div>
+                <button
+                  className={`fl-toggle ${micEnabled ? "fl-toggle-on" : ""}`}
+                  onClick={() => setMicEnabled(!micEnabled)}
+                >
+                  <div className="fl-toggle-thumb">
+                    {micEnabled ? <Mic size={11} /> : <MicOff size={11} />}
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div className="fl-nav">
+              <button className="fl-btn fl-btn-ghost" onClick={goBack}>
+                <ArrowLeft size={16} />
+                <span>Back</span>
+              </button>
+              <button className="fl-btn fl-btn-primary" onClick={goNext}>
+                <span>Continue</span>
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Step 5: Complete ─────────────────── */}
         {currentStep === "complete" && (
           <div className="fl-step fl-step-complete">
             <div className="fl-complete-icon">
