@@ -215,6 +215,39 @@ export default function OniChatWidget() {
     ]);
   }, []);
 
+  // ─── Listen for context from DynamicDisplay clicks ───
+  const handleSendRef = useRef(null);
+  useEffect(() => {
+    const handler = ({ item, summary, action }) => {
+      const actionVerb =
+        action === "expand"
+          ? "Expand on this"
+          : action === "explain"
+            ? "Explain this in detail"
+            : action === "deeper"
+              ? "Go deeper on this topic"
+              : "Tell me more about this";
+      const contextMsg = `${actionVerb}:\n\n${summary}`;
+
+      // Ensure chat window is open/focused
+      const store = useWindowStore.getState();
+      const wins = store.windows || [];
+      const chatWin = wins.find((w) => w.widgetType === "oni-chat");
+      if (chatWin) {
+        store.focusWindow(chatWin.id);
+      }
+
+      // Send after a tick so chat is open
+      setTimeout(() => {
+        if (handleSendRef.current) {
+          handleSendRef.current(contextMsg);
+        }
+      }, 300);
+    };
+    eventBus.on("chat:addContext", handler);
+    return () => eventBus.off("chat:addContext", handler);
+  }, []);
+
   // New chat — clear messages
   const handleNewChat = useCallback(async () => {
     setMessages([]);
@@ -356,6 +389,9 @@ export default function OniChatWidget() {
     },
     [getDesktopContext, addStatusMessage],
   );
+
+  // Keep ref in sync so chat:addContext can call handleSend
+  handleSendRef.current = handleSend;
 
   const handleStop = useCallback(() => {
     abortRef.current?.abort();

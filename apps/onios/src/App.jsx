@@ -1643,6 +1643,38 @@ function registerAllCommands() {
     { description: "Stop screen recording and save the file" },
   );
 
+  // === browser commands ===
+  commandRegistry.register(
+    "browser.open",
+    (url) => {
+      openWidget("browser", url ? { initialUrl: url } : {}, {
+        title: url ? `Browser: ${url}` : "Browser",
+      });
+      return url ? `Browser opened: ${url}` : "Browser opened";
+    },
+    { description: "Open the headless browser widget", widget: "browser" },
+  );
+
+  commandRegistry.register(
+    "browser.navigate",
+    (url) => {
+      if (!url) return "Usage: browser.navigate(url)";
+      const wins = useWindowStore.getState().windows || [];
+      const browserWin = wins.find((w) => w.widgetType === "browser");
+      if (!browserWin) {
+        openWidget(
+          "browser",
+          { initialUrl: url },
+          { title: `Browser: ${url}` },
+        );
+      } else {
+        eventBus.emit("browser:navigate", { url });
+      }
+      return `Navigating to: ${url}`;
+    },
+    { description: "Navigate the browser to a URL" },
+  );
+
   // === sub-agent commands ===
   commandRegistry.register(
     "agent.spawn",
@@ -2776,6 +2808,13 @@ export default function App() {
       }
     });
 
+    // Listen for command:execute events from widgets (e.g. chat file links)
+    const unsubCmdExec = eventBus.on("command:execute", (rawCmd) => {
+      if (typeof rawCmd === "string") {
+        commandRegistry.execute(rawCmd, "widget");
+      }
+    });
+
     // Emit system:boot event after all initialization
     setTimeout(() => {
       eventBus.emit("system:boot", {
@@ -2805,6 +2844,7 @@ export default function App() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       unsubWorkflows();
+      unsubCmdExec();
       workflowEngine.stopListeners();
     };
   }, []);

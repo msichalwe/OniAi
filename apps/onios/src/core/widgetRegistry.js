@@ -31,7 +31,7 @@
  * widget. The AI can spawn multiple display instances simultaneously.
  */
 
-import { Folder, Terminal, Film, FileText, Clock, Calculator, Activity, BookOpen, Settings, Code, Map, FileSpreadsheet, Shield, Database, MessageSquare, Camera, LayoutDashboard, MonitorUp } from 'lucide-react';
+import { Folder, Terminal, Film, FileText, Clock, Calculator, Activity, BookOpen, Settings, Code, Map, FileSpreadsheet, Shield, Database, MessageSquare, Camera, LayoutDashboard, MonitorUp, Globe } from 'lucide-react';
 
 import FileExplorer from '../widgets/FileExplorer/FileExplorer';
 import TerminalWidget from '../widgets/Terminal/Terminal';
@@ -51,6 +51,7 @@ import StorageWidget from '../widgets/Storage/Storage';
 import CameraWidget from '../widgets/Camera/Camera';
 import OniChatWidget from '../widgets/OniAssistant/OniChatWidget';
 import ScreenCaptureWidget from '../widgets/ScreenCapture/ScreenCapture';
+import BrowserWidget from '../widgets/Browser/Browser';
 
 export const WIDGET_REGISTRY = {
     'file-explorer': {
@@ -239,6 +240,17 @@ export const WIDGET_REGISTRY = {
         minWidth: 480,
         minHeight: 380,
         commands: ['screen.open', 'screen.screenshot', 'screen.record.start', 'screen.record.stop'],
+    },
+    'browser': {
+        component: BrowserWidget,
+        title: 'Browser',
+        icon: Globe,
+        singleton: false,
+        defaultWidth: 900,
+        defaultHeight: 600,
+        minWidth: 600,
+        minHeight: 400,
+        commands: ['browser.open', 'browser.navigate'],
     },
     'oni-chat': {
         component: OniChatWidget,

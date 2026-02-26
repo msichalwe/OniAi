@@ -22,7 +22,143 @@ import {
   Zap,
   MessageSquarePlus,
 } from "lucide-react";
+import { eventBus } from "../../core/EventBus";
 import "./OniChat.css";
+
+// Custom markdown renderers to handle file paths, blank elements, and OniOS integration
+const markdownComponents = {
+  // Collapse empty paragraphs
+  p: ({ children }) => {
+    if (
+      !children ||
+      (Array.isArray(children) &&
+        children.every(
+          (c) => c === null || c === undefined || c === "" || c === "\n",
+        ))
+    )
+      return null;
+    return <p>{children}</p>;
+  },
+  // Handle images — open in media player if local, otherwise render normally
+  img: ({ src, alt }) => {
+    if (!src) return null;
+    const isLocal =
+      src.startsWith("/") || src.startsWith("~") || src.startsWith("file://");
+    if (isLocal) {
+      return (
+        <button
+          className="oni-chat-file-link"
+          onClick={() =>
+            eventBus.emit("command:execute", `system.media.playVideo("${src}")`)
+          }
+          title="Open in Media Player"
+        >
+          {alt || src.split("/").pop()}
+        </button>
+      );
+    }
+    return (
+      <img
+        src={src}
+        alt={alt || ""}
+        style={{ maxWidth: "100%", borderRadius: 6 }}
+      />
+    );
+  },
+  // Make links that point to local files open in OniOS widgets
+  a: ({ href, children }) => {
+    if (!href) return <span>{children}</span>;
+    const isFilePath =
+      href.startsWith("/") ||
+      href.startsWith("~") ||
+      href.startsWith("file://");
+    if (isFilePath) {
+      return (
+        <button
+          className="oni-chat-file-link"
+          onClick={() => openFileInOniOS(href)}
+          title={`Open: ${href}`}
+        >
+          {children || href.split("/").pop()}
+        </button>
+      );
+    }
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        {children}
+      </a>
+    );
+  },
+  // Collapse empty code blocks
+  code: ({ children, className }) => {
+    const text = String(children || "").trim();
+    if (!text) return null;
+    if (className) {
+      return <code className={className}>{children}</code>;
+    }
+    // Check if it's a file path
+    if (/^[\/~].*\.\w+$/.test(text) || /^\/Users\//.test(text)) {
+      return (
+        <button
+          className="oni-chat-file-link oni-chat-file-path"
+          onClick={() => openFileInOniOS(text)}
+          title={`Open: ${text}`}
+        >
+          {text}
+        </button>
+      );
+    }
+    return <code>{children}</code>;
+  },
+};
+
+// Route file opens to appropriate OniOS widget
+function openFileInOniOS(path) {
+  const ext = (path.split(".").pop() || "").toLowerCase();
+  const imageExts = ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico"];
+  const videoExts = ["mp4", "webm", "mov", "avi", "mkv"];
+  const audioExts = ["mp3", "wav", "ogg", "flac", "aac"];
+  const codeExts = [
+    "js",
+    "jsx",
+    "ts",
+    "tsx",
+    "py",
+    "rb",
+    "go",
+    "rs",
+    "java",
+    "c",
+    "cpp",
+    "h",
+    "css",
+    "html",
+    "json",
+    "yaml",
+    "yml",
+    "toml",
+    "md",
+    "sh",
+    "sql",
+  ];
+
+  if (
+    imageExts.includes(ext) ||
+    videoExts.includes(ext) ||
+    audioExts.includes(ext)
+  ) {
+    eventBus.emit("command:execute", `system.media.playVideo("${path}")`);
+  } else if (codeExts.includes(ext)) {
+    eventBus.emit("command:execute", `code.openFile("${path}")`);
+  } else if (ext === "pdf" || ext === "doc" || ext === "docx") {
+    eventBus.emit("command:execute", `document.open("${path}")`);
+  } else if (!ext) {
+    // Likely a directory
+    eventBus.emit("command:execute", `system.files.navigate("${path}")`);
+  } else {
+    eventBus.emit("command:execute", `viewer.openFile("${path}")`);
+  }
+}
 
 function formatTime(ts) {
   if (!ts) return "";
@@ -191,7 +327,10 @@ export default function OniChat({
                 )}
                 <div className="oni-chat-msg-text">
                   {msg.role === "assistant" ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={markdownComponents}
+                    >
                       {msg.content || ""}
                     </ReactMarkdown>
                   ) : (
@@ -211,7 +350,10 @@ export default function OniChat({
           <div className="oni-chat-msg oni-chat-msg-assistant oni-chat-msg-streaming">
             <div className="oni-chat-msg-content">
               <div className="oni-chat-msg-text">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={markdownComponents}
+                >
                   {streamingText || ""}
                 </ReactMarkdown>
               </div>

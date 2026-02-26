@@ -536,3 +536,49 @@
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   margin: 8px 0;
 }
+
+/* ─── Clickable file/path links in chat ─── */
+.oni-chat-file-link {
+  display: inline;
+  background: rgba(80, 130, 255, 0.1);
+  border: 1px solid rgba(80, 130, 255, 0.2);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: rgba(100, 160, 255, 0.95);
+  font-size: inherit;
+  font-family: "SF Mono", "Fira Code", monospace;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.oni-chat-file-link:hover {
+  background: rgba(80, 130, 255, 0.2);
+  border-color: rgba(80, 130, 255, 0.35);
+  color: #fff;
+}
+
+.oni-chat-file-path {
+  font-size: 11px;
+  word-break: break-all;
+}
+
+/* Collapse empty elements from markdown */
+.oni-chat-msg-text p:empty,
+.oni-chat-msg-text img[src=""],
+.oni-chat-msg-text img:not([src]) {
+  display: none;
+}
+
+/* Light mode file links */
+[data-theme="light"] .oni-chat-file-link {
+  background: rgba(40, 80, 200, 0.08);
+  border-color: rgba(40, 80, 200, 0.15);
+  color: rgba(30, 70, 180, 0.9);
+}
+
+[data-theme="light"] .oni-chat-file-link:hover {
+  background: rgba(40, 80, 200, 0.15);
+  border-color: rgba(40, 80, 200, 0.3);
+  color: rgba(20, 50, 160, 1);
+}

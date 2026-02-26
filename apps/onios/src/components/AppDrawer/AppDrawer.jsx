@@ -21,6 +21,7 @@ const WIDGET_GRADIENTS = {
   storage: "linear-gradient(135deg, #8B5CF6, #6D28D9)",
   camera: "linear-gradient(135deg, #EF4444, #DC2626)",
   "screen-capture": "linear-gradient(135deg, #06B6D4, #0891B2)",
+  browser: "linear-gradient(135deg, #3B82F6, #2563EB)",
   "oni-chat": "linear-gradient(135deg, #6B7280, #374151)",
 };
 

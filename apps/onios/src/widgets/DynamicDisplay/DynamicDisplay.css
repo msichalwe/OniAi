@@ -262,6 +262,89 @@
   opacity: 0.85;
 }
 
+/* ─── Detail Overlay Action Buttons ──────────────── */
+.dd-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--dd-border, rgba(255, 255, 255, 0.06));
+}
+
+.dd-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.dd-action-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.dd-action-btn:active {
+  transform: scale(0.97);
+}
+
+.dd-action-primary {
+  background: rgba(80, 130, 255, 0.15);
+  border-color: rgba(80, 130, 255, 0.25);
+  color: rgba(140, 180, 255, 0.95);
+}
+
+.dd-action-primary:hover {
+  background: rgba(80, 130, 255, 0.25);
+  border-color: rgba(80, 130, 255, 0.4);
+  color: #fff;
+}
+
+.dd-action-link {
+  color: rgba(100, 160, 255, 0.9);
+}
+
+[data-theme="light"] .dd-detail-actions {
+  border-top-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .dd-action-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.65);
+}
+
+[data-theme="light"] .dd-action-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.18);
+  color: rgba(0, 0, 0, 0.9);
+}
+
+[data-theme="light"] .dd-action-primary {
+  background: rgba(60, 100, 220, 0.1);
+  border-color: rgba(60, 100, 220, 0.2);
+  color: rgba(40, 80, 200, 0.9);
+}
+
+[data-theme="light"] .dd-action-primary:hover {
+  background: rgba(60, 100, 220, 0.18);
+  color: rgba(30, 60, 180, 1);
+}
+
+[data-theme="light"] .dd-action-link {
+  color: rgba(30, 70, 180, 0.9);
+}
+
 /* ─── Hero ────────────────────────────────────────── */
 
 .dd-hero {

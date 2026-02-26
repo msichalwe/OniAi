@@ -44,6 +44,7 @@ import diff from "highlight.js/lib/languages/diff";
 import markdown from "highlight.js/lib/languages/markdown";
 import graphql from "highlight.js/lib/languages/graphql";
 import nginx from "highlight.js/lib/languages/nginx";
+import { eventBus } from "../../core/EventBus";
 import "./DynamicDisplay.css";
 
 hljs.registerLanguage("javascript", javascript);
@@ -104,10 +105,38 @@ function Img({ src, alt, className, style, onClick }) {
   );
 }
 
+// ─── Send item context to AI Chat ────────────────────
+
+function sendToChat(item, action = "expand") {
+  const summary = [
+    item.title || item.name || item.label,
+    item.subtitle,
+    item.description || item.snippet || item.text,
+    item.value,
+    item.price,
+    item.source,
+    item.url || item.link,
+  ]
+    .filter(Boolean)
+    .join(" | ");
+
+  eventBus.emit("chat:addContext", {
+    item,
+    summary,
+    action,
+  });
+}
+
 // ─── Detail Overlay ───────────────────────────────────
 
 function DetailOverlay({ item, onClose }) {
   if (!item) return null;
+
+  const handleAskAI = (prompt) => {
+    sendToChat(item, prompt);
+    onClose();
+  };
+
   return (
     <div className="dd-overlay" onClick={onClose}>
       <div className="dd-detail" onClick={(e) => e.stopPropagation()}>
@@ -148,16 +177,37 @@ function DetailOverlay({ item, onClose }) {
               ))}
             </div>
           )}
-          {item.link && (
-            <a
-              className="dd-detail-link"
-              href={item.link}
-              target="_blank"
-              rel="noopener noreferrer"
+          <div className="dd-detail-actions">
+            <button
+              className="dd-action-btn dd-action-primary"
+              onClick={() => handleAskAI("expand")}
             >
-              Open Link <ExternalLink size={12} />
-            </a>
-          )}
+              Expand on this
+            </button>
+            <button
+              className="dd-action-btn"
+              onClick={() => handleAskAI("explain")}
+            >
+              Explain
+            </button>
+            <button
+              className="dd-action-btn"
+              onClick={() => handleAskAI("deeper")}
+            >
+              Go deeper
+            </button>
+            {item.link && (
+              <a
+                className="dd-action-btn dd-action-link"
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Open Link <ExternalLink size={12} />
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>
