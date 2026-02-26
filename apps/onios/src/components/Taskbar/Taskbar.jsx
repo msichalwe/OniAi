@@ -13,10 +13,8 @@ import {
 } from "lucide-react";
 import useWindowStore from "../../stores/windowStore";
 import useCommandStore from "../../stores/commandStore";
-import useDesktopStore from "../../stores/desktopStore";
 import { WIDGET_REGISTRY } from "../../core/widgetRegistry";
 import AppDrawer from "../AppDrawer/AppDrawer";
-import DesktopSwitcher from "../DesktopSwitcher/DesktopSwitcher";
 import ContextMenu from "../ContextMenu/ContextMenu";
 import "./Taskbar.css";
 
@@ -29,7 +27,6 @@ export default function Taskbar() {
   const closeWindow = useWindowStore((s) => s.closeWindow);
   const maximizeWindow = useWindowStore((s) => s.maximizeWindow);
   const openCommandBar = useCommandStore((s) => s.openCommandBar);
-  const activeDesktopId = useDesktopStore((s) => s.activeDesktopId);
   const [time, setTime] = useState(new Date());
   const [showDrawer, setShowDrawer] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
@@ -168,29 +165,25 @@ export default function Taskbar() {
             O
           </div>
           <div className="taskbar-divider" />
-          <DesktopSwitcher />
-          <div className="taskbar-divider" />
         </div>
 
         <div className="taskbar-center">
-          {windows
-            .filter((win) => win.desktopId === activeDesktopId)
-            .map((win) => (
-              <button
-                key={win.id}
-                className={`taskbar-tab ${!win.isMinimized ? "active" : "minimized"}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleTabClick(win);
-                }}
-                onContextMenu={(e) => handleTabContextMenu(e, win)}
-              >
-                <span className="taskbar-tab-icon">
-                  {getWidgetIcon(win.widgetType)}
-                </span>
-                <span className="taskbar-tab-title">{win.title}</span>
-              </button>
-            ))}
+          {windows.map((win) => (
+            <button
+              key={win.id}
+              className={`taskbar-tab ${!win.isMinimized ? "active" : "minimized"}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleTabClick(win);
+              }}
+              onContextMenu={(e) => handleTabContextMenu(e, win)}
+            >
+              <span className="taskbar-tab-icon">
+                {getWidgetIcon(win.widgetType)}
+              </span>
+              <span className="taskbar-tab-title">{win.title}</span>
+            </button>
+          ))}
         </div>
 
         <div className="taskbar-right">

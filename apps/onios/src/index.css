@@ -401,3 +401,128 @@ body,
   background: rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
+
+/* ===== Light Theme — DynamicDisplay ===== */
+[data-theme="light"] .dd-widget {
+  --dd-bg: rgba(255, 255, 255, 0.65);
+  --dd-surface: rgba(0, 0, 0, 0.03);
+  --dd-surface-hover: rgba(0, 0, 0, 0.06);
+  --dd-border: rgba(0, 0, 0, 0.06);
+  --dd-border-strong: rgba(0, 0, 0, 0.1);
+  --dd-border-subtle: rgba(0, 0, 0, 0.04);
+  --dd-code-bg: rgba(0, 0, 0, 0.04);
+  --dd-code-header-bg: rgba(0, 0, 0, 0.03);
+  --dd-copy-bg: rgba(0, 0, 0, 0.05);
+  --dd-copy-hover: rgba(0, 0, 0, 0.1);
+  --dd-overlay-bg: rgba(0, 0, 0, 0.35);
+  --dd-detail-bg: rgba(255, 255, 255, 0.92);
+  --dd-detail-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  --dd-tag-bg: rgba(0, 0, 0, 0.05);
+  --dd-num-bg: rgba(0, 0, 0, 0.06);
+  --dd-close-bg: rgba(0, 0, 0, 0.08);
+  --dd-close-hover: rgba(0, 0, 0, 0.14);
+  --dd-close-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Light mode syntax highlighting */
+[data-theme="light"] .dd-code-block .hljs-keyword,
+[data-theme="light"] .dd-code-block .hljs-selector-tag,
+[data-theme="light"] .dd-code-block .hljs-built_in,
+[data-theme="light"] .dd-code-block .hljs-name {
+  color: #8839ef;
+}
+
+[data-theme="light"] .dd-code-block .hljs-string,
+[data-theme="light"] .dd-code-block .hljs-attr,
+[data-theme="light"] .dd-code-block .hljs-symbol,
+[data-theme="light"] .dd-code-block .hljs-bullet {
+  color: #40a02b;
+}
+
+[data-theme="light"] .dd-code-block .hljs-number,
+[data-theme="light"] .dd-code-block .hljs-literal {
+  color: #fe640b;
+}
+
+[data-theme="light"] .dd-code-block .hljs-type,
+[data-theme="light"] .dd-code-block .hljs-class .hljs-title,
+[data-theme="light"] .dd-code-block .hljs-title {
+  color: #df8e1d;
+}
+
+[data-theme="light"] .dd-code-block .hljs-function .hljs-title,
+[data-theme="light"] .dd-code-block .hljs-title.function_ {
+  color: #1e66f5;
+}
+
+[data-theme="light"] .dd-code-block .hljs-comment,
+[data-theme="light"] .dd-code-block .hljs-doctag {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="light"] .dd-code-block .hljs-regexp,
+[data-theme="light"] .dd-code-block .hljs-template-variable {
+  color: #179299;
+}
+
+[data-theme="light"] .dd-code-block .hljs-variable,
+[data-theme="light"] .dd-code-block .hljs-params {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="light"] .dd-code-block .hljs-meta,
+[data-theme="light"] .dd-code-block .hljs-meta .hljs-keyword {
+  color: #d20f39;
+}
+
+[data-theme="light"] .dd-code-block .hljs-tag {
+  color: #e64553;
+}
+[data-theme="light"] .dd-code-block .hljs-attribute {
+  color: #df8e1d;
+}
+[data-theme="light"] .dd-code-block .hljs-property {
+  color: #179299;
+}
+
+[data-theme="light"] .dd-code-block .hljs-addition {
+  color: #40a02b;
+  background: rgba(64, 160, 43, 0.08);
+}
+[data-theme="light"] .dd-code-block .hljs-deletion {
+  color: #d20f39;
+  background: rgba(210, 15, 57, 0.08);
+}
+
+/* Light mode alert adjustments */
+[data-theme="light"] .dd-alert-info {
+  background: rgba(10, 132, 255, 0.06);
+  border-color: rgba(10, 132, 255, 0.18);
+}
+[data-theme="light"] .dd-alert-warning {
+  background: rgba(255, 159, 10, 0.06);
+  border-color: rgba(255, 159, 10, 0.2);
+}
+[data-theme="light"] .dd-alert-error {
+  background: rgba(255, 69, 58, 0.06);
+  border-color: rgba(255, 69, 58, 0.18);
+}
+[data-theme="light"] .dd-alert-success {
+  background: rgba(48, 209, 88, 0.06);
+  border-color: rgba(48, 209, 88, 0.2);
+}
+
+/* Light mode taskbar */
+[data-theme="light"] .taskbar {
+  background: rgba(255, 255, 255, 0.75);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .taskbar-tab.active {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .taskbar-divider {
+  background: rgba(0, 0, 0, 0.08);
+}

@@ -44,7 +44,6 @@ import usePasswordStore, {
 import { runAllTests, runTest } from "./core/testScenarios";
 import { storageService } from "./core/StorageService";
 import { widgetContext } from "./core/WidgetContextProvider";
-import useDesktopStore from "./stores/desktopStore";
 import { eventBus } from "./core/EventBus";
 import { agentManager } from "./core/AgentManager";
 import OniWidget from "./widgets/OniAssistant/OniWidget";
@@ -1828,133 +1827,28 @@ function registerAllCommands() {
     { description: "Get the focused window and its live widget state" },
   );
 
-  // === desktop management commands ===
+  // === window management commands ===
   commandRegistry.register(
-    "desktop.list",
+    "window.context",
     () => {
-      const ds = useDesktopStore.getState();
-      const sorted = ds.getSortedDesktops();
-      const wins = useWindowStore.getState().windows;
-      return sorted
-        .map(
-          (d, i) =>
-            `${i + 1}. ${d.name}${d.id === ds.activeDesktopId ? " [ACTIVE]" : ""} (${wins.filter((w) => w.desktopId === d.id).length} windows)`,
-        )
-        .join("\n");
-    },
-    { description: "List all virtual desktops" },
-  );
-
-  commandRegistry.register(
-    "desktop.add",
-    (name) => {
-      const id = useDesktopStore.getState().addDesktop(name || null, true);
-      return `Created desktop: ${id}`;
-    },
-    { description: "Add a new virtual desktop", args: ["name?"] },
-  );
-
-  commandRegistry.register(
-    "desktop.switch",
-    (indexOrId) => {
-      if (!indexOrId)
-        return "Usage: desktop.switch(1) or desktop.switch(desktopId)";
-      const ds = useDesktopStore.getState();
-      const num = parseInt(indexOrId, 10);
-      if (!isNaN(num) && num > 0) {
-        ds.switchToIndex(num - 1);
-        return `Switched to desktop ${num}`;
-      }
-      ds.switchDesktop(indexOrId);
-      return `Switched to desktop: ${indexOrId}`;
+      const ctx = useWindowStore.getState().getActiveContext();
+      return JSON.stringify(ctx, null, 2);
     },
     {
-      description: "Switch to a desktop by number (1-based) or ID",
-      args: ["indexOrId"],
+      description:
+        "Get full window context (all open windows, max limit, focus state)",
     },
   );
 
   commandRegistry.register(
-    "desktop.next",
+    "window.autoCloseOldest",
     () => {
-      useDesktopStore.getState().nextDesktop();
-      return `Switched to: ${useDesktopStore.getState().getActiveDesktop().name}`;
-    },
-    { description: "Switch to the next desktop" },
-  );
-
-  commandRegistry.register(
-    "desktop.prev",
-    () => {
-      useDesktopStore.getState().prevDesktop();
-      return `Switched to: ${useDesktopStore.getState().getActiveDesktop().name}`;
-    },
-    { description: "Switch to the previous desktop" },
-  );
-
-  commandRegistry.register(
-    "desktop.remove",
-    (indexOrId) => {
-      const ds = useDesktopStore.getState();
-      let targetId = indexOrId;
-      if (!targetId) targetId = ds.activeDesktopId;
-      const num = parseInt(targetId, 10);
-      if (!isNaN(num) && num > 0) {
-        const sorted = ds.getSortedDesktops();
-        targetId = sorted[num - 1]?.id;
-        if (!targetId) return `Desktop ${num} not found`;
-      }
-      const fallback = ds.removeDesktop(targetId);
-      if (!fallback) return "Cannot remove the last desktop.";
-      // Move orphaned windows
-      const wins = useWindowStore
-        .getState()
-        .windows.filter((w) => w.desktopId === targetId);
-      wins.forEach((w) =>
-        useWindowStore.getState().moveWindowToDesktop(w.id, fallback),
-      );
-      return `Removed desktop. ${wins.length} windows moved.`;
+      const closed = useWindowStore.getState().autoCloseOldest();
+      if (closed) return `Auto-closed: ${closed.title} (${closed.widgetType})`;
+      return "No windows to close.";
     },
     {
-      description: "Remove a desktop (windows move to adjacent desktop)",
-      args: ["indexOrId?"],
-    },
-  );
-
-  commandRegistry.register(
-    "desktop.rename",
-    (indexOrId, name) => {
-      if (!indexOrId || !name) return 'Usage: desktop.rename(1, "Work")';
-      const ds = useDesktopStore.getState();
-      const num = parseInt(indexOrId, 10);
-      let targetId = indexOrId;
-      if (!isNaN(num) && num > 0) {
-        const sorted = ds.getSortedDesktops();
-        targetId = sorted[num - 1]?.id;
-        if (!targetId) return `Desktop ${num} not found`;
-      }
-      ds.renameDesktop(targetId, name);
-      return `Renamed to: ${name}`;
-    },
-    { description: "Rename a desktop", args: ["indexOrId", "name"] },
-  );
-
-  commandRegistry.register(
-    "desktop.moveWindow",
-    (windowId, desktopIndex) => {
-      if (!windowId || !desktopIndex)
-        return 'Usage: desktop.moveWindow("windowId", 2)';
-      const ds = useDesktopStore.getState();
-      const num = parseInt(desktopIndex, 10);
-      const sorted = ds.getSortedDesktops();
-      const target = sorted[num - 1];
-      if (!target) return `Desktop ${desktopIndex} not found`;
-      useWindowStore.getState().moveWindowToDesktop(windowId, target.id);
-      return `Moved window to ${target.name}`;
-    },
-    {
-      description: "Move a window to another desktop",
-      args: ["windowId", "desktopNumber"],
+      description: "Auto-close the oldest non-focused window to free up space",
     },
   );
 
@@ -2813,7 +2707,6 @@ export default function App() {
       (cmd) => executeCommand(cmd, "scheduler"),
       {
         getWindowStore: () => useWindowStore.getState(),
-        getDesktopStore: () => useDesktopStore.getState(),
         getWorkflowStore: () => useWorkflowStore.getState(),
       },
     );

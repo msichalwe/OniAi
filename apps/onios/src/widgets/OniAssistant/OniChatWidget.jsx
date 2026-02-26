@@ -20,7 +20,6 @@ import { gateway } from "../../gateway/GatewayClient";
 import { commandRegistry } from "../../core/CommandRegistry";
 import { eventBus } from "../../core/EventBus";
 import useWindowStore from "../../stores/windowStore";
-import useDesktopStore from "../../stores/desktopStore";
 import useThemeStore from "../../stores/themeStore";
 import { widgetContext } from "../../core/WidgetContextProvider";
 import "./OniChatWidget.css";
@@ -166,23 +165,21 @@ export default function OniChatWidget() {
     }
   }, [action]);
 
-  // Gather live desktop context to send with chat messages
+  // Gather live context to send with chat messages
   const getDesktopContext = useCallback(() => {
-    const windows = useWindowStore.getState().windows || [];
-    const desktops = useDesktopStore.getState().desktops || [];
+    const wCtx = useWindowStore.getState().getActiveContext();
     const theme = useThemeStore.getState().theme || "dark";
-    const focused = windows.find((w) => w.focused);
     const liveState = widgetContext?.getSummary?.() || "";
     return {
       windows:
-        windows
-          .map((w) => `${w.title || w.widgetType} (${w.widgetType})`)
-          .join(", ") || "none",
-      desktops: `${desktops.length} desktops`,
+        wCtx.windows.map((w) => `${w.title} (${w.widgetType})`).join(", ") ||
+        "none",
+      windowCount: `${wCtx.windowCount}/${wCtx.maxWindows} max`,
       theme,
       time: new Date().toLocaleString(),
-      focusedWindow: focused
-        ? `${focused.title || focused.widgetType}`
+      focusedWindow: wCtx.focusedWindowId
+        ? wCtx.windows.find((w) => w.windowId === wCtx.focusedWindowId)
+            ?.title || "none"
         : "none",
       liveWidgetState: liveState,
     };

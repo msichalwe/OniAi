@@ -20,7 +20,6 @@ import {
 import useWindowStore from "../../stores/windowStore";
 import useCommandStore from "../../stores/commandStore";
 import useThemeStore from "../../stores/themeStore";
-import useDesktopStore from "../../stores/desktopStore";
 import { WIDGET_REGISTRY } from "../../core/widgetRegistry";
 import { commandRegistry } from "../../core/CommandRegistry";
 import Window from "../Window/Window";
@@ -121,7 +120,6 @@ export default function Desktop() {
   const windows = useWindowStore((s) => s.windows);
   const openWindow = useWindowStore((s) => s.openWindow);
   const openCommandBar = useCommandStore((s) => s.openCommandBar);
-  const activeDesktopId = useDesktopStore((s) => s.activeDesktopId);
   const wallpaper = useThemeStore((s) => s.wallpaper);
   const customWallpaper = useThemeStore((s) => s.customWallpaper);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
@@ -231,10 +229,8 @@ export default function Desktop() {
       onContextMenu={handleDesktopContextMenu}
     >
       <div className="desktop-surface">
-        {/* Welcome screen when no windows on this desktop */}
-        {windows.filter(
-          (w) => w.desktopId === activeDesktopId && !w.isMinimized,
-        ).length === 0 && (
+        {/* Welcome screen when no windows are visible */}
+        {windows.filter((w) => !w.isMinimized).length === 0 && (
           <div className="desktop-welcome">
             <div className="desktop-welcome-logo">OniOS</div>
             <div className="desktop-welcome-sub">
@@ -267,32 +263,30 @@ export default function Desktop() {
           </div>
         )}
 
-        {/* Render windows on active desktop */}
-        {windows
-          .filter((w) => w.desktopId === activeDesktopId)
-          .map((win) => {
-            const reg = WIDGET_REGISTRY[win.widgetType];
-            if (!reg) return null;
-            const WidgetComponent = reg.component;
-            const IconComponent = reg.icon;
+        {/* Render all windows */}
+        {windows.map((win) => {
+          const reg = WIDGET_REGISTRY[win.widgetType];
+          if (!reg) return null;
+          const WidgetComponent = reg.component;
+          const IconComponent = reg.icon;
 
-            return (
-              <Window
-                key={win.id}
-                windowData={{
-                  ...win,
-                  icon: IconComponent ? <IconComponent size={14} /> : null,
-                }}
-                isFocused={win.zIndex === topZIndex}
-              >
-                <WidgetComponent
-                  {...win.props}
-                  windowId={win.id}
-                  widgetType={win.widgetType}
-                />
-              </Window>
-            );
-          })}
+          return (
+            <Window
+              key={win.id}
+              windowData={{
+                ...win,
+                icon: IconComponent ? <IconComponent size={14} /> : null,
+              }}
+              isFocused={win.zIndex === topZIndex}
+            >
+              <WidgetComponent
+                {...win.props}
+                windowId={win.id}
+                widgetType={win.widgetType}
+              />
+            </Window>
+          );
+        })}
       </div>
 
       {/* Context Menu */}

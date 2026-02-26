@@ -1,24 +1,25 @@
 /**
  * windowStore — Zustand store managing all open windows.
  * 
- * Supports singleton widgets (only one instance allowed) and exposes
- * an active-widgets context for AI agents to understand screen state.
+ * Single desktop. Max 5 windows open at once.
+ * When limit is hit, auto-closes the oldest non-focused window.
+ * Supports singleton widgets and exposes active-widgets context for AI agents.
  */
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { nanoid } from 'nanoid';
 import { WIDGET_REGISTRY } from '../core/widgetRegistry';
-import useDesktopStore from './desktopStore';
 import { eventBus } from '../core/EventBus';
 
 let topZIndex = 100;
 
+/** Maximum number of windows that can be open simultaneously. */
+const MAX_WINDOWS = 5;
+
 /**
- * Find the best position for a new window using available screen real estate.
- * Tries to place windows in a grid-like layout, filling gaps left by closed
- * windows. Falls back to cascade offset when screen is full.
- * Returns { position, hasRoom } where hasRoom indicates if a no-overlap position was found.
+ * Find the best position for a new window.
+ * Grid-scan for no-overlap positions, cascade fallback.
  */
 function findBestPosition(existingWindows, width, height) {
     const screenW = window.innerWidth;
@@ -28,7 +29,6 @@ function findBestPosition(existingWindows, width, height) {
     const usableW = screenW - padding * 2;
     const usableH = screenH - taskbarH - padding * 2;
 
-    // Collect bounding rects of non-minimized windows
     const occupied = existingWindows
         .filter(w => !w.isMinimized)
         .map(w => ({
@@ -38,7 +38,6 @@ function findBestPosition(existingWindows, width, height) {
             y2: w.position.y + w.size.height,
         }));
 
-    // Try candidate positions in a grid scan (step = 40px)
     const step = 40;
     let bestPos = null;
     let bestOverlap = Infinity;
@@ -55,7 +54,6 @@ function findBestPosition(existingWindows, width, height) {
             }
 
             if (totalOverlap === 0) {
-                // Perfect — no overlap at all
                 return { position: { x, y }, hasRoom: true };
             }
 
@@ -66,19 +64,34 @@ function findBestPosition(existingWindows, width, height) {
         }
     }
 
-    // If we found a position with minimal overlap, use it
     if (bestPos) return { position: bestPos, hasRoom: false };
 
-    // Fallback: cascade from top-left
     const offset = (existingWindows.length % 8) * 30;
     return { position: { x: 80 + offset, y: 60 + offset }, hasRoom: false };
 }
 
 /**
- * Threshold: if a desktop has this many non-minimized windows already,
- * consider it "full" for overflow purposes.
+ * Determine which window to auto-close when at max capacity.
+ * Hierarchy: close the oldest, least-recently-interacted, non-focused window.
+ * Prefers closing minimized windows first, then non-singleton windows.
  */
-const OVERFLOW_THRESHOLD = 6;
+function pickWindowToClose(windows, focusedId) {
+    const candidates = windows
+        .filter(w => w.id !== focusedId)
+        .sort((a, b) => {
+            // Prefer closing minimized windows
+            if (a.isMinimized && !b.isMinimized) return -1;
+            if (!a.isMinimized && b.isMinimized) return 1;
+            // Prefer closing non-singleton
+            const aReg = WIDGET_REGISTRY[a.widgetType];
+            const bReg = WIDGET_REGISTRY[b.widgetType];
+            if (!aReg?.singleton && bReg?.singleton) return -1;
+            if (aReg?.singleton && !bReg?.singleton) return 1;
+            // Oldest interaction first
+            return (a.lastInteractedAt || 0) - (b.lastInteractedAt || 0);
+        });
+    return candidates[0] || null;
+}
 
 const useWindowStore = create(
     persist(
@@ -93,18 +106,12 @@ const useWindowStore = create(
             openWindow: (widgetType, props = {}, meta = {}) => {
                 const existing = get().windows;
                 const reg = WIDGET_REGISTRY[widgetType];
-                const desktopState = useDesktopStore.getState();
-                let targetDesktopId = desktopState.activeDesktopId;
 
-                // Singleton check: if already open, focus + update props and return existing ID
+                // Singleton check: if already open, focus + update props
                 if (reg?.singleton) {
                     const found = existing.find(w => w.widgetType === widgetType);
                     if (found) {
                         topZIndex++;
-                        // Switch to that window's desktop
-                        if (found.desktopId && found.desktopId !== desktopState.activeDesktopId) {
-                            desktopState.switchDesktop(found.desktopId);
-                        }
                         set(state => ({
                             windows: state.windows.map(w =>
                                 w.id === found.id
@@ -112,6 +119,7 @@ const useWindowStore = create(
                                         ...w,
                                         zIndex: topZIndex,
                                         isMinimized: false,
+                                        lastInteractedAt: Date.now(),
                                         props: { ...w.props, ...props },
                                     }
                                     : w
@@ -121,45 +129,27 @@ const useWindowStore = create(
                     }
                 }
 
-                const winWidth = meta.defaultWidth || 600;
-                const winHeight = meta.defaultHeight || 420;
-
-                // Smart overflow: check if current desktop has room
-                const desktopWindows = existing.filter(
-                    w => w.desktopId === targetDesktopId && !w.isMinimized
-                );
-                const { position, hasRoom } = findBestPosition(desktopWindows, winWidth, winHeight);
-
-                // If desktop is crowded and there are multiple desktops, try overflow
-                if (!hasRoom && desktopWindows.length >= OVERFLOW_THRESHOLD) {
-                    const desktops = desktopState.getSortedDesktops();
-                    if (desktops.length > 1) {
-                        // Find the first desktop with room
-                        for (const d of desktops) {
-                            if (d.id === targetDesktopId) continue;
-                            const dWins = existing.filter(
-                                w => w.desktopId === d.id && !w.isMinimized
-                            );
-                            const result = findBestPosition(dWins, winWidth, winHeight);
-                            if (result.hasRoom) {
-                                targetDesktopId = d.id;
-                                desktopState.switchDesktop(d.id);
-                                break;
-                            }
-                        }
-                    }
-                    // If still no room on any desktop, create a new one
-                    if (targetDesktopId === desktopState.activeDesktopId && !hasRoom && desktopWindows.length >= OVERFLOW_THRESHOLD) {
-                        targetDesktopId = desktopState.getOrCreateNextDesktop();
-                        desktopState.switchDesktop(targetDesktopId);
+                // Auto-close oldest window if at max capacity
+                if (existing.length >= MAX_WINDOWS) {
+                    const focused = get().getFocusedWindow();
+                    const victim = pickWindowToClose(existing, focused?.id);
+                    if (victim) {
+                        set(state => ({
+                            windows: state.windows.filter(w => w.id !== victim.id),
+                        }));
+                        eventBus.emit('window:auto-closed', {
+                            id: victim.id,
+                            widgetType: victim.widgetType,
+                            title: victim.title,
+                            reason: 'max_windows_reached',
+                        });
                     }
                 }
 
-                // Recalculate position for the target desktop
-                const finalDesktopWindows = existing.filter(
-                    w => w.desktopId === targetDesktopId && !w.isMinimized
-                );
-                const finalPos = findBestPosition(finalDesktopWindows, winWidth, winHeight);
+                const winWidth = meta.defaultWidth || 600;
+                const winHeight = meta.defaultHeight || 420;
+                const visibleWindows = get().windows.filter(w => !w.isMinimized);
+                const finalPos = findBestPosition(visibleWindows, winWidth, winHeight);
 
                 const newWindow = {
                     id: nanoid(8),
@@ -179,7 +169,7 @@ const useWindowStore = create(
                     isMinimized: false,
                     isMaximized: false,
                     preMaximizeState: null,
-                    desktopId: targetDesktopId,
+                    lastInteractedAt: Date.now(),
                     props,
                 };
 
@@ -187,7 +177,7 @@ const useWindowStore = create(
                     windows: [...state.windows, newWindow],
                 }));
 
-                eventBus.emit('window:opened', { id: newWindow.id, widgetType, title: newWindow.title, desktopId: targetDesktopId });
+                eventBus.emit('window:opened', { id: newWindow.id, widgetType, title: newWindow.title });
                 return newWindow.id;
             },
 
@@ -204,7 +194,7 @@ const useWindowStore = create(
                 set(state => ({
                     windows: state.windows.map(w =>
                         w.id === id
-                            ? { ...w, zIndex: topZIndex, isMinimized: false }
+                            ? { ...w, zIndex: topZIndex, isMinimized: false, lastInteractedAt: Date.now() }
                             : w
                     ),
                 }));
@@ -312,21 +302,26 @@ const useWindowStore = create(
             },
 
             /**
-             * Move a window to a different desktop.
+             * Auto-close oldest non-focused window to free up space.
+             * Returns the closed window's info or null.
              */
-            moveWindowToDesktop: (windowId, desktopId) => {
-                set(state => ({
-                    windows: state.windows.map(w =>
-                        w.id === windowId ? { ...w, desktopId } : w
-                    ),
-                }));
-            },
-
-            /**
-             * Get windows on a specific desktop.
-             */
-            getWindowsOnDesktop: (desktopId) => {
-                return get().windows.filter(w => w.desktopId === desktopId);
+            autoCloseOldest: () => {
+                const wins = get().windows;
+                const focused = get().getFocusedWindow();
+                const victim = pickWindowToClose(wins, focused?.id);
+                if (victim) {
+                    set(state => ({
+                        windows: state.windows.filter(w => w.id !== victim.id),
+                    }));
+                    eventBus.emit('window:auto-closed', {
+                        id: victim.id,
+                        widgetType: victim.widgetType,
+                        title: victim.title,
+                        reason: 'ai_requested',
+                    });
+                    return { id: victim.id, title: victim.title, widgetType: victim.widgetType };
+                }
+                return null;
             },
 
             /**
@@ -350,12 +345,16 @@ const useWindowStore = create(
              * windows with their IDs, types, titles, available commands, and state.
              * This is the primary interface for AI agents to understand screen state.
              */
+            /** Max windows constant exposed for AI context */
+            getMaxWindows: () => MAX_WINDOWS,
+
             getActiveContext: () => {
                 const wins = get().windows;
                 const focused = get().getFocusedWindow();
 
                 return {
                     windowCount: wins.length,
+                    maxWindows: MAX_WINDOWS,
                     focusedWindowId: focused?.id || null,
                     windows: wins.map(w => {
                         const reg = WIDGET_REGISTRY[w.widgetType];
@@ -363,11 +362,11 @@ const useWindowStore = create(
                             windowId: w.id,
                             widgetType: w.widgetType,
                             title: w.title,
-                            desktopId: w.desktopId || null,
                             singleton: reg?.singleton || false,
                             isMinimized: w.isMinimized,
                             isMaximized: w.isMaximized,
                             isFocused: focused?.id === w.id,
+                            lastInteractedAt: w.lastInteractedAt || 0,
                             props: w.props,
                             position: w.position,
                             size: w.size,
@@ -392,27 +391,26 @@ const useWindowStore = create(
                     isMinimized: w.isMinimized,
                     isMaximized: w.isMaximized,
                     preMaximizeState: w.preMaximizeState,
-                    desktopId: w.desktopId || null,
+                    lastInteractedAt: w.lastInteractedAt || 0,
                     props: w.props,
                 })),
             }),
-            // On rehydration, restore icon from WIDGET_REGISTRY and sync topZIndex
             onRehydrateStorage: () => (state) => {
                 if (state?.windows?.length) {
-                    // Restore non-serialisable fields
-                    const activeDesktopId = useDesktopStore.getState().activeDesktopId;
-                    state.windows = state.windows
-                        .filter(w => WIDGET_REGISTRY[w.widgetType]) // drop windows for removed widgets
+                    // Enforce max windows on rehydration
+                    let wins = state.windows
+                        .filter(w => WIDGET_REGISTRY[w.widgetType])
                         .map(w => {
                             const reg = WIDGET_REGISTRY[w.widgetType];
-                            return {
-                                ...w,
-                                icon: reg?.icon || null,
-                                desktopId: w.desktopId || activeDesktopId,
-                            };
+                            return { ...w, icon: reg?.icon || null };
                         });
-                    // Sync topZIndex to highest persisted value
-                    const maxZ = Math.max(...state.windows.map(w => w.zIndex || 100));
+                    // Trim to max
+                    if (wins.length > MAX_WINDOWS) {
+                        wins.sort((a, b) => (b.lastInteractedAt || 0) - (a.lastInteractedAt || 0));
+                        wins = wins.slice(0, MAX_WINDOWS);
+                    }
+                    state.windows = wins;
+                    const maxZ = Math.max(...wins.map(w => w.zIndex || 100));
                     topZIndex = maxZ + 1;
                 }
             },

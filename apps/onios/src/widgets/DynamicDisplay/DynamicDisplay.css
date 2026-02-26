@@ -1,11 +1,34 @@
 /* ─── DynamicDisplay — OniOS Frosted Glass Design ──── */
 
+/* Theme-aware surface tokens */
+.dd-widget {
+  --dd-bg: rgba(18, 18, 28, 0.55);
+  --dd-surface: rgba(255, 255, 255, 0.03);
+  --dd-surface-hover: rgba(255, 255, 255, 0.06);
+  --dd-border: rgba(255, 255, 255, 0.05);
+  --dd-border-strong: rgba(255, 255, 255, 0.08);
+  --dd-border-subtle: rgba(255, 255, 255, 0.03);
+  --dd-code-bg: rgba(0, 0, 0, 0.3);
+  --dd-code-header-bg: rgba(255, 255, 255, 0.04);
+  --dd-copy-bg: rgba(255, 255, 255, 0.06);
+  --dd-copy-hover: rgba(255, 255, 255, 0.12);
+  --dd-overlay-bg: rgba(0, 0, 0, 0.55);
+  --dd-detail-bg: rgba(28, 28, 40, 0.85);
+  --dd-detail-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --dd-tag-bg: rgba(255, 255, 255, 0.06);
+  --dd-num-bg: rgba(255, 255, 255, 0.05);
+  --dd-close-bg: rgba(0, 0, 0, 0.4);
+  --dd-close-hover: rgba(255, 255, 255, 0.15);
+  --dd-close-color: rgba(255, 255, 255, 0.8);
+}
+
 .dd-widget {
   width: 100%;
   height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  background: rgba(18, 18, 28, 0.55);
+  background: var(--dd-bg);
   -webkit-backdrop-filter: blur(40px) saturate(1.4);
   backdrop-filter: blur(40px) saturate(1.4);
   color: var(--text-primary);
@@ -53,7 +76,7 @@
   padding: 5px 12px;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--dd-code-header-bg);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   color: var(--text-secondary);
@@ -63,7 +86,7 @@
   transition: background var(--transition-fast);
 }
 .dd-retry:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--dd-surface-hover);
 }
 
 .dd-section-title {
@@ -80,7 +103,7 @@
   font-size: 10px;
   color: var(--text-tertiary);
   text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--dd-border-subtle);
 }
 
 /* ─── Image Helper ────────────────────────────────── */
@@ -88,7 +111,7 @@
 .dd-img-wrap {
   position: relative;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--dd-surface);
 }
 .dd-img-wrap img {
   width: 100%;
@@ -122,7 +145,7 @@
   position: absolute;
   inset: 0;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--dd-overlay-bg);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   display: flex;
@@ -145,14 +168,12 @@
   max-width: 380px;
   max-height: 90%;
   overflow-y: auto;
-  background: rgba(28, 28, 40, 0.85);
+  background: var(--dd-detail-bg);
   -webkit-backdrop-filter: blur(40px) saturate(1.3);
   backdrop-filter: blur(40px) saturate(1.3);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--dd-border-strong);
   border-radius: var(--radius-lg);
-  box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--dd-detail-shadow);
   animation: dd-slide-up 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 @keyframes dd-slide-up {
@@ -173,16 +194,16 @@
   justify-content: center;
   border: none;
   border-radius: var(--radius-full);
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--dd-close-bg);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--dd-close-color);
   cursor: pointer;
   z-index: 2;
   transition: background var(--transition-fast);
 }
 .dd-detail-close:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--dd-close-hover);
 }
 
 .dd-detail-img {
@@ -295,8 +316,8 @@
   flex: 1;
   min-width: 64px;
   padding: var(--space-md) var(--space-sm);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--dd-surface);
+  border: 1px solid var(--dd-border);
   border-radius: var(--radius-md);
   text-align: center;
   display: flex;
@@ -306,7 +327,7 @@
   transition: background var(--transition-fast);
 }
 .dd-stat:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--dd-surface-hover);
 }
 
 .dd-stat-icon {
@@ -348,8 +369,8 @@
 }
 
 .dd-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--dd-surface);
+  border: 1px solid var(--dd-border);
   border-radius: var(--radius-md);
   overflow: hidden;
   transition:
@@ -362,8 +383,8 @@
 }
 .dd-card-clickable:hover {
   transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--dd-border-strong);
+  background: var(--dd-surface-hover);
 }
 
 .dd-card-img {
@@ -422,7 +443,7 @@
 .dd-tag {
   padding: 2px 7px;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--dd-tag-bg);
   font-size: 9px;
   font-weight: 600;
   color: var(--text-secondary);
@@ -461,15 +482,15 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-tertiary);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--dd-border-strong);
 }
 .dd-table td {
   padding: 7px var(--space-md);
   color: var(--text-secondary);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--dd-border-subtle);
 }
 .dd-table tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--dd-surface);
 }
 .dd-table td:first-child {
   color: var(--text-primary);
@@ -491,10 +512,10 @@
   transition: background var(--transition-fast);
 }
 .dd-list-item + .dd-list-item {
-  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  border-top: 1px solid var(--dd-border-subtle);
 }
 .dd-list-item:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--dd-surface);
 }
 .dd-list-clickable {
   cursor: pointer;
@@ -507,7 +528,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--dd-num-bg);
   font-size: 10px;
   font-weight: 800;
   color: var(--text-secondary);
@@ -605,7 +626,7 @@
 .dd-text code {
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--dd-tag-bg);
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--accent-teal);
@@ -620,7 +641,7 @@
 }
 .dd-image .dd-img-wrap {
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--dd-border);
 }
 .dd-image-caption {
   font-size: var(--text-xs);
@@ -638,7 +659,7 @@
   width: 100%;
   border-radius: var(--radius-md);
   background: var(--bg-primary);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--dd-border);
 }
 .dd-video-caption {
   font-size: var(--text-xs);
@@ -658,7 +679,7 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--dd-border);
   cursor: pointer;
   transition:
     transform 0.15s ease,
@@ -666,7 +687,7 @@
 }
 .dd-gallery-item:hover {
   transform: scale(1.02);
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--dd-border-strong);
 }
 .dd-gallery-item .dd-img-wrap {
   aspect-ratio: 1;
@@ -693,7 +714,7 @@
 }
 .dd-embed iframe {
   border-radius: var(--radius-md) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid var(--dd-border) !important;
 }
 
 /* ─── Progress ────────────────────────────────────── */
@@ -723,7 +744,7 @@
 }
 .dd-progress-bar {
   height: 4px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--dd-surface);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
@@ -740,7 +761,7 @@
   margin: var(--space-xs) var(--space-lg);
   padding: var(--space-md) var(--space-lg);
   border-left: 2px solid var(--accent-blue);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--dd-surface);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
 }
 .dd-quote-text {
@@ -767,7 +788,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 6px var(--space-md);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--dd-code-header-bg);
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   font-size: var(--text-xs);
   font-weight: 700;
@@ -791,19 +812,19 @@
   height: 22px;
   border: none;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--dd-copy-bg);
   color: var(--text-tertiary);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 .dd-code-copy:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--dd-copy-hover);
   color: var(--text-primary);
 }
 .dd-code-block {
   padding: var(--space-md);
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: var(--dd-code-bg);
+  border: 1px solid var(--dd-border-subtle);
   border-radius: 0 0 var(--radius-sm) var(--radius-sm);
   overflow-x: auto;
   font-family: var(--font-mono);
@@ -833,7 +854,7 @@
   padding: 6px 0;
 }
 .dd-kv-row + .dd-kv-row {
-  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  border-top: 1px solid var(--dd-border-subtle);
 }
 .dd-kv-key {
   color: var(--text-tertiary);
@@ -865,7 +886,7 @@
   top: 22px;
   bottom: -6px;
   width: 1.5px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--dd-border);
 }
 .dd-timeline-dot {
   width: 12px;
@@ -980,8 +1001,8 @@
   flex: 1;
   min-width: 52px;
   padding: var(--space-sm) var(--space-xs);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: var(--dd-surface);
+  border: 1px solid var(--dd-border);
   border-radius: var(--radius-md);
   text-align: center;
   display: flex;
@@ -991,7 +1012,7 @@
   transition: background var(--transition-fast);
 }
 .dd-weather-day:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--dd-surface-hover);
 }
 .dd-weather-day-name {
   font-size: 9px;
@@ -1066,7 +1087,7 @@
 
 .dd-divider {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid var(--dd-border-subtle);
   margin: var(--space-xs) var(--space-lg);
 }
 
