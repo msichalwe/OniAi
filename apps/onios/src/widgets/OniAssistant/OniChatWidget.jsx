@@ -27,6 +27,22 @@ import "./OniChatWidget.css";
 let _nanoid = 0;
 const nanoid = () => `oni_${++_nanoid}_${Date.now().toString(36)}`;
 
+/**
+ * Strip raw JSON tool-result blocks that the AI model sometimes echoes.
+ * Matches patterns like {"success":true,"id":"d_..."} on their own line.
+ */
+function stripToolResultJSON(text) {
+  if (!text) return text;
+  return text
+    .replace(/^\s*\{"(?:success|error|id|updated|result)"[^}]*\}\s*$/gm, "")
+    .replace(
+      /^\s*```json\s*\n\{"(?:success|error|id)"[^}]*\}\s*\n```\s*$/gm,
+      "",
+    )
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 const SESSION_KEY = "onios:main";
 const CHAT_STORAGE_KEY = "onios_chat_messages";
 const MAX_STORED_MESSAGES = 100;
@@ -110,11 +126,11 @@ export default function OniChatWidget() {
       }
 
       if (event.type === "action_done") {
-        const resultDesc =
-          event.result?.message || event.result?.success ? "Done" : "Failed";
+        const isSuccess = event.result?.success !== false;
+        const label = isSuccess ? "Done" : "Failed";
         addStatusMessage(
-          `${actionInfo.label}: ${resultDesc}`,
-          event.result?.success !== false ? "success" : "error",
+          `${actionInfo.label}: ${label}`,
+          isSuccess ? "success" : "error",
         );
       }
 
@@ -297,11 +313,12 @@ export default function OniChatWidget() {
           }
         }
 
-        // Build final assistant message
+        // Build final assistant message — strip raw JSON tool results
+        const cleanedText = stripToolResultJSON(fullText);
         const assistantMsg = {
           id: nanoid(),
           role: "assistant",
-          content: fullText || "Done!",
+          content: cleanedText || "Done!",
           timestamp: Date.now(),
         };
 
