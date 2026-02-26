@@ -442,37 +442,16 @@ export default function OniChatWidget() {
     prevStreamingRef.current = isStreaming;
   }, [isStreaming]);
 
-  // Auto-start voice engine on mount (respects Settings toggle)
-  useEffect(() => {
-    if (voiceEngine.isSupported) {
-      let enabled = true;
-      try {
-        enabled = localStorage.getItem("onios_voice_enabled") !== "false";
-      } catch {
-        /* default true */
-      }
-      if (enabled && voiceEngine.state === "OFF") {
-        voiceEngine.start();
-      }
-    }
-    return () => {
-      // Don't stop on unmount — voice should persist
-    };
-  }, []);
+  // No auto-start — voice is manual only (click mic to activate)
 
   const handleVoiceToggle = useCallback(() => {
     voiceEngine.toggle();
   }, []);
 
   const handleVoiceMic = useCallback(() => {
-    if (voiceState.state === "ACTIVATED") {
-      // Already listening — stop and finalize
-      voiceEngine._finalizeCommand();
-    } else {
-      // Manual activation — bypass wake word
-      voiceEngine.activateManual();
-    }
-  }, [voiceState.state]);
+    // Click mic: start listening, or finalize & send if already listening
+    voiceEngine.activate();
+  }, []);
 
   return (
     <div className="oni-chat-widget">

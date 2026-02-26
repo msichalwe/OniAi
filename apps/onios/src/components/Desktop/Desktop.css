@@ -204,7 +204,7 @@
   transform: scale(0.93);
 }
 
-/* Core — warm nude sphere (light, 3D, matches original OniWidget orb) */
+/* Core — warm nude sphere (solid opaque, 3D highlights via gradients) */
 .oni-orb-core {
   width: 56px;
   height: 56px;
@@ -215,35 +215,23 @@
   z-index: 2;
   position: relative;
   transition: all 0.4s ease;
-  background:
-    radial-gradient(
-      circle at 38% 32%,
-      rgba(255, 240, 225, 1) 0%,
-      rgba(245, 225, 205, 0.95) 20%,
-      transparent 55%
-    ),
-    radial-gradient(
-      circle at 62% 68%,
-      rgba(210, 180, 155, 0.8) 0%,
-      transparent 45%
-    ),
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(228, 205, 185, 1) 0%,
-      rgba(205, 178, 155, 0.95) 40%,
-      rgba(180, 150, 125, 0.85) 100%
-    );
+  /* Solid opaque base so it never looks grey on any wallpaper */
+  background-color: #c8a882;
+  background-image:
+    radial-gradient(circle at 35% 28%, #f0dcc8 0%, transparent 45%),
+    radial-gradient(circle at 65% 72%, #a0805e 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, #d4b896 0%, #c0a080 50%, #a08060 100%);
   background-size:
     200% 200%,
     200% 200%,
     100% 100%;
   animation: oni-orb-gradient 8s ease-in-out infinite;
-  border: 1.5px solid rgba(210, 185, 160, 0.2);
+  border: 1.5px solid rgba(210, 185, 160, 0.25);
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.25),
-    0 0 16px rgba(200, 165, 130, 0.12),
-    inset 0 -4px 12px rgba(120, 88, 60, 0.15),
-    inset 0 4px 12px rgba(240, 220, 200, 0.2);
+    0 6px 24px rgba(0, 0, 0, 0.25),
+    0 0 16px rgba(200, 165, 130, 0.15),
+    inset 0 -5px 14px rgba(100, 70, 45, 0.2),
+    inset 0 5px 14px rgba(255, 235, 215, 0.3);
 }
 
 @keyframes oni-orb-gradient {
@@ -291,9 +279,9 @@
   border-color: rgba(210, 185, 160, 0.08);
 }
 
-/* ─── OFF state — dimmed ─── */
+/* ─── OFF state — slightly muted but still warm ─── */
 .oni-orb-off .oni-orb-core {
-  filter: saturate(0.3) brightness(0.6);
+  filter: saturate(0.7) brightness(0.85);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 

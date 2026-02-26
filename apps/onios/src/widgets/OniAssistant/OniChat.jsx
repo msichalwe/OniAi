@@ -409,7 +409,6 @@ export default function OniChat({
         >
           <div className="oni-voice-pulse" />
           <span className="oni-voice-label">
-            {voiceState.state === "IDLE" && 'Listening for "Oni"...'}
             {voiceState.state === "ACTIVATED" &&
               (voiceState.transcript ||
                 voiceState.interimTranscript ||

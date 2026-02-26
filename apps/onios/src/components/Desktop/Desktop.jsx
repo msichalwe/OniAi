@@ -145,17 +145,8 @@ export default function Desktop() {
   }, []);
 
   const handleOrbClick = useCallback(() => {
-    if (voiceState.state === "OFF") {
-      voiceEngine.start();
-    } else if (
-      voiceState.state === "IDLE" ||
-      voiceState.state === "FOLLOW_UP"
-    ) {
-      voiceEngine.activateManual();
-    } else if (voiceState.state === "ACTIVATED") {
-      voiceEngine._finalizeCommand();
-    }
-  }, [voiceState.state]);
+    voiceEngine.activate();
+  }, []);
 
   const topZIndex =
     windows.length > 0 ? Math.max(...windows.map((w) => w.zIndex)) : 0;
@@ -325,16 +316,14 @@ export default function Desktop() {
         onClick={handleOrbClick}
         title={
           voiceState.state === "OFF"
-            ? "Click to enable voice"
-            : voiceState.state === "IDLE"
-              ? 'Listening for "Oni"...'
-              : voiceState.state === "ACTIVATED"
-                ? "Listening... click to send"
-                : voiceState.state === "PROCESSING"
-                  ? "Processing..."
-                  : voiceState.state === "FOLLOW_UP"
-                    ? "Anything else?"
-                    : "Oni Voice"
+            ? "Click to speak to Oni"
+            : voiceState.state === "ACTIVATED"
+              ? "Listening... click to send"
+              : voiceState.state === "PROCESSING"
+                ? "Processing..."
+                : voiceState.state === "FOLLOW_UP"
+                  ? "Anything else?"
+                  : "Oni Voice"
         }
       >
         <div className="oni-orb-ring" />
