@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from "react";
 import Desktop from "./components/Desktop/Desktop";
 import TabletDesktop from "./components/TabletDesktop/TabletDesktop";
+import FirstLaunch from "./components/FirstLaunch/FirstLaunch";
 import CommandBar from "./components/CommandBar/CommandBar";
 import Taskbar from "./components/Taskbar/Taskbar";
 import Notifications from "./components/Notifications/Notifications";
@@ -2927,6 +2928,9 @@ export default function App() {
   const layoutMode = useThemeStore((s) => s.layoutMode);
   const layoutSwitching = useThemeStore((s) => s.layoutSwitching);
   const [oniVisible, setOniVisible] = useState(true);
+  const [setupComplete, setSetupComplete] = useState(() => {
+    return localStorage.getItem("onios-setup-complete") === "1";
+  });
 
   useEffect(() => {
     // Register all commands on mount
@@ -3035,6 +3039,11 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute("data-layout", layoutMode);
   }, [layoutMode]);
+
+  // Show first-launch wizard if setup not complete
+  if (!setupComplete) {
+    return <FirstLaunch onComplete={() => setSetupComplete(true)} />;
+  }
 
   return (
     <>

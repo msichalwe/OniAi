@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
 const ROOT = path.join(__dirname, "..");
 
 const isDev = !app.isPackaged;
-let vitePort = 5173;
+let serverPort = 5173;
 let mainWindow = null;
 let viteProcess = null;
 
@@ -58,7 +58,9 @@ function createWindow() {
 
   // Prevent navigation away from the app
   mainWindow.webContents.on('will-navigate', (e, url) => {
-    if (!url.startsWith(`http://localhost:${vitePort}`) && !url.startsWith('file://')) {
+    const localBase = `http://127.0.0.1:${serverPort}`;
+    const localBase2 = `http://localhost:${serverPort}`;
+    if (!url.startsWith(localBase) && !url.startsWith(localBase2) && !url.startsWith('file://')) {
       e.preventDefault();
       shell.openExternal(url);
     }
@@ -71,13 +73,7 @@ function createWindow() {
   });
 
   // Load the app
-  if (isDev) {
-    mainWindow.loadURL(`http://localhost:${vitePort}`);
-  } else {
-    // Production: load from built files via local server
-    // For now, load the built index.html directly
-    mainWindow.loadFile(path.join(ROOT, "dist", "index.html"));
-  }
+  mainWindow.loadURL(`http://127.0.0.1:${serverPort}`);
 
   mainWindow.on("closed", () => {
     mainWindow = null;
@@ -164,7 +160,7 @@ function startViteDev() {
       process.stdout.write(`[Vite] ${text}`);
       // Detect actual port from Vite output
       const portMatch = text.match(/localhost:(\d+)/);
-      if (portMatch) vitePort = parseInt(portMatch[1], 10);
+      if (portMatch) serverPort = parseInt(portMatch[1], 10);
       if (!resolved && (text.includes("localhost") || text.includes("ready in") || text.includes("Local:"))) {
         resolved = true;
         setTimeout(resolve, 1500);
@@ -205,6 +201,15 @@ app.whenReady().then(async () => {
       await startViteDev();
     } catch (err) {
       console.error("[Electron] Vite failed to start, trying to connect anyway...", err.message);
+    }
+  } else {
+    // Production: start Express server with all API routes + static files
+    try {
+      const { startProductionServer } = await import("./server.mjs");
+      serverPort = await startProductionServer();
+      console.log(`[Electron] Production server on port ${serverPort}`);
+    } catch (err) {
+      console.error("[Electron] Production server failed:", err.message);
     }
   }
 

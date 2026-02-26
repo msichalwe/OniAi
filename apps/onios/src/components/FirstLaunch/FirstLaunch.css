@@ -1,0 +1,570 @@
+/**
+ * FirstLaunch.css — Setup wizard styles.
+ * Dark glass aesthetic matching OniOS design language.
+ */
+
+/* ─── Root ────────────────────────────────────────────── */
+
+.fl-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100000;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fl-root.fl-launching {
+  opacity: 0;
+  transform: scale(1.05);
+  pointer-events: none;
+}
+
+.fl-backdrop {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, #07071a 0%, #0c0c2a 30%, #150a28 60%, #07071a 100%);
+  z-index: -1;
+}
+
+.fl-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 400px at 30% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 350px at 70% 70%, rgba(168, 85, 247, 0.05) 0%, transparent 70%);
+}
+
+/* ─── Progress Dots ───────────────────────────────────── */
+
+.fl-progress {
+  position: fixed;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+}
+
+.fl-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  transition: all 0.3s ease;
+}
+
+.fl-dot-active {
+  background: rgba(129, 140, 248, 0.8);
+  box-shadow: 0 0 8px rgba(129, 140, 248, 0.4);
+  width: 24px;
+  border-radius: 4px;
+}
+
+.fl-dot-done {
+  background: rgba(34, 197, 94, 0.6);
+}
+
+/* ─── Card Container ──────────────────────────────────── */
+
+.fl-card {
+  width: 520px;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  -webkit-backdrop-filter: blur(40px);
+  backdrop-filter: blur(40px);
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  animation: fl-card-in 0.5s ease;
+}
+
+@keyframes fl-card-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.fl-card::-webkit-scrollbar {
+  width: 4px;
+}
+
+.fl-card::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+}
+
+/* ─── Step Container ──────────────────────────────────── */
+
+.fl-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 36px 32px;
+  gap: 20px;
+  animation: fl-step-in 0.35s ease;
+}
+
+@keyframes fl-step-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ─── Welcome Step ────────────────────────────────────── */
+
+.fl-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(168, 85, 247, 0.15));
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  color: rgba(165, 180, 252, 0.9);
+  margin-bottom: 4px;
+}
+
+.fl-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.fl-subtitle {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  margin: 0;
+}
+
+/* ─── Gateway Select ──────────────────────────────────── */
+
+.fl-gateway-select {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.fl-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.fl-gateway-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fl-gw-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1.5px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fl-gw-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.fl-gw-card.fl-gw-selected {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.fl-gw-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.fl-gw-card.fl-gw-selected .fl-gw-icon {
+  background: rgba(99, 102, 241, 0.12);
+  color: rgba(165, 180, 252, 0.9);
+}
+
+.fl-gw-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fl-gw-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.fl-gw-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.fl-gw-check {
+  color: rgba(99, 102, 241, 0.8);
+  flex-shrink: 0;
+}
+
+/* ─── Icon Circle ─────────────────────────────────────── */
+
+.fl-icon-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  color: rgba(165, 180, 252, 0.85);
+}
+
+.fl-step-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  text-align: center;
+}
+
+.fl-step-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  margin: 0;
+}
+
+/* ─── Input Group ─────────────────────────────────────── */
+
+.fl-input-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fl-input-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.fl-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.fl-input {
+  flex: 1;
+  height: 42px;
+  padding: 0 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.fl-input:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.fl-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Buttons ─────────────────────────────────────────── */
+
+.fl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.fl-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.fl-btn-primary {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.8), rgba(129, 140, 248, 0.7));
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.25);
+}
+
+.fl-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.9), rgba(129, 140, 248, 0.85));
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+}
+
+.fl-btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.fl-btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.fl-btn-test {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  padding: 0 16px;
+  height: 42px;
+}
+
+.fl-btn-test:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.fl-btn-install {
+  width: 100%;
+}
+
+.fl-btn-launch {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 15px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.85), rgba(168, 85, 247, 0.7));
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
+}
+
+.fl-btn-launch:hover:not(:disabled) {
+  box-shadow: 0 6px 28px rgba(99, 102, 241, 0.45);
+  transform: translateY(-1px);
+}
+
+.fl-btn-loading {
+  pointer-events: none;
+}
+
+/* ─── Results ─────────────────────────────────────────── */
+
+.fl-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.fl-result-success {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: rgba(74, 222, 128, 0.9);
+}
+
+.fl-result-error {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: rgba(248, 113, 113, 0.9);
+}
+
+.fl-result-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fl-result-detail {
+  font-size: 11px;
+  color: rgba(248, 113, 113, 0.6);
+  font-weight: 400;
+}
+
+/* ─── Nav ─────────────────────────────────────────────── */
+
+.fl-nav {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ─── Skills List ─────────────────────────────────────── */
+
+.fl-skills-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fl-skills-checking {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.fl-skill-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+}
+
+.fl-skill-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.fl-skill-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fl-skill-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.fl-skill-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fl-skill-status {
+  flex-shrink: 0;
+}
+
+.fl-text-green { color: rgba(34, 197, 94, 0.8); }
+.fl-text-red { color: rgba(239, 68, 68, 0.8); }
+.fl-text-blue { color: rgba(99, 102, 241, 0.8); }
+.fl-text-dim { color: rgba(255, 255, 255, 0.25); }
+
+/* ─── Complete Step ───────────────────────────────────── */
+
+.fl-complete-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(99, 102, 241, 0.1));
+  border: 1px solid rgba(34, 197, 94, 0.15);
+  color: rgba(74, 222, 128, 0.8);
+  margin-bottom: 4px;
+}
+
+.fl-summary {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.fl-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.fl-summary-row + .fl-summary-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.fl-summary-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.fl-summary-value {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: "SF Mono", "Fira Code", monospace;
+}
+
+/* ─── Spinner ─────────────────────────────────────────── */
+
+.fl-spin {
+  animation: fl-spin-anim 1s linear infinite;
+}
+
+@keyframes fl-spin-anim {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
