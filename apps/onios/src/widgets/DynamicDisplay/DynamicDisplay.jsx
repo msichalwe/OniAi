@@ -84,6 +84,32 @@ hljs.registerLanguage("nginx", nginx);
 
 // ─── Helpers ──────────────────────────────────────────
 
+const isElectron =
+  typeof window !== "undefined" &&
+  (window.process?.type === "renderer" ||
+    navigator.userAgent.includes("Electron"));
+
+function openUrl(url, e) {
+  if (!url) return;
+  if (e) e.preventDefault();
+  if (isElectron) {
+    // In Electron: use shell.openExternal for system browser, or open in OniOS browser widget
+    try {
+      const { shell } = window.require("electron");
+      shell.openExternal(url);
+    } catch {
+      // Fallback: open in OniOS browser widget via command
+      eventBus.emit(
+        "command:execute",
+        `browser.open("${url.replace(/"/g, '\\"')}")`,
+      );
+    }
+  } else {
+    // Web: open in new tab
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
 function Img({ src, alt, className, style, onClick }) {
   const [status, setStatus] = useState("loading");
   return (
@@ -207,15 +233,15 @@ function DetailOverlay({ item, onClose }) {
               Go deeper
             </button>
             {item.link && (
-              <a
+              <button
                 className="dd-action-btn dd-action-link"
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openUrl(item.link);
+                }}
               >
                 Open Link <ExternalLink size={12} />
-              </a>
+              </button>
             )}
           </div>
         </div>
@@ -312,15 +338,15 @@ function CardsSection({ data, onSelect }) {
             {card.value && <div className="dd-card-value">{card.value}</div>}
             {card.price && <div className="dd-card-price">{card.price}</div>}
             {card.link && !card.details && (
-              <a
+              <button
                 className="dd-card-link"
-                href={card.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openUrl(card.link);
+                }}
               >
                 View <ExternalLink size={10} />
-              </a>
+              </button>
             )}
           </div>
         </div>
@@ -558,7 +584,7 @@ function VideoSection({ data }) {
 
   const openExternal = () => {
     const url = data.youtube || data.src;
-    if (url) window.open(url, "_blank");
+    if (url) openUrl(url);
   };
 
   return (
@@ -690,14 +716,12 @@ function VideoSection({ data }) {
               </button>
             )}
             {data.url && (
-              <a
+              <button
                 className="dd-media-btn"
-                href={data.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={() => openUrl(data.url)}
               >
                 <ExternalLink size={12} /> Source
-              </a>
+              </button>
             )}
           </div>
         </div>
@@ -1009,14 +1033,13 @@ function SearchResultsSection({ data }) {
             {source && <div className="dd-search-source">{source}</div>}
             {title &&
               (url ? (
-                <a
+                <span
                   className="dd-search-title"
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => openUrl(url)}
                 >
                   {title}
-                </a>
+                </span>
               ) : (
                 <div className="dd-search-title">{title}</div>
               ))}
@@ -1174,24 +1197,20 @@ function ArticleSection({ data }) {
 
       <div className="dd-article-footer">
         {data.source_url && (
-          <a
+          <button
             className="dd-media-btn"
-            href={data.source_url}
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={() => openUrl(data.source_url)}
           >
             Read original <ExternalLink size={11} />
-          </a>
+          </button>
         )}
         {(data.url || data.link) && !data.source_url && (
-          <a
+          <button
             className="dd-media-btn"
-            href={data.url || data.link}
-            target="_blank"
-            rel="noopener noreferrer"
+            onClick={() => openUrl(data.url || data.link)}
           >
             View source <ExternalLink size={11} />
-          </a>
+          </button>
         )}
         <button
           className="dd-media-btn"

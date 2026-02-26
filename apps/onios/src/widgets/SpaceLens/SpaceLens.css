@@ -182,24 +182,119 @@
   justify-content: center;
   cursor: pointer;
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
-    opacity 0.3s ease;
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
   border: 1.5px solid rgba(255, 255, 255, 0.08);
   overflow: hidden;
   text-align: center;
   padding: 4px;
+  /* entrance animation */
+  animation: sl-bubble-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform;
+}
+
+/* stagger via inline --i from JSX */
+.sl-bubble {
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+/* subtle idle floating */
+.sl-bubble::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 35%,
+    rgba(255, 255, 255, 0.08),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.sl-bubble:hover::after {
+  opacity: 1;
 }
 
 .sl-bubble:hover {
-  transform: scale(1.08);
+  transform: scale(1.12);
   z-index: 10;
-  box-shadow: 0 0 24px rgba(99, 102, 241, 0.25);
+  box-shadow:
+    0 0 30px rgba(99, 102, 241, 0.3),
+    0 0 60px rgba(99, 102, 241, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.sl-bubble:active {
+  transform: scale(0.96);
 }
 
 .sl-bubble.sl-bubble-selected {
   border-color: rgba(99, 102, 241, 0.6);
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  box-shadow:
+    0 0 24px rgba(99, 102, 241, 0.35),
+    inset 0 0 20px rgba(99, 102, 241, 0.08);
+  animation:
+    sl-bubble-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) both,
+    sl-bubble-glow 2.5s ease-in-out infinite;
+}
+
+/* Entrance: scale up + fade in from nothing */
+@keyframes sl-bubble-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Idle floating for large bubbles */
+.sl-bubble.sl-bubble-float {
+  animation:
+    sl-bubble-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) both,
+    sl-bubble-float 6s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 60ms), calc(var(--i, 0) * 400ms + 0.6s);
+}
+
+@keyframes sl-bubble-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(2px, -3px) scale(1.01);
+  }
+  50% {
+    transform: translate(-1px, 2px) scale(0.99);
+  }
+  75% {
+    transform: translate(1px, -1px) scale(1.005);
+  }
+}
+
+/* Glow pulse on selected */
+@keyframes sl-bubble-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 24px rgba(99, 102, 241, 0.35),
+      inset 0 0 20px rgba(99, 102, 241, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 36px rgba(99, 102, 241, 0.5),
+      inset 0 0 30px rgba(99, 102, 241, 0.12);
+  }
 }
 
 .sl-bubble-name {

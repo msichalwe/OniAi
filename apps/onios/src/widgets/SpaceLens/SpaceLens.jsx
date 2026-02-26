@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  useMemo,
+} from "react";
 import {
   HardDrive,
   Folder,
@@ -60,12 +66,63 @@ function getFileIcon(item) {
     return <Folder size={13} />;
   }
   const ext = item.ext || "";
-  if (["jpg", "jpeg", "png", "gif", "webp", "svg", "heic", "tiff", "ico"].includes(ext)) return <Image size={13} />;
-  if (["mp4", "mov", "avi", "mkv", "webm"].includes(ext)) return <Film size={13} />;
-  if (["mp3", "wav", "flac", "aac", "ogg"].includes(ext)) return <Music size={13} />;
-  if (["js", "ts", "jsx", "tsx", "py", "rb", "go", "rs", "c", "cpp", "h", "css", "html", "json", "yaml", "toml", "sh"].includes(ext)) return <Code size={13} />;
-  if (["zip", "tar", "gz", "rar", "7z", "dmg"].includes(ext)) return <Archive size={13} />;
-  if (["pdf", "doc", "docx", "txt", "md", "rtf", "xls", "xlsx", "ppt", "pptx"].includes(ext)) return <FileText size={13} />;
+  if (
+    [
+      "jpg",
+      "jpeg",
+      "png",
+      "gif",
+      "webp",
+      "svg",
+      "heic",
+      "tiff",
+      "ico",
+    ].includes(ext)
+  )
+    return <Image size={13} />;
+  if (["mp4", "mov", "avi", "mkv", "webm"].includes(ext))
+    return <Film size={13} />;
+  if (["mp3", "wav", "flac", "aac", "ogg"].includes(ext))
+    return <Music size={13} />;
+  if (
+    [
+      "js",
+      "ts",
+      "jsx",
+      "tsx",
+      "py",
+      "rb",
+      "go",
+      "rs",
+      "c",
+      "cpp",
+      "h",
+      "css",
+      "html",
+      "json",
+      "yaml",
+      "toml",
+      "sh",
+    ].includes(ext)
+  )
+    return <Code size={13} />;
+  if (["zip", "tar", "gz", "rar", "7z", "dmg"].includes(ext))
+    return <Archive size={13} />;
+  if (
+    [
+      "pdf",
+      "doc",
+      "docx",
+      "txt",
+      "md",
+      "rtf",
+      "xls",
+      "xlsx",
+      "ppt",
+      "pptx",
+    ].includes(ext)
+  )
+    return <FileText size={13} />;
   return <File size={13} />;
 }
 
@@ -96,8 +153,16 @@ function layoutBubbles(items, containerW, containerH) {
 
   const bubbles = items.slice(0, 30).map((item, i) => {
     const ratio = item.size / totalSize;
-    const r = Math.max(minR, Math.min(maxR, Math.sqrt((ratio * area) / Math.PI) * 0.65));
-    return { ...item, r, index: i, color: BUBBLE_COLORS[i % BUBBLE_COLORS.length] };
+    const r = Math.max(
+      minR,
+      Math.min(maxR, Math.sqrt((ratio * area) / Math.PI) * 0.65),
+    );
+    return {
+      ...item,
+      r,
+      index: i,
+      color: BUBBLE_COLORS[i % BUBBLE_COLORS.length],
+    };
   });
 
   // Simple force-directed placement
@@ -137,8 +202,14 @@ function layoutBubbles(items, containerW, containerH) {
       bubbles[i].y += gy * 0.02;
 
       // Contain within bounds
-      bubbles[i].x = Math.max(bubbles[i].r, Math.min(containerW - bubbles[i].r, bubbles[i].x));
-      bubbles[i].y = Math.max(bubbles[i].r, Math.min(containerH - bubbles[i].r, bubbles[i].y));
+      bubbles[i].x = Math.max(
+        bubbles[i].r,
+        Math.min(containerW - bubbles[i].r, bubbles[i].x),
+      );
+      bubbles[i].y = Math.max(
+        bubbles[i].r,
+        Math.min(containerH - bubbles[i].r, bubbles[i].y),
+      );
     }
   }
 
@@ -200,30 +271,33 @@ export default function SpaceLens({ windowId }) {
     setLoading(false);
   }, []);
 
-  const drillInto = useCallback(async (dirPath) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/oni/actions/spacelens", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "drill", path: dirPath }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setPathHistory((h) => [...h, currentPath]);
-        setItems(data.items || []);
-        setCurrentPath(dirPath);
-        setSelected(null);
-        setChecked(new Set());
+  const drillInto = useCallback(
+    async (dirPath) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch("/api/oni/actions/spacelens", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "drill", path: dirPath }),
+        });
+        const data = await res.json();
+        if (data.error) {
+          setError(data.error);
+        } else {
+          setPathHistory((h) => [...h, currentPath]);
+          setItems(data.items || []);
+          setCurrentPath(dirPath);
+          setSelected(null);
+          setChecked(new Set());
+        }
+      } catch (err) {
+        setError(err.message);
       }
-    } catch (err) {
-      setError(err.message);
-    }
-    setLoading(false);
-  }, [currentPath]);
+      setLoading(false);
+    },
+    [currentPath],
+  );
 
   const goBack = useCallback(() => {
     if (pathHistory.length === 0) return;
@@ -232,33 +306,41 @@ export default function SpaceLens({ windowId }) {
     scan(prev);
   }, [pathHistory, scan]);
 
-  const navigateTo = useCallback((targetPath) => {
-    if (targetPath === currentPath) return;
-    // Find index in breadcrumb
-    const crumbs = buildBreadcrumb(currentPath);
-    const idx = crumbs.findIndex((c) => c.path === targetPath);
-    if (idx >= 0) {
-      // Going back — trim history
-      setPathHistory((h) => h.slice(0, idx));
-    }
-    scan(targetPath);
-  }, [currentPath, scan]);
+  const navigateTo = useCallback(
+    (targetPath) => {
+      if (targetPath === currentPath) return;
+      // Find index in breadcrumb
+      const crumbs = buildBreadcrumb(currentPath);
+      const idx = crumbs.findIndex((c) => c.path === targetPath);
+      if (idx >= 0) {
+        // Going back — trim history
+        setPathHistory((h) => h.slice(0, idx));
+      }
+      scan(targetPath);
+    },
+    [currentPath, scan],
+  );
 
-  const deleteItems = useCallback(async (paths, trash = true) => {
-    for (const p of paths) {
-      try {
-        await fetch("/api/oni/actions/spacelens", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "delete", path: p, trash }),
-        });
-      } catch { /* ignore */ }
-    }
-    setChecked(new Set());
-    setConfirmDelete(null);
-    // Re-scan current dir
-    if (currentPath) scan(currentPath);
-  }, [currentPath, scan]);
+  const deleteItems = useCallback(
+    async (paths, trash = true) => {
+      for (const p of paths) {
+        try {
+          await fetch("/api/oni/actions/spacelens", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete", path: p, trash }),
+          });
+        } catch {
+          /* ignore */
+        }
+      }
+      setChecked(new Set());
+      setConfirmDelete(null);
+      // Re-scan current dir
+      if (currentPath) scan(currentPath);
+    },
+    [currentPath, scan],
+  );
 
   const revealInFinder = useCallback(async (filePath) => {
     try {
@@ -267,7 +349,9 @@ export default function SpaceLens({ windowId }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "reveal", path: filePath }),
       });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   // Auto-scan home on mount
@@ -284,10 +368,18 @@ export default function SpaceLens({ windowId }) {
 
   // ─── Derived ────────────────────────────────────────
 
-  const totalDirSize = useMemo(() => items.reduce((s, i) => s + (i.size || 0), 0), [items]);
-  const bubbles = useMemo(() => layoutBubbles(items, bubbleSize.w, bubbleSize.h), [items, bubbleSize]);
+  const totalDirSize = useMemo(
+    () => items.reduce((s, i) => s + (i.size || 0), 0),
+    [items],
+  );
+  const bubbles = useMemo(
+    () => layoutBubbles(items, bubbleSize.w, bubbleSize.h),
+    [items, bubbleSize],
+  );
   const checkedSize = useMemo(() => {
-    return items.filter((i) => checked.has(i.path)).reduce((s, i) => s + (i.size || 0), 0);
+    return items
+      .filter((i) => checked.has(i.path))
+      .reduce((s, i) => s + (i.size || 0), 0);
   }, [items, checked]);
 
   function buildBreadcrumb(p) {
@@ -304,7 +396,10 @@ export default function SpaceLens({ windowId }) {
     return crumbs;
   }
 
-  const breadcrumbs = useMemo(() => buildBreadcrumb(currentPath), [currentPath]);
+  const breadcrumbs = useMemo(
+    () => buildBreadcrumb(currentPath),
+    [currentPath],
+  );
 
   const toggleCheck = (path, e) => {
     e?.stopPropagation();
@@ -375,7 +470,10 @@ export default function SpaceLens({ windowId }) {
           onClick={() => scan(currentPath)}
           disabled={loading}
         >
-          <RotateCcw size={12} style={{ marginRight: 4, verticalAlign: "middle" }} />
+          <RotateCcw
+            size={12}
+            style={{ marginRight: 4, verticalAlign: "middle" }}
+          />
           {loading ? "Scanning..." : "Rescan"}
         </button>
       </div>
@@ -403,7 +501,9 @@ export default function SpaceLens({ windowId }) {
           <React.Fragment key={c.path}>
             {i > 0 && <ChevronRight size={11} className="sl-crumb-sep" />}
             <span
-              className={i === breadcrumbs.length - 1 ? "sl-crumb-active" : "sl-crumb"}
+              className={
+                i === breadcrumbs.length - 1 ? "sl-crumb-active" : "sl-crumb"
+              }
               onClick={() => i < breadcrumbs.length - 1 && navigateTo(c.path)}
             >
               {c.name}
@@ -434,16 +534,17 @@ export default function SpaceLens({ windowId }) {
         <div className="sl-content">
           {/* ─── Bubbles ─── */}
           <div className="sl-bubbles" ref={bubblesRef}>
-            {bubbles.map((b) => (
+            {bubbles.map((b, bi) => (
               <div
                 key={b.path}
-                className={`sl-bubble ${selected === b.path ? "sl-bubble-selected" : ""}`}
+                className={`sl-bubble ${selected === b.path ? "sl-bubble-selected" : ""} ${b.r > 50 ? "sl-bubble-float" : ""}`}
                 style={{
                   left: b.x - b.r,
                   top: b.y - b.r,
                   width: b.r * 2,
                   height: b.r * 2,
                   background: b.color,
+                  "--i": bi,
                 }}
                 onClick={() => handleItemClick(b)}
                 onContextMenu={(e) => handleContextMenu(e, b)}
@@ -451,9 +552,7 @@ export default function SpaceLens({ windowId }) {
                 onMouseLeave={() => setSelected(null)}
                 title={`${b.name} — ${formatSize(b.size)}`}
               >
-                {b.r > 28 && (
-                  <span className="sl-bubble-name">{b.name}</span>
-                )}
+                {b.r > 28 && <span className="sl-bubble-name">{b.name}</span>}
                 {b.r > 36 && (
                   <span className="sl-bubble-size">{formatSize(b.size)}</span>
                 )}
@@ -464,10 +563,13 @@ export default function SpaceLens({ windowId }) {
           {/* ─── File List ─── */}
           <div className="sl-list">
             <div className="sl-list-header">
-              <span>{items.length} items — {formatSize(totalDirSize)}</span>
+              <span>
+                {items.length} items — {formatSize(totalDirSize)}
+              </span>
             </div>
             {items.map((item, i) => {
-              const sizeRatio = totalDirSize > 0 ? (item.size / totalDirSize) * 100 : 0;
+              const sizeRatio =
+                totalDirSize > 0 ? (item.size / totalDirSize) * 100 : 0;
               const isChecked = checked.has(item.path);
               const isSelected = selected === item.path;
 
@@ -488,7 +590,12 @@ export default function SpaceLens({ windowId }) {
                   </div>
                   <div
                     className="sl-item-icon"
-                    style={{ background: getIconBg(item, i), color: BUBBLE_COLORS[i % BUBBLE_COLORS.length].replace("0.35", "0.9").replace("0.30", "0.9") }}
+                    style={{
+                      background: getIconBg(item, i),
+                      color: BUBBLE_COLORS[i % BUBBLE_COLORS.length]
+                        .replace("0.35", "0.9")
+                        .replace("0.30", "0.9"),
+                    }}
                   >
                     {getFileIcon(item)}
                   </div>
@@ -548,7 +655,10 @@ export default function SpaceLens({ windowId }) {
                   })
                 }
               >
-                <Trash2 size={12} style={{ marginRight: 4, verticalAlign: "middle" }} />
+                <Trash2
+                  size={12}
+                  style={{ marginRight: 4, verticalAlign: "middle" }}
+                />
                 Move to Trash
               </button>
             </>
@@ -590,7 +700,10 @@ export default function SpaceLens({ windowId }) {
               setContextMenu(null);
             }}
           >
-            <Check size={13} /> {checked.has(contextMenu.item.path) ? "Deselect" : "Select for Removal"}
+            <Check size={13} />{" "}
+            {checked.has(contextMenu.item.path)
+              ? "Deselect"
+              : "Select for Removal"}
           </button>
           <div className="sl-ctx-sep" />
           <button
@@ -612,21 +725,26 @@ export default function SpaceLens({ windowId }) {
 
       {/* ─── Confirm Delete Dialog ─── */}
       {confirmDelete && (
-        <div className="sl-confirm-overlay" onClick={() => setConfirmDelete(null)}>
+        <div
+          className="sl-confirm-overlay"
+          onClick={() => setConfirmDelete(null)}
+        >
           <div className="sl-confirm-box" onClick={(e) => e.stopPropagation()}>
-            <div className="sl-confirm-title">
-              Move to Trash?
-            </div>
+            <div className="sl-confirm-title">Move to Trash?</div>
             <div className="sl-confirm-msg">
               {confirmDelete.name
                 ? `"${confirmDelete.name}" (${formatSize(confirmDelete.size)})`
                 : `${confirmDelete.count} items (${formatSize(confirmDelete.size)})`}
               <br />
-              will be moved to the Trash. You can restore them from Trash if needed.
+              will be moved to the Trash. You can restore them from Trash if
+              needed.
             </div>
             <div className="sl-confirm-actions">
               <button
-                style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.6)" }}
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  color: "rgba(255,255,255,0.6)",
+                }}
                 onClick={() => setConfirmDelete(null)}
               >
                 Cancel
