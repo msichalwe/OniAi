@@ -31,7 +31,7 @@
  * widget. The AI can spawn multiple display instances simultaneously.
  */
 
-import { Folder, Terminal, Film, FileText, Clock, Calculator, Activity, BookOpen, Settings, Code, Map, FileSpreadsheet, Shield, Database, MessageSquare, Camera, LayoutDashboard, MonitorUp, Globe } from 'lucide-react';
+import { Folder, Terminal, Film, FileText, Clock, Calculator, Activity, BookOpen, Settings, Code, Map, FileSpreadsheet, Shield, Database, MessageSquare, Camera, LayoutDashboard, MonitorUp, Globe, PenTool } from 'lucide-react';
 
 import FileExplorer from '../widgets/FileExplorer/FileExplorer';
 import TerminalWidget from '../widgets/Terminal/Terminal';
@@ -52,6 +52,7 @@ import CameraWidget from '../widgets/Camera/Camera';
 import OniChatWidget from '../widgets/OniAssistant/OniChatWidget';
 import ScreenCaptureWidget from '../widgets/ScreenCapture/ScreenCapture';
 import BrowserWidget from '../widgets/Browser/Browser';
+import DrawingWidget from '../widgets/Drawing/Drawing';
 
 export const WIDGET_REGISTRY = {
     'file-explorer': {
@@ -251,6 +252,17 @@ export const WIDGET_REGISTRY = {
         minWidth: 600,
         minHeight: 400,
         commands: ['browser.open', 'browser.navigate'],
+    },
+    'drawing': {
+        component: DrawingWidget,
+        title: 'Drawing Board',
+        icon: PenTool,
+        singleton: false,
+        defaultWidth: 960,
+        defaultHeight: 640,
+        minWidth: 640,
+        minHeight: 420,
+        commands: ['board.open', 'board.draw', 'board.clear'],
     },
     'oni-chat': {
         component: OniChatWidget,

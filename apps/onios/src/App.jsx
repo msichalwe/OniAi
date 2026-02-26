@@ -1724,6 +1724,50 @@ function registerAllCommands() {
     { description: "Stop screen recording and save the file" },
   );
 
+  // === drawing board commands ===
+  commandRegistry.register(
+    "board.open",
+    () => {
+      openWidget("drawing");
+      return "Drawing Board opened";
+    },
+    { description: "Open the drawing whiteboard", widget: "drawing" },
+  );
+
+  commandRegistry.register(
+    "board.draw",
+    (...args) => {
+      // Ensure drawing widget is open
+      const wins = useWindowStore.getState().windows || [];
+      if (!wins.find((w) => w.widgetType === "drawing")) {
+        openWidget("drawing");
+      }
+      // Accept either a single command or array of commands
+      let commands;
+      try {
+        commands = typeof args[0] === "string" ? JSON.parse(args[0]) : args[0];
+      } catch {
+        commands = args;
+      }
+      setTimeout(() => {
+        eventBus.emit("drawing:command", commands);
+      }, 400);
+      return "Drawing commands sent to board";
+    },
+    {
+      description: "Send draw commands to the whiteboard (JSON draw protocol)",
+    },
+  );
+
+  commandRegistry.register(
+    "board.clear",
+    () => {
+      eventBus.emit("drawing:command", { type: "board.clear" });
+      return "Board cleared";
+    },
+    { description: "Clear the drawing board" },
+  );
+
   // === browser commands ===
   commandRegistry.register(
     "browser.open",

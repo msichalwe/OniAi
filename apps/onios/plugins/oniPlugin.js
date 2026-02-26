@@ -230,6 +230,18 @@ MEDIA ROUTING: Video section has immersive glass player with dynamic background 
 Example: {"title":"Weather","sections":[{"type":"stats","items":[{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12 km/h"},{"label":"UV","value":"High","color":"#f87171"}]},{"type":"weather","title":"This Week","items":[{"day":"Mon","high":"29°C","low":"18°C"},{"day":"Tue","high":"26°C","low":"17°C"}]}]}
 For search results use search_results section. For stock data use stats+chart+table. For articles use article section. For media always use display widget with video/image/gallery sections — they have immersive glass designs.
 
+**drawing** — AI-driven whiteboard. Opens a Drawing Board widget and streams draw commands.
+Use for: architecture diagrams, flowcharts, workflows, brainstorming, data visualizations, explanations.
+Commands (JSON draw protocol via board.draw):
+- shape.add: {"type":"shape.add","payload":{"id":"api","shape":"rect|ellipse|diamond|text|sticky|note|container","x":100,"y":100,"w":200,"h":80,"text":"API Gateway","fill":"rgba(80,130,255,0.12)","stroke":"rgba(80,130,255,0.5)"}}
+- shape.update: {"type":"shape.update","payload":{"id":"api","text":"Updated"}}
+- shape.delete: {"type":"shape.delete","payload":{"id":"api"}}
+- edge.add: {"type":"edge.add","payload":{"id":"e1","from":"api","to":"db","label":"queries","arrow":true}}
+- board.clear: {"type":"board.clear"}
+- chart.create: {"type":"chart.create","payload":{"id":"c1","chartType":"bar|line","x":50,"y":300,"w":400,"h":200,"title":"Revenue","data":[{"label":"Q1","value":100},{"label":"Q2","value":150}]}}
+Send ARRAY of commands to draw step-by-step: [cmd1, cmd2, cmd3...] — widget animates them sequentially.
+Always label assumptions as note shapes. Use container shapes to group related nodes.
+
 **task** — {"action":"create|list|complete|delete","title":"...","priority":"high|medium|low","id":"..."}
 **note** — {"action":"create|list|read","title":"...","content":"..."}
 **file** — {"action":"list|read|write","path":"...","content":"..."}
