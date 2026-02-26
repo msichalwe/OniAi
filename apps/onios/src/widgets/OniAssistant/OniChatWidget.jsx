@@ -421,23 +421,33 @@ export default function OniChatWidget() {
     return unsub;
   }, []);
 
+  // Track whether the current message was initiated by voice
+  const voiceInitiatedRef = useRef(false);
+
   // Wire voice commands to handleSend
   useEffect(() => {
     voiceEngine.setCommandHandler((text) => {
       if (text && handleSendRef.current) {
+        voiceInitiatedRef.current = true;
         handleSendRef.current(text);
       }
     });
   }, []);
 
   // Notify voice engine when AI starts/finishes processing
+  // ONLY enter follow-up mode if the message was voice-initiated
   const prevStreamingRef = useRef(false);
   useEffect(() => {
     if (isStreaming && !prevStreamingRef.current) {
-      voiceEngine.onProcessingStart();
+      if (voiceInitiatedRef.current) {
+        voiceEngine.onProcessingStart();
+      }
     }
     if (!isStreaming && prevStreamingRef.current) {
-      voiceEngine.onProcessingEnd();
+      if (voiceInitiatedRef.current) {
+        voiceEngine.onProcessingEnd();
+      }
+      voiceInitiatedRef.current = false;
     }
     prevStreamingRef.current = isStreaming;
   }, [isStreaming]);

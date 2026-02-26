@@ -289,7 +289,9 @@ Phase 1 — Context:
 - Clipboard: \`{"action":"clipboard"}\` (read) or \`{"action":"clipboard","write":"text"}\` (write)
 - System state: \`{"action":"system"}\` → OS, memory, CPU, battery, wifi, volume
 Phase 2 — App Control:
-- Open app: \`{"action":"open_app","app":"Microsoft Outlook"}\`
+- Open/focus app: \`{"action":"open_app","app":"Microsoft Outlook"}\` — opens AND brings to front (uses AppleScript activate, works across all monitors)
+- Focus app: \`{"action":"focus_app","app":"Safari"}\` — brings an already-running app to front across all screens. Optional: \`"window":"title fragment"\` to target a specific window.
+- **IMPORTANT (multi-monitor):** When user has multiple screens, apps may appear on different monitors. \`open_app\` and \`focus_app\` use AppleScript \`activate\` which properly brings windows to the foreground. The \`apps\` action returns \`frontmost\` and \`windows\` count per app so you know which app is actually in front. Always use \`open_app\` or \`focus_app\` BEFORE trying to automate an app — this ensures it's focused.
 - Automation: \`{"action":"automate","script":"tell app \\\\"Finder\\\\" to get name of every file of desktop"}\` — runs AppleScript (macOS), PowerShell (Windows), or shell (Linux)
 - Keystrokes: \`{"action":"keystroke","keys":"cmd+n"}\` or \`{"action":"keystroke","text":"Hello world"}\`
 Phase 3 — App-Specific:
@@ -502,7 +504,8 @@ Full access to the host machine. Screenshot + vision, app automation, email, bro
 - Screenshot: \`{"action":"screenshot","analyze":true,"prompt":"what is on screen?"}\`
 - Apps: \`{"action":"apps"}\` · \`{"action":"focused"}\` · \`{"action":"installed"}\`
 - Clipboard: \`{"action":"clipboard"}\` (read) · \`{"action":"clipboard","write":"text"}\`
-- Open app: \`{"action":"open_app","app":"Microsoft Outlook"}\`
+- Open/focus app: \`{"action":"open_app","app":"Microsoft Outlook"}\` — uses activate (works across monitors)
+- Focus app: \`{"action":"focus_app","app":"Safari"}\` — bring already-running app to front
 - Automate: \`{"action":"automate","script":"tell app \\\\"Mail\\\\" to get subject of every message of inbox"}\`
 - Keystrokes: \`{"action":"keystroke","keys":"cmd+n"}\` · \`{"action":"keystroke","text":"Hello"}\`
 - Email: \`{"action":"email","subaction":"inbox|send|outlook_inbox"}\`
@@ -1726,15 +1729,41 @@ async function handleDeviceAction(body) {
             if (!body.app) return { error: 'app name required' };
             try {
                 if (platform === 'darwin') {
-                    execSync(`open -a "${body.app}" 2>/dev/null`, { timeout: 10000 });
+                    // Use AppleScript activate to properly bring to front on all monitors
+                    execSync(`osascript -e 'tell application "${body.app.replace(/"/g, '\\"')}" to activate'`, { timeout: 10000 });
                 } else if (platform === 'win32') {
                     execSync(`start "" "${body.app}"`, { timeout: 10000, shell: true });
                 } else {
                     execSync(`${body.app} &`, { timeout: 5000, shell: true });
                 }
-                return { success: true, message: `Opened ${body.app}` };
+                return { success: true, message: `Opened and focused ${body.app}` };
             } catch (err) {
-                return { error: `Failed to open ${body.app}: ${err.message}` };
+                // Fallback to open -a if activate fails (app not installed yet)
+                try {
+                    if (platform === 'darwin') execSync(`open -a "${body.app}"`, { timeout: 10000 });
+                    return { success: true, message: `Opened ${body.app}` };
+                } catch (err2) {
+                    return { error: `Failed to open ${body.app}: ${err2.message}` };
+                }
+            }
+        }
+
+        case 'focus_app': {
+            if (!body.app) return { error: 'app name required' };
+            try {
+                if (platform === 'darwin') {
+                    // Activate brings the app and ALL its windows to front across all monitors
+                    execSync(`osascript -e 'tell application "${body.app.replace(/"/g, '\\"')}"
+                        activate
+                        ${body.window ? `tell application "System Events" to tell process "${body.app.replace(/"/g, '\\"')}" to perform action "AXRaise" of (first window whose title contains "${(body.window || '').replace(/"/g, '\\"')}")` : ''}
+                    end tell'`, { timeout: 5000 });
+                    // Get the now-focused window info
+                    const title = _safeExec(`osascript -e 'tell application "System Events" to get title of front window of process "${body.app.replace(/"/g, '\\"')}"'`);
+                    return { success: true, app: body.app, title, message: `${body.app} brought to front` };
+                }
+                return { error: 'focus_app currently macOS only' };
+            } catch (err) {
+                return { error: `Focus failed: ${err.message}` };
             }
         }
 
@@ -1801,11 +1830,20 @@ async function handleDeviceAction(body) {
 
 // ─── Device Helpers ─────────────────────────────────
 
+function _safeExec(cmd, timeout = 3000) {
+    try { return execSync(cmd, { encoding: 'utf-8', timeout }).trim(); } catch { return ''; }
+}
+
 function _getRunningApps() {
     try {
         if (platform === 'darwin') {
-            const raw = execSync(`osascript -e 'tell application "System Events" to get name of every application process whose background only is false'`, { encoding: 'utf-8', timeout: 5000 });
-            return raw.trim().split(', ').filter(Boolean).map(name => ({ name }));
+            // Get app names + frontmost app separately (reliable, fast)
+            const raw = _safeExec(`osascript -e 'tell application "System Events" to get name of every application process whose background only is false'`, 5000);
+            const frontApp = _safeExec(`osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true'`);
+            return raw.split(', ').filter(Boolean).map(name => ({
+                name: name.trim(),
+                frontmost: name.trim() === frontApp.trim(),
+            }));
         } else if (platform === 'win32') {
             const raw = execSync('tasklist /FO CSV /NH', { encoding: 'utf-8', timeout: 5000 });
             const seen = new Set();
@@ -1825,12 +1863,16 @@ function _getRunningApps() {
 function _getFocusedWindow() {
     try {
         if (platform === 'darwin') {
-            const app = execSync(`osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true'`, { encoding: 'utf-8', timeout: 3000 }).trim();
-            let title = '';
+            const app = _safeExec(`osascript -e 'tell application "System Events" to get name of first application process whose frontmost is true'`);
+            let title = _safeExec(`osascript -e 'tell application "System Events" to get title of front window of first application process whose frontmost is true'`);
+            // Get window position to identify which monitor it's on
+            let position = '';
             try {
-                title = execSync(`osascript -e 'tell application "System Events" to get title of front window of first application process whose frontmost is true'`, { encoding: 'utf-8', timeout: 3000 }).trim();
-            } catch { /* some apps don't expose window title */ }
-            return { app, title, platform: 'macOS' };
+                position = _safeExec(`osascript -e 'tell application "System Events" to get position of front window of first application process whose frontmost is true'`);
+            } catch {}
+            // Get total screen count
+            const screenCount = _safeExec(`osascript -e 'tell application "Finder" to count of desktops'`) || '1';
+            return { app, title, position, screens: parseInt(screenCount) || 1, platform: 'macOS' };
         } else if (platform === 'win32') {
             const title = execSync('powershell -Command "(Get-Process | Where-Object {$_.MainWindowTitle} | Select-Object -First 1).MainWindowTitle"', { encoding: 'utf-8', timeout: 3000 }).trim();
             return { app: title.split(' - ').pop() || title, title, platform: 'Windows' };
