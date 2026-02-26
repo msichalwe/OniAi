@@ -349,8 +349,13 @@ Section types: hero, stats, cards, table, list, text, image, video, gallery, emb
 **DESIGN RULES:**
 - Hero section is OPTIONAL. Only use it when a prominent title/banner makes sense (e.g. weather, profiles). Skip it for image grids, search results, data tables.
 - NEVER use emojis in hero icons, stat icons, list icons, card icons, or headings. Keep it clean and professional.
-- Use \`article\` section for detailed write-ups, news articles, or when user asks for more detail. Fields: title, subtitle, author, date, source, image, content (markdown), tags, source_url.
-- Use \`search_results\` section for web search results. Fields: query, items[{title, description/snippet, url, source, date}].
+- Use \`article\` section for ALL news, informative content, deep dives, explainers, and when the user asks for details about a topic.
+  Article fields: title, subtitle, category, author, date, source, read_time, image/banner (URL), content (rich markdown body), key_points (array of strings), items (array of sub-articles: {title, description, image, source, date, author}), tags, source_url/url.
+  For NEWS: always use article with items[] for multiple stories. Each item is clickable and sends context to AI for follow-up.
+  For SINGLE TOPIC: use article with content (markdown body) + key_points for highlights.
+  ALWAYS include source_url when the information comes from a real source. If you searched the web, link to the actual source.
+- Use \`search_results\` section for raw web search results. Fields: query, items[{title, description/snippet, url, source, date}].
+- **NEVER HALLUCINATE**: Do not invent news articles, dates, authors, URLs, or statistics. If you don't have real data, say so clearly. Only present information you actually retrieved from search or that you are confident about. When presenting news, always cite the real source and date. If search returned no results, tell the user honestly.
 - Cards with \`image\` field are clickable — user can tap to see detail overlay. Add \`description\`, \`details\` (object), \`price\`, \`link\` for the expanded view.
 - List items with \`details\` (object) are also clickable for expanded view.
 - Gallery images are clickable for full preview. Use \`gallery\` for image-heavy results (shoes, products, photos).
@@ -361,7 +366,8 @@ Section types: hero, stats, cards, table, list, text, image, video, gallery, emb
 
 **Examples:**
 - Weather: \`{"title":"Lusaka Weather","sections":[{"type":"stats","items":[{"label":"Now","value":"28°C"},{"label":"Humidity","value":"45%"},{"label":"Wind","value":"12km/h"}]},{"type":"weather","title":"This Week","items":[{"day":"Mon","high":"29°C","low":"18°C"}]}]}\`
-- Article: \`{"title":"AI Deep Dive","sections":[{"type":"article","title":"How LLMs Work","subtitle":"A comprehensive guide","author":"OniAI","date":"2026-02-26","content":"# Introduction\\nLarge language models...","tags":["AI","LLM"]}]}\`
+- Article (single): \`{"title":"AI Deep Dive","sections":[{"type":"article","title":"How LLMs Work","subtitle":"A comprehensive guide","category":"Technology","author":"OniAI","date":"2026-02-26","read_time":"5 min read","image":"https://...","content":"# Introduction\\nLarge language models...","key_points":["LLMs use transformer architecture","Training requires massive datasets"],"tags":["AI","LLM"],"source_url":"https://..."}]}\`
+- News feed: \`{"title":"Chelsea News","sections":[{"type":"article","title":"Chelsea FC Latest","category":"Sports","source":"BBC Sport","items":[{"title":"Chelsea sign new striker","description":"Blues complete deal...","source":"BBC Sport","date":"Feb 26, 2026","image":"https://..."},{"title":"Match preview: Chelsea vs Arsenal","description":"Key talking points...","source":"Sky Sports","date":"Feb 25, 2026"}]}]}\`
 - Search: \`{"title":"Search Results","sections":[{"type":"search_results","query":"best laptops 2026","items":[{"title":"Top 10 Laptops","description":"Our picks for...","url":"https://example.com","source":"TechReview","date":"Feb 2026"}]}]}\`
 - Image search: \`{"title":"Nike Shoes","sections":[{"type":"gallery","columns":2,"images":[{"src":"url","caption":"Air Max 90","title":"Air Max 90","price":"$120","description":"Classic runner","link":"url"}]}]}\`
 - Recipe: \`{"title":"Pasta Carbonara","sections":[{"type":"list","title":"Ingredients","items":[{"title":"Spaghetti","value":"400g"}]},{"type":"list","title":"Steps","ordered":true,"items":[{"title":"Boil pasta","description":"Cook until al dente"}]}]}\`

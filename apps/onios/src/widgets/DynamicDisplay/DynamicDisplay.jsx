@@ -1045,30 +1045,123 @@ function ArticleSection({ data }) {
     .replace(/^> (.+)$/gm, "<blockquote>$1</blockquote>")
     .replace(/\n{2,}/g, "</p><p>")
     .replace(/\n/g, "<br/>");
+
+  const hasBanner = data.image || data.banner;
+  const bannerSrc = data.banner || data.image;
+  const hasMultipleItems = data.items && data.items.length > 0;
+
   return (
-    <div className="dd-article">
-      {data.title && <h1 className="dd-article-title">{data.title}</h1>}
-      {data.subtitle && <p className="dd-article-subtitle">{data.subtitle}</p>}
-      {data.author && (
-        <div className="dd-article-meta">
-          {data.author}
-          {data.date && <span className="dd-article-date">{data.date}</span>}
-          {data.source && (
-            <span className="dd-article-source">{data.source}</span>
-          )}
+    <div className="dd-article-immersive">
+      {hasBanner && (
+        <div className="dd-article-banner">
+          <div
+            className="dd-article-banner-bg"
+            style={{ backgroundImage: `url(${bannerSrc})` }}
+          />
+          <div className="dd-article-banner-overlay" />
+          <div className="dd-article-banner-content">
+            {data.category && (
+              <span className="dd-article-category">{data.category}</span>
+            )}
+            {data.title && <h1 className="dd-article-title">{data.title}</h1>}
+            {data.subtitle && (
+              <p className="dd-article-subtitle">{data.subtitle}</p>
+            )}
+            <div className="dd-article-meta-row">
+              {data.author && (
+                <span className="dd-article-author">{data.author}</span>
+              )}
+              {data.date && (
+                <span className="dd-article-date">{data.date}</span>
+              )}
+              {data.source && (
+                <span className="dd-article-source-badge">{data.source}</span>
+              )}
+              {data.read_time && (
+                <span className="dd-article-read-time">{data.read_time}</span>
+              )}
+            </div>
+          </div>
         </div>
       )}
-      {data.image && (
-        <Img
-          src={data.image}
-          alt={data.title}
-          className="dd-article-hero-img"
-        />
+
+      {!hasBanner && (
+        <div className="dd-article-header-simple">
+          {data.category && (
+            <span className="dd-article-category">{data.category}</span>
+          )}
+          {data.title && <h1 className="dd-article-title">{data.title}</h1>}
+          {data.subtitle && (
+            <p className="dd-article-subtitle">{data.subtitle}</p>
+          )}
+          <div className="dd-article-meta-row">
+            {data.author && (
+              <span className="dd-article-author">{data.author}</span>
+            )}
+            {data.date && <span className="dd-article-date">{data.date}</span>}
+            {data.source && (
+              <span className="dd-article-source-badge">{data.source}</span>
+            )}
+            {data.read_time && (
+              <span className="dd-article-read-time">{data.read_time}</span>
+            )}
+          </div>
+        </div>
       )}
-      <div
-        className="dd-article-body"
-        dangerouslySetInnerHTML={{ __html: `<p>${html}</p>` }}
-      />
+
+      {content && (
+        <div className="dd-article-content">
+          <div
+            className="dd-article-body"
+            dangerouslySetInnerHTML={{ __html: `<p>${html}</p>` }}
+          />
+        </div>
+      )}
+
+      {hasMultipleItems && (
+        <div className="dd-article-items">
+          {data.items.map((item, i) => (
+            <div
+              key={i}
+              className="dd-article-item"
+              onClick={() => sendToChat(item, "expand")}
+            >
+              {item.image && (
+                <div className="dd-article-item-img">
+                  <Img src={item.image} alt={item.title} />
+                </div>
+              )}
+              <div className="dd-article-item-body">
+                {item.title && (
+                  <h3 className="dd-article-item-title">{item.title}</h3>
+                )}
+                {item.description && (
+                  <p className="dd-article-item-desc">{item.description}</p>
+                )}
+                <div className="dd-article-item-meta">
+                  {item.source && <span>{item.source}</span>}
+                  {item.date && <span>{item.date}</span>}
+                  {item.author && <span>{item.author}</span>}
+                </div>
+              </div>
+              <ChevronRight size={14} className="dd-article-item-arrow" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {data.key_points && (
+        <div className="dd-article-key-points">
+          <div className="dd-article-kp-title">Key Points</div>
+          {data.key_points.map((point, i) => (
+            <div key={i} className="dd-article-kp-item">
+              <span className="dd-article-kp-num">{i + 1}</span>
+              <span>{point}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {data.tags && (
         <div className="dd-article-tags">
           {data.tags.map((t, i) => (
@@ -1078,16 +1171,35 @@ function ArticleSection({ data }) {
           ))}
         </div>
       )}
-      {data.source_url && (
-        <a
-          className="dd-article-source-link"
-          href={data.source_url}
-          target="_blank"
-          rel="noopener noreferrer"
+
+      <div className="dd-article-footer">
+        {data.source_url && (
+          <a
+            className="dd-media-btn"
+            href={data.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Read original <ExternalLink size={11} />
+          </a>
+        )}
+        {(data.url || data.link) && !data.source_url && (
+          <a
+            className="dd-media-btn"
+            href={data.url || data.link}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View source <ExternalLink size={11} />
+          </a>
+        )}
+        <button
+          className="dd-media-btn"
+          onClick={() => sendToChat(data, "deeper")}
         >
-          Read original <ExternalLink size={11} />
-        </a>
-      )}
+          Go deeper
+        </button>
+      </div>
     </div>
   );
 }
