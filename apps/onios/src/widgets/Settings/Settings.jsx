@@ -18,8 +18,12 @@ import {
   MicOff,
   Monitor,
   Tablet,
+  Layers,
+  Minus,
+  Plus,
 } from "lucide-react";
 import useThemeStore from "../../stores/themeStore";
+import useWindowStore from "../../stores/windowStore";
 import { gateway } from "../../gateway/GatewayClient";
 import { voiceEngine } from "../../core/VoiceEngine";
 import "./Settings.css";
@@ -450,6 +454,8 @@ export default function Settings() {
   const layoutMode = useThemeStore((s) => s.layoutMode);
   const layoutSwitching = useThemeStore((s) => s.layoutSwitching);
   const setLayoutMode = useThemeStore((s) => s.setLayoutMode);
+  const maxWindows = useWindowStore((s) => s.maxWindows);
+  const setMaxWindows = useWindowStore((s) => s.setMaxWindows);
   const isDark = theme === "dark";
   const isTablet = layoutMode === "tablet";
   const fileInputRef = useRef(null);
@@ -580,6 +586,36 @@ export default function Settings() {
             </div>
             <span className="settings-layout-label">Tablet</span>
             <span className="settings-layout-desc">Tiles + AI chat</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Max Widgets */}
+      <div className="settings-section">
+        <h3 className="settings-section-title">Windows</h3>
+        <div className="settings-row">
+          <div className="settings-row-info">
+            <span className="settings-row-label">Max Widgets</span>
+            <span className="settings-row-desc">
+              Oldest auto-closes when limit is reached (1–12)
+            </span>
+          </div>
+          <div className="settings-stepper">
+            <button
+              className="settings-stepper-btn"
+              onClick={() => setMaxWindows(maxWindows - 1)}
+              disabled={maxWindows <= 1}
+            >
+              <Minus size={14} />
+            </button>
+            <span className="settings-stepper-value">{maxWindows}</span>
+            <button
+              className="settings-stepper-btn"
+              onClick={() => setMaxWindows(maxWindows + 1)}
+              disabled={maxWindows >= 12}
+            >
+              <Plus size={14} />
+            </button>
           </div>
         </div>
       </div>

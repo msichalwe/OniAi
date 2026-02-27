@@ -447,6 +447,68 @@ select.settings-api-key-input {
   line-height: 1.5;
 }
 
+/* Stepper Control */
+.settings-stepper {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--glass-bg, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--glass-border-light, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius-md, 10px);
+  padding: 2px;
+}
+
+.settings-stepper-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm, 8px);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, rgba(255, 255, 255, 0.6));
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.settings-stepper-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
+}
+
+.settings-stepper-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.settings-stepper-value {
+  min-width: 28px;
+  text-align: center;
+  font-size: var(--text-base, 13px);
+  font-weight: 700;
+  color: var(--text-primary, rgba(255, 255, 255, 0.9));
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme="light"] .settings-stepper {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .settings-stepper-btn {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .settings-stepper-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="light"] .settings-stepper-value {
+  color: rgba(0, 0, 0, 0.8);
+}
+
 /* Layout Mode Cards */
 .settings-layout-preview {
   display: flex;

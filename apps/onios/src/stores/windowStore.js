@@ -14,8 +14,10 @@ import { eventBus } from '../core/EventBus';
 
 let topZIndex = 100;
 
-/** Maximum number of windows that can be open simultaneously. */
-const MAX_WINDOWS = 5;
+/** Default and bounds for max simultaneous windows. */
+const DEFAULT_MAX_WINDOWS = 5;
+const MIN_MAX_WINDOWS = 1;
+const MAX_MAX_WINDOWS = 12;
 
 /**
  * Find the best position for a new window.
@@ -97,6 +99,13 @@ const useWindowStore = create(
     persist(
         (set, get) => ({
             windows: [],
+            maxWindows: parseInt(localStorage.getItem('onios-max-windows'), 10) || DEFAULT_MAX_WINDOWS,
+
+            setMaxWindows: (n) => {
+                const clamped = Math.max(MIN_MAX_WINDOWS, Math.min(MAX_MAX_WINDOWS, n));
+                localStorage.setItem('onios-max-windows', String(clamped));
+                set({ maxWindows: clamped });
+            },
 
             /**
              * Open a new window. If the widget is singleton and already open,
@@ -130,7 +139,7 @@ const useWindowStore = create(
                 }
 
                 // Auto-close oldest windows until under max capacity
-                while (get().windows.length >= MAX_WINDOWS) {
+                while (get().windows.length >= get().maxWindows) {
                     const currentWins = get().windows;
                     const focused = get().getFocusedWindow();
                     const victim = pickWindowToClose(currentWins, focused?.id);
