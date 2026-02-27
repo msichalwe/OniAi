@@ -404,10 +404,17 @@ function generateOniOSSkillMD(port = 5173) {
     return `---
 name: onios
 description: "OniOS desktop control. Use exec tool with curl to call http://localhost:${port}/api/oni/actions/{action}. Actions: task, window, note, terminal, file, notification, display, drawing, project, spacelens, search, storage, system, scheduler, workflow, screen. All POST with JSON. ALWAYS use exec curl."
-metadata: { "oni": { "emoji": "🖥️", "homepage": "http://localhost:${port}", "always": true } }
+metadata: { "oni": { "emoji": "🖥️", "homepage": "http://localhost:${port}", "context": "onios-app", "requires": "onios-server" } }
 ---
 
 # OniOS — Desktop Control via \`exec\` + \`curl\`
+
+## IMPORTANT: Context Guard
+**This skill ONLY works when the OniOS desktop app is running** (Electron or Tauri build serving on localhost:${port}).
+- If you are in a **TUI/CLI session** (oni-tui, terminal), do **NOT** attempt any OniOS actions. They will fail with connection refused.
+- Before using any OniOS action, verify the server is reachable: \`curl -sS http://localhost:${port}/api/oni/status\`
+- If the curl fails or times out, tell the user: "OniOS app is not running. Please open OniOS to use desktop features."
+- **Never assume OniOS is available.** Only use these actions after confirming connectivity.
 
 Base: \`POST http://localhost:${port}/api/oni/actions/{action}\` with JSON body.
 
