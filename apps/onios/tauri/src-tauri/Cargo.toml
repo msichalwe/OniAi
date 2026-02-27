@@ -1,0 +1,21 @@
+[package]
+name = "onios-tauri"
+version = "0.1.0"
+edition = "2021"
+description = "OniOS Desktop — Tauri build (lightweight alternative to Electron)"
+
+[dependencies]
+tauri = { version = "2", features = ["devtools"] }
+tauri-plugin-shell = "2"
+tauri-plugin-process = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", features = ["blocking"] }
+tokio = { version = "1", features = ["full"] }
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
