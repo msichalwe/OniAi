@@ -31,15 +31,21 @@ export function resolveControlPlaneRateLimitKey(client: GatewayClient | null): s
   return `${deviceId}|${clientIp}`;
 }
 
-export function consumeControlPlaneWriteBudget(params: {
-  client: GatewayClient | null;
-  nowMs?: number;
-}): {
+export type ControlPlaneWriteBudgetResult = {
   allowed: boolean;
   retryAfterMs: number;
   remaining: number;
+  /** Absolute epoch-ms when the current window resets. */
+  resetsAtMs: number;
+  maxRequests: number;
+  windowMs: number;
   key: string;
-} {
+};
+
+export function consumeControlPlaneWriteBudget(params: {
+  client: GatewayClient | null;
+  nowMs?: number;
+}): ControlPlaneWriteBudgetResult {
   const nowMs = params.nowMs ?? Date.now();
   const key = resolveControlPlaneRateLimitKey(params.client);
   const bucket = controlPlaneBuckets.get(key);
@@ -53,6 +59,9 @@ export function consumeControlPlaneWriteBudget(params: {
       allowed: true,
       retryAfterMs: 0,
       remaining: CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS - 1,
+      resetsAtMs: nowMs + CONTROL_PLANE_RATE_LIMIT_WINDOW_MS,
+      maxRequests: CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS,
+      windowMs: CONTROL_PLANE_RATE_LIMIT_WINDOW_MS,
       key,
     };
   }
@@ -66,6 +75,9 @@ export function consumeControlPlaneWriteBudget(params: {
       allowed: false,
       retryAfterMs,
       remaining: 0,
+      resetsAtMs: bucket.windowStartMs + CONTROL_PLANE_RATE_LIMIT_WINDOW_MS,
+      maxRequests: CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS,
+      windowMs: CONTROL_PLANE_RATE_LIMIT_WINDOW_MS,
       key,
     };
   }
@@ -75,7 +87,52 @@ export function consumeControlPlaneWriteBudget(params: {
     allowed: true,
     retryAfterMs: 0,
     remaining: Math.max(0, CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS - bucket.count),
+    resetsAtMs: bucket.windowStartMs + CONTROL_PLANE_RATE_LIMIT_WINDOW_MS,
+    maxRequests: CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS,
+    windowMs: CONTROL_PLANE_RATE_LIMIT_WINDOW_MS,
     key,
+  };
+}
+
+/** Query the current write budget for a client without consuming a request. */
+export function getControlPlaneWriteBudgetStatus(params: {
+  client: GatewayClient | null;
+  nowMs?: number;
+}): Omit<ControlPlaneWriteBudgetResult, "key" | "allowed"> {
+  const nowMs = params.nowMs ?? Date.now();
+  const key = resolveControlPlaneRateLimitKey(params.client);
+  const bucket = controlPlaneBuckets.get(key);
+
+  if (!bucket || nowMs - bucket.windowStartMs >= CONTROL_PLANE_RATE_LIMIT_WINDOW_MS) {
+    return {
+      retryAfterMs: 0,
+      remaining: CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS,
+      resetsAtMs: 0,
+      maxRequests: CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS,
+      windowMs: CONTROL_PLANE_RATE_LIMIT_WINDOW_MS,
+    };
+  }
+
+  if (bucket.count >= CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS) {
+    const retryAfterMs = Math.max(
+      0,
+      bucket.windowStartMs + CONTROL_PLANE_RATE_LIMIT_WINDOW_MS - nowMs,
+    );
+    return {
+      retryAfterMs,
+      remaining: 0,
+      resetsAtMs: bucket.windowStartMs + CONTROL_PLANE_RATE_LIMIT_WINDOW_MS,
+      maxRequests: CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS,
+      windowMs: CONTROL_PLANE_RATE_LIMIT_WINDOW_MS,
+    };
+  }
+
+  return {
+    retryAfterMs: 0,
+    remaining: Math.max(0, CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS - bucket.count),
+    resetsAtMs: bucket.windowStartMs + CONTROL_PLANE_RATE_LIMIT_WINDOW_MS,
+    maxRequests: CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS,
+    windowMs: CONTROL_PLANE_RATE_LIMIT_WINDOW_MS,
   };
 }
 

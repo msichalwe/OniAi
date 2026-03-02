@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   __testing as controlPlaneRateLimitTesting,
+  getControlPlaneWriteBudgetStatus,
   resolveControlPlaneRateLimitKey,
 } from "./control-plane-rate-limit.js";
 import { handleGatewayRequest } from "./server-methods.js";
@@ -146,5 +147,58 @@ describe("gateway control-plane write rate limit", () => {
       clientIp: "10.0.0.10",
     });
     expect(key).toBe("unknown-device|10.0.0.10");
+  });
+
+  it("includes budget details in rate-limit error response", async () => {
+    const handler: GatewayRequestHandler = (opts) => {
+      opts.respond(true, undefined, undefined);
+    };
+    const context = buildContext();
+    const client = buildClient();
+
+    await runRequest({ method: "config.patch", context, client, handler });
+    await runRequest({ method: "config.patch", context, client, handler });
+    await runRequest({ method: "config.patch", context, client, handler });
+    const blocked = await runRequest({ method: "config.patch", context, client, handler });
+
+    const errorArg = blocked.mock.calls[0][2];
+    expect(errorArg.details).toEqual(
+      expect.objectContaining({
+        method: "config.patch",
+        remaining: 0,
+        maxRequests: 3,
+        windowMs: 60_000,
+      }),
+    );
+    expect(typeof errorArg.details.resetsAtMs).toBe("number");
+    expect(errorArg.details.resetsAtMs).toBeGreaterThan(Date.now() - 1);
+  });
+
+  it("getControlPlaneWriteBudgetStatus returns full budget without consuming", async () => {
+    const handler: GatewayRequestHandler = (opts) => {
+      opts.respond(true, undefined, undefined);
+    };
+    const context = buildContext();
+    const client = buildClient();
+
+    // Before any writes — full budget
+    const before = getControlPlaneWriteBudgetStatus({ client });
+    expect(before.remaining).toBe(3);
+    expect(before.maxRequests).toBe(3);
+    expect(before.retryAfterMs).toBe(0);
+
+    // After 2 writes — still has remaining
+    await runRequest({ method: "config.apply", context, client, handler });
+    await runRequest({ method: "config.apply", context, client, handler });
+
+    const mid = getControlPlaneWriteBudgetStatus({ client });
+    expect(mid.remaining).toBe(1);
+    expect(mid.maxRequests).toBe(3);
+    expect(mid.windowMs).toBe(60_000);
+    expect(mid.resetsAtMs).toBeGreaterThan(0);
+
+    // Calling status again doesn't consume budget
+    const midAgain = getControlPlaneWriteBudgetStatus({ client });
+    expect(midAgain.remaining).toBe(1);
   });
 });
