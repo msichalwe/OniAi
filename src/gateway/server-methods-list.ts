@@ -1,5 +1,5 @@
 import { listChannelPlugins } from "../channels/plugins/index.js";
-import { GATEWAY_EVENT_UPDATE_AVAILABLE } from "./events.js";
+import { GATEWAY_EVENT_CONFIG_RELOAD_ERROR, GATEWAY_EVENT_UPDATE_AVAILABLE } from "./events.js";
 
 const BASE_METHODS = [
   "health",
@@ -21,6 +21,8 @@ const BASE_METHODS = [
   "config.apply",
   "config.patch",
   "config.schema",
+  "config.validate",
+  "controlPlane.budget",
   "exec.approvals.get",
   "exec.approvals.set",
   "exec.approvals.node.get",
@@ -121,4 +123,5 @@ export const GATEWAY_EVENTS = [
   "exec.approval.requested",
   "exec.approval.resolved",
   GATEWAY_EVENT_UPDATE_AVAILABLE,
+  GATEWAY_EVENT_CONFIG_RELOAD_ERROR,
 ];

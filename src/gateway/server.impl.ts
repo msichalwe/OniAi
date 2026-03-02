@@ -731,6 +731,7 @@ export async function startGatewayServer(
             error: (msg) => logReload.error(msg),
           },
           watchPath: CONFIG_PATH,
+          broadcast,
         });
       })();
 

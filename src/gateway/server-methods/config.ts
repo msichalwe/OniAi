@@ -27,12 +27,13 @@ import {
 } from "../../infra/restart-sentinel.js";
 import { scheduleGatewaySigusr1Restart } from "../../infra/restart.js";
 import { loadOniAIPlugins } from "../../plugins/loader.js";
-import { diffConfigPaths } from "../config-reload.js";
+import { diffConfigPaths, getLastConfigReloadError } from "../config-reload.js";
 import {
   formatControlPlaneActor,
   resolveControlPlaneActor,
   summarizeChangedPaths,
 } from "../control-plane-audit.js";
+import { getControlPlaneWriteBudgetStatus } from "../control-plane-rate-limit.js";
 import {
   ErrorCodes,
   errorShape,
@@ -402,6 +403,36 @@ export const configHandlers: GatewayRequestHandlers = {
       },
       undefined,
     );
+  },
+  "config.validate": async ({ params, respond }) => {
+    // Dry-run validation: parse + validate raw config without writing.
+    // Also returns the last hot-reload error if any.
+    const lastReloadError = getLastConfigReloadError();
+    const rawValue = (params as { raw?: unknown }).raw;
+    if (typeof rawValue !== "string") {
+      // No raw config provided — just return current reload-error state
+      respond(true, { valid: true, issues: [], lastReloadError }, undefined);
+      return;
+    }
+    const parsedRes = parseConfigJson5(rawValue);
+    if (!parsedRes.ok) {
+      respond(
+        true,
+        { valid: false, issues: [{ path: "<root>", message: parsedRes.error }], lastReloadError },
+        undefined,
+      );
+      return;
+    }
+    const validated = validateConfigObjectWithPlugins(parsedRes.parsed);
+    if (!validated.ok) {
+      respond(true, { valid: false, issues: validated.issues, lastReloadError }, undefined);
+      return;
+    }
+    respond(true, { valid: true, issues: [], lastReloadError }, undefined);
+  },
+  "controlPlane.budget": ({ respond, client }) => {
+    const budget = getControlPlaneWriteBudgetStatus({ client });
+    respond(true, budget, undefined);
   },
   "config.apply": async ({ params, respond, client, context }) => {
     if (!assertValidParams(params, validateConfigApplyParams, "config.apply", respond)) {

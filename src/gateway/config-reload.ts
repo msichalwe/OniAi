@@ -4,6 +4,10 @@ import { type ChannelId, listChannelPlugins } from "../channels/plugins/index.js
 import type { OniAIConfig, ConfigFileSnapshot, GatewayReloadMode } from "../config/config.js";
 import { getActivePluginRegistry } from "../plugins/runtime.js";
 import { isPlainObject } from "../utils.js";
+import {
+  GATEWAY_EVENT_CONFIG_RELOAD_ERROR,
+  type GatewayConfigReloadErrorPayload,
+} from "./events.js";
 
 export type GatewayReloadSettings = {
   mode: GatewayReloadMode;
@@ -251,6 +255,19 @@ export type GatewayConfigReloader = {
   stop: () => Promise<void>;
 };
 
+export type ConfigReloadErrorInfo = {
+  kind: "parse" | "validation";
+  message: string;
+  issues: Array<{ path: string; message: string }>;
+};
+
+/** Last config reload error, if any. Cleared on successful reload. */
+let lastConfigReloadError: ConfigReloadErrorInfo | null = null;
+
+export function getLastConfigReloadError(): ConfigReloadErrorInfo | null {
+  return lastConfigReloadError;
+}
+
 export function startGatewayConfigReloader(opts: {
   initialConfig: OniAIConfig;
   readSnapshot: () => Promise<ConfigFileSnapshot>;
@@ -262,6 +279,8 @@ export function startGatewayConfigReloader(opts: {
     error: (msg: string) => void;
   };
   watchPath: string;
+  /** Optional broadcaster for notifying connected clients of reload errors */
+  broadcast?: (event: string, payload: unknown) => void;
 }): GatewayConfigReloader {
   let currentConfig = opts.initialConfig;
   let settings = resolveGatewayReloadSettings(currentConfig);
@@ -311,16 +330,34 @@ export function startGatewayConfigReloader(opts: {
     return true;
   };
 
+  const broadcastReloadError = (info: ConfigReloadErrorInfo) => {
+    lastConfigReloadError = info;
+    if (opts.broadcast) {
+      const payload: GatewayConfigReloadErrorPayload = {
+        ...info,
+        timestamp: new Date().toISOString(),
+      };
+      opts.broadcast(GATEWAY_EVENT_CONFIG_RELOAD_ERROR, payload);
+    }
+  };
+
   const handleInvalidSnapshot = (snapshot: ConfigFileSnapshot): boolean => {
     if (snapshot.valid) {
       return false;
     }
     const issues = snapshot.issues.map((issue) => `${issue.path}: ${issue.message}`).join(", ");
     opts.log.warn(`config reload skipped (invalid config): ${issues}`);
+    broadcastReloadError({
+      kind: "validation",
+      message: `invalid config: ${issues}`,
+      issues: snapshot.issues.map((issue) => ({ path: issue.path, message: issue.message })),
+    });
     return true;
   };
 
   const applySnapshot = async (nextConfig: OniAIConfig) => {
+    // Successful parse + validation — clear any prior error
+    lastConfigReloadError = null;
     const changedPaths = diffConfigPaths(currentConfig, nextConfig);
     currentConfig = nextConfig;
     settings = resolveGatewayReloadSettings(nextConfig);
@@ -378,6 +415,11 @@ export function startGatewayConfigReloader(opts: {
       await applySnapshot(snapshot.config);
     } catch (err) {
       opts.log.error(`config reload failed: ${String(err)}`);
+      broadcastReloadError({
+        kind: "parse",
+        message: String(err),
+        issues: [],
+      });
     } finally {
       running = false;
       if (pending) {
