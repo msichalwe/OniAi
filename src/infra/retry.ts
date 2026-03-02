@@ -13,6 +13,18 @@ export type RetryInfo = {
   delayMs: number;
   err: unknown;
   label?: string;
+  /** Optional domain-specific context for observability */
+  context?: RetryContext;
+};
+
+/** Domain-specific context attached to retry attempts for observability. */
+export type RetryContext = {
+  channel?: string;
+  accountId?: string;
+  /** Application-level error code or category */
+  errorCode?: string;
+  /** Arbitrary metadata for debugging */
+  meta?: Record<string, unknown>;
 };
 
 export type RetryOptions = RetryConfig & {
@@ -20,6 +32,8 @@ export type RetryOptions = RetryConfig & {
   shouldRetry?: (err: unknown, attempt: number) => boolean;
   retryAfterMs?: (err: unknown) => number | undefined;
   onRetry?: (info: RetryInfo) => void;
+  /** Domain-specific context propagated to onRetry callbacks */
+  context?: RetryContext;
 };
 
 const DEFAULT_RETRY_CONFIG = {
@@ -127,6 +141,7 @@ export async function retryAsync<T>(
         delayMs: delay,
         err,
         label: options.label,
+        context: options.context,
       });
       await sleep(delay);
     }

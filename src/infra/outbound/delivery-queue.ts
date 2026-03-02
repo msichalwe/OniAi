@@ -4,6 +4,7 @@ import type { ReplyPayload } from "../../auto-reply/types.js";
 import type { OniAIConfig } from "../../config/config.js";
 import { resolveStateDir } from "../../config/paths.js";
 import { generateSecureUuid } from "../secure-random.js";
+import { recordDeliveryFailure } from "./delivery-failures.js";
 import type { OutboundChannel } from "./targets.js";
 
 const QUEUE_DIRNAME = "delivery-queue";
@@ -123,6 +124,14 @@ export async function failDelivery(id: string, error: string, stateDir?: string)
   const entry: QueuedDelivery = JSON.parse(raw);
   entry.retryCount += 1;
   entry.lastError = error;
+  // Track failure for health-state observability
+  recordDeliveryFailure({
+    channel: entry.channel,
+    accountId: entry.accountId,
+    errorMessage: error,
+    retryCount: entry.retryCount,
+    timestamp: Date.now(),
+  });
   const tmp = `${filePath}.${process.pid}.tmp`;
   await fs.promises.writeFile(tmp, JSON.stringify(entry, null, 2), {
     encoding: "utf-8",

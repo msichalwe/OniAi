@@ -14,6 +14,10 @@ import {
   type HeartbeatSummary,
   resolveHeartbeatSummaryForAgent,
 } from "../infra/heartbeat-runner.js";
+import {
+  getDeliveryFailureSummary,
+  type DeliveryFailureSummary,
+} from "../infra/outbound/delivery-failures.js";
 import { buildChannelAccountBindings, resolvePreferredAccountId } from "../routing/bindings.js";
 import { normalizeAgentId } from "../routing/session-key.js";
 import type { RuntimeEnv } from "../runtime.js";
@@ -69,6 +73,8 @@ export type HealthSummary = {
       age: number | null;
     }>;
   };
+  /** Recent delivery failures aggregated by channel (5-minute window). */
+  deliveryFailures?: DeliveryFailureSummary;
 };
 
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -502,6 +508,7 @@ export async function getHealthSnapshot(params?: {
     }
   }
 
+  const deliveryFailures = getDeliveryFailureSummary();
   const summary: HealthSummary = {
     ok: true,
     ts: Date.now(),
@@ -517,6 +524,8 @@ export async function getHealthSnapshot(params?: {
       count: sessions.count,
       recent: sessions.recent,
     },
+    // Only include if there are recent failures
+    ...(deliveryFailures.total > 0 ? { deliveryFailures } : {}),
   };
 
   return summary;
