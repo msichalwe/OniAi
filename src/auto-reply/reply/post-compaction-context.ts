@@ -1,42 +1,55 @@
 import fs from "node:fs";
 import path from "node:path";
+import { buildRecentMemoryContext } from "../../memory/auto-extract.js";
 
 const MAX_CONTEXT_CHARS = 3000;
+const MAX_MEMORY_CHARS = 1500;
 
 /**
  * Read critical sections from workspace AGENTS.md for post-compaction injection.
+ * Also injects recent memory entries so the agent retains context continuity.
  * Returns formatted system event text, or null if no AGENTS.md or no relevant sections.
  */
 export async function readPostCompactionContext(workspaceDir: string): Promise<string | null> {
   const agentsPath = path.join(workspaceDir, "AGENTS.md");
 
   try {
-    if (!fs.existsSync(agentsPath)) {
-      return null;
+    const parts: string[] = [];
+
+    // 1. AGENTS.md critical sections
+    if (fs.existsSync(agentsPath)) {
+      const content = await fs.promises.readFile(agentsPath, "utf-8");
+      const sections = extractSections(content, ["Session Startup", "Red Lines"]);
+      if (sections.length > 0) {
+        const combined = sections.join("\n\n");
+        const safeContent =
+          combined.length > MAX_CONTEXT_CHARS
+            ? combined.slice(0, MAX_CONTEXT_CHARS) + "\n...[truncated]..."
+            : combined;
+        parts.push("Critical rules from AGENTS.md:\n\n" + safeContent);
+      }
     }
 
-    const content = await fs.promises.readFile(agentsPath, "utf-8");
-
-    // Extract "## Session Startup" and "## Red Lines" sections
-    // Each section ends at the next "## " heading or end of file
-    const sections = extractSections(content, ["Session Startup", "Red Lines"]);
-
-    if (sections.length === 0) {
-      return null;
+    // 2. Recent memory entries for context continuity
+    const recentMemory = buildRecentMemoryContext(workspaceDir, 15);
+    if (recentMemory) {
+      const safeMemory =
+        recentMemory.length > MAX_MEMORY_CHARS
+          ? recentMemory.slice(0, MAX_MEMORY_CHARS) + "\n...[truncated]..."
+          : recentMemory;
+      parts.push(safeMemory);
     }
 
-    const combined = sections.join("\n\n");
-    const safeContent =
-      combined.length > MAX_CONTEXT_CHARS
-        ? combined.slice(0, MAX_CONTEXT_CHARS) + "\n...[truncated]..."
-        : combined;
+    if (parts.length === 0) {
+      return null;
+    }
 
     return (
       "[Post-compaction context refresh]\n\n" +
       "Session was just compacted. The conversation summary above is a hint, NOT a substitute for your startup sequence. " +
-      "Execute your Session Startup sequence now — read the required files before responding to the user.\n\n" +
-      "Critical rules from AGENTS.md:\n\n" +
-      safeContent
+      "Execute your Session Startup sequence now — read the required files before responding to the user.\n" +
+      "After compaction, always run memory_search to reload any relevant context you may have lost.\n\n" +
+      parts.join("\n\n")
     );
   } catch {
     return null;

@@ -9,10 +9,17 @@ import { SILENT_REPLY_TOKEN } from "../tokens.js";
 export const DEFAULT_MEMORY_FLUSH_SOFT_TOKENS = 4000;
 
 export const DEFAULT_MEMORY_FLUSH_PROMPT = [
-  "Pre-compaction memory flush.",
-  "Store durable memories now (use memory/YYYY-MM-DD.md; create memory/ if needed).",
-  "IMPORTANT: If the file already exists, APPEND new content only and do not overwrite existing entries.",
-  `If nothing to store, reply with ${SILENT_REPLY_TOKEN}.`,
+  "Pre-compaction memory flush — context is about to be compacted.",
+  "Extract and save ALL of the following to memory/YYYY-MM-DD.md (create memory/ if needed):",
+  "1. Decisions made in this session (what was decided and why)",
+  "2. User preferences or corrections discovered",
+  "3. Project-specific facts (stack, patterns, conventions, gotchas)",
+  "4. Task progress and outcomes (what was completed, what's pending)",
+  "5. Error fixes and workarounds found",
+  "6. Any context the next session will need to continue this work",
+  "IMPORTANT: APPEND to the file (do not overwrite). Use structured format: `- HH:MM [category]: fact`.",
+  "Also update MEMORY.md if any long-term preferences or project facts were discovered.",
+  `If genuinely nothing worth saving, reply with ${SILENT_REPLY_TOKEN}.`,
 ].join(" ");
 
 export const DEFAULT_MEMORY_FLUSH_SYSTEM_PROMPT = [
