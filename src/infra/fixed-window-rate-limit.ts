@@ -1,3 +1,16 @@
+export type RateLimiterStatus = {
+  /** Current count of consumed requests in the active window */
+  consumed: number;
+  /** Maximum requests allowed per window */
+  maxRequests: number;
+  /** Remaining requests before limit is reached */
+  remaining: number;
+  /** Window duration in milliseconds */
+  windowMs: number;
+  /** Milliseconds until the current window resets */
+  resetsInMs: number;
+};
+
 export type FixedWindowRateLimiter = {
   consume: () => {
     allowed: boolean;
@@ -5,6 +18,8 @@ export type FixedWindowRateLimiter = {
     remaining: number;
   };
   reset: () => void;
+  /** Return current rate limiter state for observability */
+  status: () => RateLimiterStatus;
 };
 
 export function createFixedWindowRateLimiter(params: {
@@ -43,6 +58,26 @@ export function createFixedWindowRateLimiter(params: {
     reset() {
       count = 0;
       windowStartMs = 0;
+    },
+    status(): RateLimiterStatus {
+      const nowMs = now();
+      // If window has expired, reflect a fresh state
+      if (nowMs - windowStartMs >= windowMs) {
+        return {
+          consumed: 0,
+          maxRequests,
+          remaining: maxRequests,
+          windowMs,
+          resetsInMs: windowMs,
+        };
+      }
+      return {
+        consumed: count,
+        maxRequests,
+        remaining: Math.max(0, maxRequests - count),
+        windowMs,
+        resetsInMs: Math.max(0, windowStartMs + windowMs - nowMs),
+      };
     },
   };
 }

@@ -56,6 +56,19 @@ export interface RateLimitCheckResult {
   retryAfterMs: number;
 }
 
+export interface AuthRateLimiterStatus {
+  /** Number of tracked IP+scope entries */
+  trackedEntries: number;
+  /** Number of currently locked-out entries */
+  lockedOut: number;
+  /** Configuration */
+  config: {
+    maxAttempts: number;
+    windowMs: number;
+    lockoutMs: number;
+  };
+}
+
 export interface AuthRateLimiter {
   /** Check whether `ip` is currently allowed to attempt authentication. */
   check(ip: string | undefined, scope?: string): RateLimitCheckResult;
@@ -69,6 +82,8 @@ export interface AuthRateLimiter {
   prune(): void;
   /** Dispose the limiter and cancel periodic cleanup timers. */
   dispose(): void;
+  /** Return aggregate status for observability. */
+  status(): AuthRateLimiterStatus;
 }
 
 // ---------------------------------------------------------------------------
@@ -228,5 +243,20 @@ export function createAuthRateLimiter(config?: RateLimitConfig): AuthRateLimiter
     entries.clear();
   }
 
-  return { check, recordFailure, reset, size, prune, dispose };
+  function status(): AuthRateLimiterStatus {
+    const now = Date.now();
+    let lockedOut = 0;
+    for (const entry of entries.values()) {
+      if (entry.lockedUntil && now < entry.lockedUntil) {
+        lockedOut += 1;
+      }
+    }
+    return {
+      trackedEntries: entries.size,
+      lockedOut,
+      config: { maxAttempts, windowMs, lockoutMs },
+    };
+  }
+
+  return { check, recordFailure, reset, size, prune, dispose, status };
 }

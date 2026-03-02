@@ -24,6 +24,11 @@ function createLimiterSpy(): AuthRateLimiter & {
     size: () => 0,
     prune: () => {},
     dispose: () => {},
+    status: () => ({
+      trackedEntries: 0,
+      lockedOut: 0,
+      config: { maxAttempts: 10, windowMs: 60_000, lockoutMs: 300_000 },
+    }),
   };
 }
 
