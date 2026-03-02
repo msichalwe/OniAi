@@ -18,6 +18,7 @@ import {
 } from "../hooks/internal-hooks.js";
 import { loadInternalHooks } from "../hooks/loader.js";
 import { isTruthyEnvValue } from "../infra/env.js";
+import { validateHeartbeatTimezone } from "../infra/heartbeat-timezone-check.js";
 import type { loadOniAIPlugins } from "../plugins/loader.js";
 import { type PluginServicesHandle, startPluginServices } from "../plugins/services.js";
 import { startBrowserControlServerIfEnabled } from "./server-browser.js";
@@ -44,6 +45,12 @@ export async function startGatewaySidecars(params: {
   logChannels: { info: (msg: string) => void; error: (msg: string) => void };
   logBrowser: { error: (msg: string) => void };
 }) {
+  // Validate heartbeat timezone config at startup
+  const tzResult = validateHeartbeatTimezone(params.cfg);
+  if (tzResult && !tzResult.valid && tzResult.warning) {
+    params.log.warn(tzResult.warning);
+  }
+
   try {
     const stateDir = resolveStateDir(process.env);
     const sessionDirs = await resolveAgentSessionDirs(stateDir);
@@ -132,9 +139,7 @@ export async function startGatewaySidecars(params: {
       params.logChannels.error(`channel startup failed: ${String(err)}`);
     }
   } else {
-    params.logChannels.info(
-      "skipping channel start (ONI_SKIP_CHANNELS=1 or ONI_SKIP_PROVIDERS=1)",
-    );
+    params.logChannels.info("skipping channel start (ONI_SKIP_CHANNELS=1 or ONI_SKIP_PROVIDERS=1)");
   }
 
   if (params.cfg.hooks?.internal?.enabled) {

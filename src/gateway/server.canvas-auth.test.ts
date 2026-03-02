@@ -96,6 +96,7 @@ function makeWsClient(params: {
     clientIp: params.clientIp,
     canvasCapability: params.canvasCapability,
     canvasCapabilityExpiresAtMs: params.canvasCapabilityExpiresAtMs,
+    metrics: { connectedAt: Date.now(), messagesIn: 0, messagesOut: 0 },
   };
 }
 

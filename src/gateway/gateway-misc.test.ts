@@ -177,21 +177,25 @@ describe("gateway broadcaster", () => {
       close: vi.fn(),
     };
 
+    const defaultMetrics = { connectedAt: Date.now(), messagesIn: 0, messagesOut: 0 };
     const clients = new Set<GatewayWsClient>([
       {
         socket: approvalsSocket as unknown as GatewayWsClient["socket"],
         connect: { role: "operator", scopes: ["operator.approvals"] } as GatewayWsClient["connect"],
         connId: "c-approvals",
+        metrics: { ...defaultMetrics },
       },
       {
         socket: pairingSocket as unknown as GatewayWsClient["socket"],
         connect: { role: "operator", scopes: ["operator.pairing"] } as GatewayWsClient["connect"],
         connId: "c-pairing",
+        metrics: { ...defaultMetrics },
       },
       {
         socket: readSocket as unknown as GatewayWsClient["socket"],
         connect: { role: "operator", scopes: ["operator.read"] } as GatewayWsClient["connect"],
         connId: "c-read",
+        metrics: { ...defaultMetrics },
       },
     ]);
 
