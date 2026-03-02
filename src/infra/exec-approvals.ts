@@ -8,7 +8,7 @@ export * from "./exec-approvals-analysis.js";
 export * from "./exec-approvals-allowlist.js";
 
 export type ExecHost = "sandbox" | "gateway" | "node";
-export type ExecSecurity = "deny" | "allowlist" | "full";
+export type ExecSecurity = "deny" | "allowlist" | "supervised" | "full";
 export type ExecAsk = "off" | "on-miss" | "always";
 
 export type ExecApprovalRequest = {
@@ -329,7 +329,7 @@ export function ensureExecApprovals(): ExecApprovalsFile {
 }
 
 function normalizeSecurity(value: ExecSecurity | undefined, fallback: ExecSecurity): ExecSecurity {
-  if (value === "allowlist" || value === "full" || value === "deny") {
+  if (value === "allowlist" || value === "supervised" || value === "full" || value === "deny") {
     return value;
   }
   return fallback;
@@ -485,7 +485,7 @@ export function addAllowlistEntry(
 }
 
 export function minSecurity(a: ExecSecurity, b: ExecSecurity): ExecSecurity {
-  const order: Record<ExecSecurity, number> = { deny: 0, allowlist: 1, full: 2 };
+  const order: Record<ExecSecurity, number> = { deny: 0, allowlist: 1, supervised: 2, full: 3 };
   return order[a] <= order[b] ? a : b;
 }
 

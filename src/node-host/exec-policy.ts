@@ -1,4 +1,5 @@
 import { requiresExecApproval, type ExecAsk, type ExecSecurity } from "../infra/exec-approvals.js";
+import { classifyCommand, appendTrustJournalEntry } from "../infra/exec-supervised.js";
 
 export type ExecApprovalDecision = "allow-once" | "allow-always" | null;
 
@@ -10,13 +11,15 @@ export type SystemRunPolicyDecision = {
   requiresAsk: boolean;
   approvalDecision: ExecApprovalDecision;
   approvedByAsk: boolean;
+  /** Set when supervised mode auto-approved a read-only command. */
+  supervisedAutoApproved?: boolean;
 } & (
   | {
       allowed: true;
     }
   | {
       allowed: false;
-      eventReason: "security=deny" | "approval-required" | "allowlist-miss";
+      eventReason: "security=deny" | "approval-required" | "allowlist-miss" | "supervised-blocked";
       errorMessage: string;
     }
 );
@@ -59,6 +62,12 @@ export function evaluateSystemRunPolicy(params: {
   isWindows: boolean;
   cmdInvocation: boolean;
   shellWrapperInvocation: boolean;
+  /** argv of the command being evaluated (used for supervised mode classification). */
+  argv?: string[];
+  /** Agent id for trust journal entries. */
+  agentId?: string;
+  /** Session key for trust journal entries. */
+  sessionKey?: string;
 }): SystemRunPolicyDecision {
   const shellWrapperBlocked = params.security === "allowlist" && params.shellWrapperInvocation;
   const windowsShellWrapperBlocked =
@@ -80,6 +89,65 @@ export function evaluateSystemRunPolicy(params: {
       approvalDecision: params.approvalDecision,
       approvedByAsk,
     };
+  }
+
+  // Supervised mode: auto-approve read-only commands, require approval for mutating/unknown.
+  if (params.security === "supervised" && params.argv && params.argv.length > 0) {
+    const classification = classifyCommand(params.argv);
+    const commandText = params.argv.join(" ");
+    if (classification === "read-only") {
+      appendTrustJournalEntry({
+        timestampMs: Date.now(),
+        command: commandText,
+        classification,
+        decision: "auto-approved",
+        agentId: params.agentId,
+        sessionKey: params.sessionKey,
+      });
+      return {
+        allowed: true,
+        analysisOk: true,
+        allowlistSatisfied: true,
+        shellWrapperBlocked: false,
+        windowsShellWrapperBlocked: false,
+        requiresAsk: false,
+        approvalDecision: params.approvalDecision,
+        approvedByAsk: true,
+        supervisedAutoApproved: true,
+      };
+    }
+    // Mutating or unknown → require approval (fall through to ask logic).
+    if (!approvedByAsk) {
+      appendTrustJournalEntry({
+        timestampMs: Date.now(),
+        command: commandText,
+        classification,
+        decision: "prompted",
+        agentId: params.agentId,
+        sessionKey: params.sessionKey,
+      });
+      return {
+        allowed: false,
+        eventReason: "supervised-blocked",
+        errorMessage: `SYSTEM_RUN_SUPERVISED: ${classification} command requires approval`,
+        analysisOk,
+        allowlistSatisfied,
+        shellWrapperBlocked: false,
+        windowsShellWrapperBlocked: false,
+        requiresAsk: true,
+        approvalDecision: params.approvalDecision,
+        approvedByAsk,
+      };
+    }
+    // Approved by ask — allow through.
+    appendTrustJournalEntry({
+      timestampMs: Date.now(),
+      command: commandText,
+      classification,
+      decision: "auto-approved",
+      agentId: params.agentId,
+      sessionKey: params.sessionKey,
+    });
   }
 
   const requiresAsk = requiresExecApproval({

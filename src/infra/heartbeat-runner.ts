@@ -65,6 +65,7 @@ import {
   resolveHeartbeatSenderContext,
 } from "./outbound/targets.js";
 import { peekSystemEventEntries } from "./system-events.js";
+import { resolveTaskHeartbeatWork } from "../tasks/heartbeat.js";
 
 export type HeartbeatDeps = OutboundSendDeps &
   ChannelHeartbeatDeps & {
@@ -557,6 +558,7 @@ type HeartbeatPromptResolution = {
   prompt: string;
   hasExecCompletion: boolean;
   hasCronEvents: boolean;
+  hasTaskWork: boolean;
 };
 
 function resolveHeartbeatRunPrompt(params: {
@@ -564,6 +566,7 @@ function resolveHeartbeatRunPrompt(params: {
   heartbeat?: HeartbeatConfig;
   preflight: HeartbeatPreflight;
   canRelayToUser: boolean;
+  agentId?: string;
 }): HeartbeatPromptResolution {
   const pendingEventEntries = params.preflight.pendingEventEntries;
   const pendingEvents = params.preflight.shouldInspectPendingEvents
@@ -578,13 +581,42 @@ function resolveHeartbeatRunPrompt(params: {
     .map((event) => event.text);
   const hasExecCompletion = pendingEvents.some(isExecCompletionEvent);
   const hasCronEvents = cronEvents.length > 0;
-  const prompt = hasExecCompletion
-    ? buildExecEventPrompt({ deliverToUser: params.canRelayToUser })
-    : hasCronEvents
-      ? buildCronEventPrompt(cronEvents, { deliverToUser: params.canRelayToUser })
-      : resolveHeartbeatPrompt(params.cfg, params.heartbeat);
 
-  return { prompt, hasExecCompletion, hasCronEvents };
+  // Priority: exec events > cron events > task queue work > default heartbeat
+  if (hasExecCompletion) {
+    return {
+      prompt: buildExecEventPrompt({ deliverToUser: params.canRelayToUser }),
+      hasExecCompletion,
+      hasCronEvents,
+      hasTaskWork: false,
+    };
+  }
+  if (hasCronEvents) {
+    return {
+      prompt: buildCronEventPrompt(cronEvents, { deliverToUser: params.canRelayToUser }),
+      hasExecCompletion,
+      hasCronEvents,
+      hasTaskWork: false,
+    };
+  }
+
+  // Check persistent task queue for autonomous work.
+  const taskWork = resolveTaskHeartbeatWork({ agentId: params.agentId });
+  if (taskWork.hasWork) {
+    return {
+      prompt: taskWork.prompt,
+      hasExecCompletion: false,
+      hasCronEvents: false,
+      hasTaskWork: true,
+    };
+  }
+
+  return {
+    prompt: resolveHeartbeatPrompt(params.cfg, params.heartbeat),
+    hasExecCompletion: false,
+    hasCronEvents: false,
+    hasTaskWork: false,
+  };
 }
 
 export async function runHeartbeatOnce(opts: {
@@ -672,6 +704,7 @@ export async function runHeartbeatOnce(opts: {
     heartbeat,
     preflight,
     canRelayToUser,
+    agentId,
   });
   const ctx = {
     Body: appendCronStyleCurrentTimeLine(prompt, cfg, startedAt),

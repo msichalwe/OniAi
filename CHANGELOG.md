@@ -6,6 +6,12 @@ Docs: https://docs.openclaw.ai
 
 ### Changes
 
+- Agents/Task Queue: add persistent task queue system for autonomous agent work. Agents can create, track, and execute multi-step tasks across sessions via the new `task` tool (create/list/get/update/cancel/next/progress/complete/fail). Heartbeat cycles automatically pick up queued tasks, with budget constraints (maxCycles/maxTokens/maxCostUsd), structured plan steps, and progress tracking. Tasks survive across sessions and compactions.
+- Agents/Graduated Trust: add `supervised` exec security mode between `allowlist` and `full`. Auto-approves read-only commands (ls, cat, grep, git status, etc.) and prompts for mutating/unknown commands. All decisions are logged to a trust journal (`~/.oni/trust-journal.jsonl`) for audit.
+- Agents/Plan Tool: add `plan` tool for structured multi-step planning (create/get/update_step/add_step/remove_step/summary/clear). Plans persist in the workspace and survive context compaction — use `summary` after compaction to reload plan state.
+- Agents/Event Bus: add event bus infrastructure (`src/events/`) with typed triggers for file watchers, webhooks, system monitors, channel events, and scheduled events. Events are delivered as system events and wake the agent via heartbeat.
+- Agents/Delegate Tool: add `delegate` tool for simplified fire-and-forget sub-agent task delegation (dispatch/status/results/cancel). Simpler than `sessions_spawn` — handles prompt formatting and result routing automatically.
+- Agents/System Health: add `system_health` tool for self-monitoring and auto-recovery (overview/channels/disk/memory/processes/deliveries). Agents can diagnose issues, check channel status, and investigate delivery failures.
 - Android/Chat: improve streaming delivery handling and markdown rendering quality in the native Android chat UI, including better GitHub-flavored markdown behavior. (#26079) Thanks @obviyus.
 - Branding/Docs + Apple surfaces: replace remaining `bot.molt` launchd label, bundle-id, logging subsystem, and command examples with `ai.openclaw` across docs, iOS app surfaces, helper scripts, and CLI test fixtures.
 - Agents/Config: remind agents to call `config.schema` before config edits or config-field questions to avoid guessing. Thanks @thewilloftheshadow.

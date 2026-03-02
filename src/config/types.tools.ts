@@ -218,7 +218,7 @@ export type ExecToolConfig = {
   /** Exec host routing (default: sandbox). */
   host?: "sandbox" | "gateway" | "node";
   /** Exec security mode (default: deny). */
-  security?: "deny" | "allowlist" | "full";
+  security?: "deny" | "allowlist" | "supervised" | "full";
   /** Exec ask mode (default: on-miss). */
   ask?: "off" | "on-miss" | "always";
   /** Default node binding for exec.host=node (node id/name). */

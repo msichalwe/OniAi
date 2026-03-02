@@ -38,6 +38,7 @@ type SystemRunDeniedReason =
   | "security=deny"
   | "approval-required"
   | "allowlist-miss"
+  | "supervised-blocked"
   | "execution-plan-miss"
   | "companion-unavailable"
   | "permission:screenRecording";

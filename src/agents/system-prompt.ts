@@ -256,6 +256,10 @@ export function buildAgentSystemPrompt(params: {
     sessions_send: "Send a message to another session/sub-agent",
     sessions_spawn: "Spawn a sub-agent session",
     subagents: "List, steer, or kill sub-agent runs for this requester session",
+    task: "Persistent task queue for autonomous work (create/list/get/update/cancel/next/progress/complete/fail); tasks survive across sessions and are picked up by heartbeat work cycles",
+    plan: "Structured plan management (create/get/update_step/add_step/remove_step/summary/clear); plans persist in workspace and survive context compaction — use summary after compaction to reload state",
+    delegate: "Fire-and-forget task delegation to sub-agents (dispatch/status/results/cancel); simpler than sessions_spawn — handles prompt formatting and result routing automatically",
+    system_health: "Query system health (overview/channels/disk/memory/processes/deliveries) for self-monitoring; use to diagnose issues, check channel status, and support self-healing",
     session_status:
       "Show a /status-equivalent status card (usage + time + Reasoning/Verbose/Elevated); use for model-use questions (📊 session_status); optional per-session model override",
     image: "Analyze an image with the configured image model",
@@ -284,6 +288,10 @@ export function buildAgentSystemPrompt(params: {
     "sessions_history",
     "sessions_send",
     "subagents",
+    "task",
+    "plan",
+    "delegate",
+    "system_health",
     "session_status",
     "image",
   ];
