@@ -699,7 +699,7 @@ export async function runHeartbeatOnce(opts: {
   const canRelayToUser = Boolean(
     delivery.channel !== "none" && delivery.to && visibility.showAlerts,
   );
-  const { prompt, hasExecCompletion, hasCronEvents } = resolveHeartbeatRunPrompt({
+  const { prompt, hasExecCompletion, hasCronEvents, hasTaskWork } = resolveHeartbeatRunPrompt({
     cfg,
     heartbeat,
     preflight,
@@ -987,6 +987,16 @@ export async function runHeartbeatOnce(opts: {
       accountId: delivery.accountId,
       indicatorType: visibility.useIndicator ? resolveIndicatorType("sent") : undefined,
     });
+
+    // Immediate re-trigger: if this was a task work cycle and more tasks remain,
+    // request another heartbeat immediately instead of waiting for the next interval.
+    if (hasTaskWork) {
+      const moreWork = resolveTaskHeartbeatWork({ agentId });
+      if (moreWork.hasWork) {
+        requestHeartbeatNow({ reason: "task-continuation", agentId, sessionKey });
+      }
+    }
+
     return { status: "ran", durationMs: Date.now() - startedAt };
   } catch (err) {
     const reason = formatErrorMessage(err);

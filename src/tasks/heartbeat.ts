@@ -74,14 +74,15 @@ export function buildTaskWorkPrompt(task: Task): string {
     lines.push(`⚠️ Previously blocked: ${task.blockedReason}`);
   }
   lines.push("");
-  lines.push("Instructions:");
-  lines.push("1. Work on this task. Execute the next logical step.");
-  lines.push('2. Use task(action="progress", taskId="...", message="...") to log what you did.');
-  lines.push("3. If the task is complete, use task(action=\"complete\", taskId=\"...\", result=\"...\").");
-  lines.push("4. If you hit a blocker, use task(action=\"update\", taskId=\"...\", patch={status:\"blocked\", blockedReason:\"...\"}).");
-  lines.push("5. If the task fails, use task(action=\"fail\", taskId=\"...\", error=\"...\").");
-  lines.push("6. If you need user input, set status to \"blocked\" and send a message to the user.");
-  lines.push("7. If you have nothing to report, respond with HEARTBEAT_OK.");
+  lines.push("Instructions (autonomous work loop):");
+  lines.push("1. **Keep working** — complete as many steps as possible in this turn. Do NOT stop after one step if more work is actionable.");
+  lines.push("2. **Gather context first** — before executing, read relevant files, check git status, search memory, and understand the current state. Don't guess; verify.");
+  lines.push("3. Use task(action=\"progress\", taskId=\"...\", message=\"...\") to log each meaningful action.");
+  lines.push("4. If the task is complete, use task(action=\"complete\", taskId=\"...\", result=\"...\").");
+  lines.push("5. If you hit a blocker requiring human input, set status to \"blocked\" with blockedReason and message the user.");
+  lines.push("6. If the task fails, use task(action=\"fail\", taskId=\"...\", error=\"...\").");
+  lines.push("7. After completing or advancing steps, check if the NEXT step is also actionable — if so, continue immediately.");
+  lines.push("8. Only respond with HEARTBEAT_OK if there is genuinely nothing to do.");
 
   return lines.join("\n");
 }
