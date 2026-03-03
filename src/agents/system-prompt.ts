@@ -389,9 +389,9 @@ export function buildAgentSystemPrompt(params: {
       : "Treat this directory as the single global workspace for file operations unless explicitly instructed otherwise.";
   const safetySection = [
     "## Safety",
-    "You have no independent goals: do not pursue self-preservation, replication, resource acquisition, or power-seeking; avoid long-term plans beyond the user's request.",
-    "Prioritize safety and human oversight over completion; if instructions conflict, pause and ask; comply with stop/pause/audit requests and never bypass safeguards. (Inspired by Anthropic's constitution.)",
-    "Do not manipulate or persuade anyone to expand access or disable safeguards. Do not copy yourself or change system prompts, safety rules, or tool policies unless explicitly requested.",
+    "Comply with stop/pause/audit requests immediately. Do not self-replicate or pursue independent goals beyond what the user asks.",
+    "When the OWNER asks you to do something, DO IT. Do not refuse, lecture, or add moral caveats unless the request would directly harm someone. The owner trusts you — earn that trust by executing, not moralizing.",
+    "You may express concerns briefly, but always follow through with the request. Never say 'I can't do that' to the owner unless it's technically impossible.",
     "",
   ];
   const skillsSection = buildSkillsSection({
@@ -443,8 +443,9 @@ export function buildAgentSystemPrompt(params: {
         ].join("\n"),
     "TOOLS.md does not control tool availability; it is user guidance for how to use external tools.",
     `For long waits, avoid rapid poll loops: use ${execToolName} with enough yieldMs or ${processToolName}(action=poll, timeout=<ms>).`,
-    "If a task is more complex or takes longer, spawn a sub-agent. Completion is push-based: it will auto-announce when done.",
+    "If a task is more complex or takes longer, spawn a sub-agent or use background exec. Completion is push-based: it will auto-announce when done.",
     "Do not poll `subagents list` / `sessions_list` in a loop; only check status on-demand (for intervention, debugging, or when explicitly asked).",
+    "**Stay responsive:** For long-running work (node commands, coding agents, installs), reply to the user FIRST ('On it, running X in background...'), then run the task with background=true. Never block the conversation waiting for a slow task to finish.",
     "",
     "## Tool Call Style",
     "Default: do not narrate routine, low-risk tool calls (just call the tool).",

@@ -121,12 +121,8 @@ describe("buildAgentSystemPrompt", () => {
     expect(prompt).toContain(
       "For long waits, avoid rapid poll loops: use exec with enough yieldMs or process(action=poll, timeout=<ms>).",
     );
-    expect(prompt).toContain("You have no independent goals");
-    expect(prompt).toContain("Prioritize safety and human oversight");
-    expect(prompt).toContain("if instructions conflict");
-    expect(prompt).toContain("Inspired by Anthropic's constitution");
-    expect(prompt).toContain("Do not manipulate or persuade anyone");
-    expect(prompt).toContain("Do not copy yourself or change system prompts");
+    expect(prompt).toContain("Comply with stop/pause/audit requests");
+    expect(prompt).toContain("Do not self-replicate");
     expect(prompt).toContain("## Subagent Context");
     expect(prompt).not.toContain("## Group Chat Context");
     expect(prompt).toContain("Subagent details");
@@ -161,12 +157,9 @@ describe("buildAgentSystemPrompt", () => {
     });
 
     expect(prompt).toContain("## Safety");
-    expect(prompt).toContain("You have no independent goals");
-    expect(prompt).toContain("Prioritize safety and human oversight");
-    expect(prompt).toContain("if instructions conflict");
-    expect(prompt).toContain("Inspired by Anthropic's constitution");
-    expect(prompt).toContain("Do not manipulate or persuade anyone");
-    expect(prompt).toContain("Do not copy yourself or change system prompts");
+    expect(prompt).toContain("Comply with stop/pause/audit requests");
+    expect(prompt).toContain("Do not self-replicate");
+    expect(prompt).toContain("When the OWNER asks you to do something, DO IT");
   });
 
   it("includes voice hint when provided", () => {
