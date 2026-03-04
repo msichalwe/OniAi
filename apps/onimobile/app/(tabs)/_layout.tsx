@@ -1,63 +1,56 @@
-/**
- * Tab layout — Bottom tab navigation matching the design reference.
- * Home | Chat | Widgets | Settings
- */
-
 import { Tabs } from 'expo-router';
-import { Home, MessageSquare, LayoutGrid, Settings } from 'lucide-react-native';
-import useThemeStore from '../../src/stores/themeStore';
-import { getColors } from '../../src/theme/colors';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function TabLayout() {
-  const scheme = useThemeStore((s) => s.scheme);
-  const c = getColors(scheme);
+const colors = {
+  bg: '#0a0a0f',
+  accent: '#6c5ce7',
+  textMuted: '#555570',
+  border: '#2a2a3a',
+};
 
+export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: c.primary,
-        tabBarInactiveTintColor: c.textTertiary,
         tabBarStyle: {
-          backgroundColor: c.surface,
-          borderTopColor: c.border,
-          borderTopWidth: 0.5,
-          paddingTop: 6,
-          height: 88,
+          backgroundColor: colors.bg,
+          borderTopColor: colors.border,
+          borderTopWidth: 1,
+          height: 85,
+          paddingBottom: 30,
+          paddingTop: 8,
         },
-        tabBarLabelStyle: {
-          fontFamily: 'Inter_500Medium',
-          fontSize: 11,
-          marginTop: 2,
-        },
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
           title: 'Chat',
-          tabBarIcon: ({ color, size }) => <MessageSquare size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbubble-ellipses-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
-        name="widgets"
+        name="terminal"
         options={{
-          title: 'Widgets',
-          tabBarIcon: ({ color, size }) => <LayoutGrid size={size} color={color} />,
+          title: 'Terminal',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="terminal-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>

@@ -1,98 +1,53 @@
-/**
- * OniOS Mobile — Color palette matching the design reference.
- * Soft lavender/purple accent, warm neutral backgrounds.
- */
-
 export const colors = {
-  // Primary accent — soft lavender/purple
-  primary: '#8B7EC8',
-  primaryLight: '#C4B8F0',
-  primaryMuted: '#E8E0F5',
-  primaryBg: '#F0EBFA',
+  bg: '#0a0a0f',
+  bgSecondary: '#12121a',
+  bgTertiary: '#1a1a25',
+  surface: '#1e1e2a',
+  surfaceHover: '#252535',
+  border: '#2a2a3a',
+  borderLight: '#3a3a4a',
 
-  // Warm backgrounds (matches desktop gradient-warm)
-  warmBg: '#F5F0E8',
-  warmCard: '#FAF7F2',
-  warmBorder: '#E8E2D8',
+  text: '#e8e8f0',
+  textSecondary: '#8888a0',
+  textMuted: '#555570',
 
-  // Neutrals
-  bg: '#FAFAF8',
-  surface: '#FFFFFF',
-  surfaceElevated: '#FFFFFF',
-  border: '#EEECEC',
-  borderLight: '#F5F3F3',
+  accent: '#6c5ce7',
+  accentLight: '#8b7cf0',
+  accentDark: '#5a4bd6',
 
-  // Text
-  text: '#1A1A1A',
-  textSecondary: '#6B6B6B',
-  textTertiary: '#9A9A9A',
-  textInverse: '#FFFFFF',
+  success: '#00d68f',
+  warning: '#ffaa00',
+  error: '#ff4757',
+  info: '#4ecdc4',
 
-  // Dark mode
-  darkBg: '#0F0F14',
-  darkSurface: '#1A1A22',
-  darkSurfaceElevated: '#222230',
-  darkBorder: 'rgba(255,255,255,0.08)',
-  darkText: '#F0F0F0',
-  darkTextSecondary: 'rgba(255,255,255,0.6)',
-  darkTextTertiary: 'rgba(255,255,255,0.35)',
+  userBubble: '#6c5ce7',
+  botBubble: '#1e1e2a',
 
-  // Semantic
-  success: '#22C55E',
-  error: '#EF4444',
-  warning: '#F59E0B',
-  info: '#3B82F6',
+  terminalBg: '#0d0d14',
+  terminalText: '#00ff88',
+  terminalPrompt: '#6c5ce7',
 
-  // Chat
-  userBubble: '#2A2A2A',
-  userBubbleText: '#FFFFFF',
-  aiBubble: '#F5F0E8',
-  aiBubbleText: '#1A1A1A',
-
-  // Accent yellow (from design — "New" badge, highlights)
-  yellow: '#F5D76E',
-  yellowLight: '#FFF8E1',
+  shadow: 'rgba(0,0,0,0.3)',
 };
 
-export type ColorScheme = 'light' | 'dark';
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  xxl: 32,
+};
 
-export function getColors(scheme: ColorScheme) {
-  if (scheme === 'dark') {
-    return {
-      bg: colors.darkBg,
-      surface: colors.darkSurface,
-      surfaceElevated: colors.darkSurfaceElevated,
-      border: colors.darkBorder,
-      text: colors.darkText,
-      textSecondary: colors.darkTextSecondary,
-      textTertiary: colors.darkTextTertiary,
-      primary: colors.primary,
-      primaryLight: colors.primaryLight,
-      primaryMuted: 'rgba(139,126,200,0.15)',
-      primaryBg: 'rgba(139,126,200,0.08)',
-      userBubble: colors.primaryMuted,
-      userBubbleText: colors.text,
-      aiBubble: colors.darkSurfaceElevated,
-      aiBubbleText: colors.darkText,
-      card: colors.darkSurface,
-    };
-  }
-  return {
-    bg: colors.bg,
-    surface: colors.surface,
-    surfaceElevated: colors.surfaceElevated,
-    border: colors.border,
-    text: colors.text,
-    textSecondary: colors.textSecondary,
-    textTertiary: colors.textTertiary,
-    primary: colors.primary,
-    primaryLight: colors.primaryLight,
-    primaryMuted: colors.primaryMuted,
-    primaryBg: colors.primaryBg,
-    userBubble: colors.userBubble,
-    userBubbleText: colors.userBubbleText,
-    aiBubble: colors.warmCard,
-    aiBubbleText: colors.text,
-    card: colors.surface,
-  };
-}
+export const radius = {
+  sm: 6,
+  md: 12,
+  lg: 18,
+  xl: 24,
+  full: 999,
+};
+
+export const fonts = {
+  mono: 'Courier',
+  regular: 'System',
+};

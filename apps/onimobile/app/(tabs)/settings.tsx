@@ -1,234 +1,208 @@
-/**
- * Settings Screen — Gateway config, theme, voice preferences.
- */
-
-import { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  Alert,
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Moon,
-  Sun,
-  Mic,
-  MicOff,
-  Server,
-  Wifi,
-  CheckCircle2,
-  Loader2,
-  Shield,
-  Info,
-} from 'lucide-react-native';
-import useThemeStore from '../../src/stores/themeStore';
-import useGatewayStore from '../../src/stores/gatewayStore';
-import { getColors, colors } from '../../src/theme/colors';
-import { spacing, radius, fontSize } from '../../src/theme/spacing';
-import { testConnection } from '../../src/gateway/api';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing, radius } from '../../src/theme/colors';
+import { useGateway } from '../../src/hooks/useGateway';
+import { loadGatewayConfig, clearGatewayConfig, type StoredConfig } from '../../src/lib/gateway-client';
 
 export default function SettingsScreen() {
-  const scheme = useThemeStore((s) => s.scheme);
-  const toggleScheme = useThemeStore((s) => s.toggleScheme);
-  const c = getColors(scheme);
+  const { state, connect, config: currentConfig } = useGateway();
+  const [host, setHost] = useState('76.13.32.166');
+  const [port, setPort] = useState('19100');
+  const [token, setToken] = useState('');
+  const [tls, setTls] = useState(false);
 
-  const gatewayUrl = useGatewayStore((s) => s.gatewayUrl);
-  const setGatewayUrl = useGatewayStore((s) => s.setGatewayUrl);
-  const connected = useGatewayStore((s) => s.connected);
-  const setConnected = useGatewayStore((s) => s.setConnected);
+  useEffect(() => {
+    loadGatewayConfig().then((cfg) => {
+      if (cfg) {
+        setHost(cfg.host);
+        setPort(String(cfg.port));
+        setToken(cfg.token);
+        setTls(cfg.tls ?? false);
+      }
+    });
+  }, []);
 
-  const [urlInput, setUrlInput] = useState(gatewayUrl);
-  const [testing, setTesting] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
-
-  const handleTestConnection = useCallback(async () => {
-    setTesting(true);
-    const ok = await testConnection(urlInput);
-    setTesting(false);
-    if (ok) {
-      setGatewayUrl(urlInput);
-      setConnected(true);
-      Alert.alert('Connected', 'Gateway connection successful.');
-    } else {
-      setConnected(false);
-      Alert.alert('Failed', 'Could not connect to the gateway.');
+  const handleConnect = () => {
+    const cfg: StoredConfig = {
+      host: host.trim(),
+      port: parseInt(port, 10) || 19100,
+      token: token.trim(),
+      tls,
+    };
+    if (!cfg.host || !cfg.token) {
+      Alert.alert('Missing Info', 'Host and token are required');
+      return;
     }
-  }, [urlInput]);
+    connect(cfg);
+  };
 
-  const isDark = scheme === 'dark';
+  const handleClear = () => {
+    Alert.alert('Clear Config', 'Remove saved connection?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Clear',
+        style: 'destructive',
+        onPress: async () => {
+          await clearGatewayConfig();
+          setHost('');
+          setPort('19100');
+          setToken('');
+        },
+      },
+    ]);
+  };
+
+  const statusColor = state === 'connected' ? colors.success : state === 'connecting' ? colors.warning : colors.error;
+  const statusLabel = state === 'connected' ? 'Connected' : state === 'connecting' ? 'Connecting...' : 'Disconnected';
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: c.bg }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={[styles.title, { color: c.text }]}>Settings</Text>
-
-        {/* Gateway */}
-        <Text style={[styles.sectionLabel, { color: c.textTertiary }]}>GATEWAY</Text>
-        <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
-          <View style={styles.row}>
-            <Server size={18} color={c.textSecondary} />
-            <Text style={[styles.rowLabel, { color: c.text }]}>Server URL</Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>🦊 Oni Gateway</Text>
+          <View style={styles.statusRow}>
+            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+            <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
           </View>
-          <View style={styles.inputRow}>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Connection</Text>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Host</Text>
             <TextInput
-              style={[styles.input, { color: c.text, backgroundColor: c.bg, borderColor: c.border }]}
-              value={urlInput}
-              onChangeText={setUrlInput}
-              placeholder="http://127.0.0.1:5173"
-              placeholderTextColor={c.textTertiary}
+              style={styles.input}
+              value={host}
+              onChangeText={setHost}
+              placeholder="76.13.32.166"
+              placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
             />
-            <TouchableOpacity
-              style={[styles.testBtn, { backgroundColor: c.primaryMuted }]}
-              onPress={handleTestConnection}
-              disabled={testing}
-            >
-              {testing ? (
-                <Loader2 size={16} color={c.primary} />
-              ) : (
-                <Wifi size={16} color={c.primary} />
-              )}
-            </TouchableOpacity>
           </View>
-          <View style={styles.statusRow}>
-            <View style={[styles.statusDot, { backgroundColor: connected ? colors.success : colors.textTertiary }]} />
-            <Text style={[styles.statusText, { color: c.textSecondary }]}>
-              {connected ? 'Connected' : 'Not connected'}
-            </Text>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Port</Text>
+            <TextInput
+              style={styles.input}
+              value={port}
+              onChangeText={setPort}
+              placeholder="19100"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="number-pad"
+            />
           </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Auth Token</Text>
+            <TextInput
+              style={styles.input}
+              value={token}
+              onChangeText={setToken}
+              placeholder="Gateway auth token"
+              placeholderTextColor={colors.textMuted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              secureTextEntry
+            />
+          </View>
+
+          <Pressable style={styles.tlsRow} onPress={() => setTls(!tls)}>
+            <Ionicons
+              name={tls ? 'checkbox' : 'square-outline'}
+              size={20}
+              color={tls ? colors.accent : colors.textSecondary}
+            />
+            <Text style={styles.tlsLabel}>Use TLS (wss://)</Text>
+          </Pressable>
         </View>
 
-        {/* Appearance */}
-        <Text style={[styles.sectionLabel, { color: c.textTertiary }]}>APPEARANCE</Text>
-        <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
-          <TouchableOpacity style={styles.settingRow} onPress={toggleScheme}>
-            <View style={styles.row}>
-              {isDark ? <Moon size={18} color={c.textSecondary} /> : <Sun size={18} color={c.textSecondary} />}
-              <View style={styles.settingInfo}>
-                <Text style={[styles.rowLabel, { color: c.text }]}>Dark Mode</Text>
-                <Text style={[styles.rowDesc, { color: c.textTertiary }]}>
-                  {isDark ? 'On' : 'Off'}
-                </Text>
-              </View>
-            </View>
-            <View style={[styles.toggle, isDark && styles.toggleOn, isDark && { backgroundColor: colors.primary }]}>
-              <View style={[styles.toggleThumb, isDark && styles.toggleThumbOn]} />
-            </View>
-          </TouchableOpacity>
+        <View style={styles.actions}>
+          <Pressable style={styles.connectBtn} onPress={handleConnect}>
+            <Ionicons name="flash-outline" size={18} color="#fff" />
+            <Text style={styles.connectBtnText}>Connect</Text>
+          </Pressable>
+
+          <Pressable style={styles.clearBtn} onPress={handleClear}>
+            <Ionicons name="trash-outline" size={16} color={colors.error} />
+            <Text style={styles.clearBtnText}>Clear Config</Text>
+          </Pressable>
         </View>
 
-        {/* Voice */}
-        <Text style={[styles.sectionLabel, { color: c.textTertiary }]}>VOICE</Text>
-        <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
-          <TouchableOpacity style={styles.settingRow} onPress={() => setVoiceEnabled(!voiceEnabled)}>
-            <View style={styles.row}>
-              {voiceEnabled ? <Mic size={18} color={c.textSecondary} /> : <MicOff size={18} color={c.textSecondary} />}
-              <View style={styles.settingInfo}>
-                <Text style={[styles.rowLabel, { color: c.text }]}>Always Listening</Text>
-                <Text style={[styles.rowDesc, { color: c.textTertiary }]}>
-                  Say "Oni" to activate
-                </Text>
-              </View>
-            </View>
-            <View style={[styles.toggle, voiceEnabled && styles.toggleOn, voiceEnabled && { backgroundColor: colors.primary }]}>
-              <View style={[styles.toggleThumb, voiceEnabled && styles.toggleThumbOn]} />
-            </View>
-          </TouchableOpacity>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Setup</Text>
+          <Text style={styles.hint}>
+            To find your gateway token, run on the server:{'\n'}
+            <Text style={styles.code}>cat ~/.oni/oni.json | grep token</Text>
+          </Text>
         </View>
 
-        {/* About */}
-        <Text style={[styles.sectionLabel, { color: c.textTertiary }]}>ABOUT</Text>
-        <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
-          <View style={styles.aboutRow}>
-            <Text style={[styles.rowLabel, { color: c.text }]}>OniOS Mobile</Text>
-            <Text style={[styles.rowDesc, { color: c.textTertiary }]}>v0.1.0</Text>
-          </View>
-          <View style={[styles.divider, { backgroundColor: c.border }]} />
-          <View style={styles.aboutRow}>
-            <Text style={[styles.rowLabel, { color: c.text }]}>Gateway Type</Text>
-            <Text style={[styles.rowDesc, { color: c.textTertiary }]}>
-              {useGatewayStore.getState().gatewayType === 'oni' ? 'Oni' : 'OpenClaw'}
-            </Text>
-          </View>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About</Text>
+          <Text style={styles.hint}>
+            Oni Mobile v1.0.0{'\n'}
+            Connects to OniAI gateway via WebSocket RPC.{'\n'}
+            Server: {currentConfig?.host ?? 'not configured'}:{currentConfig?.port ?? ''}
+          </Text>
         </View>
-
-        <View style={{ height: 60 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  content: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
-  title: { fontSize: fontSize['3xl'], fontFamily: 'Inter_700Bold', marginBottom: spacing['2xl'] },
-
-  sectionLabel: {
-    fontSize: fontSize.xs,
-    fontFamily: 'Inter_700Bold',
-    letterSpacing: 1,
-    marginBottom: spacing.sm,
-    marginTop: spacing.lg,
-  },
-
-  card: { borderRadius: radius.xl, borderWidth: 0.5, padding: spacing.lg, marginBottom: spacing.sm },
-
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  rowLabel: { fontSize: fontSize.md, fontFamily: 'Inter_600SemiBold' },
-  rowDesc: { fontSize: fontSize.xs, fontFamily: 'Inter_400Regular', marginTop: 1 },
-
-  settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  settingInfo: { flex: 1, marginLeft: spacing.md },
-
-  inputRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-  input: {
-    flex: 1,
-    height: 42,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    fontSize: fontSize.sm,
-    fontFamily: 'Inter_400Regular',
+  container: { flex: 1, backgroundColor: colors.bg },
+  content: { padding: spacing.lg },
+  header: { alignItems: 'center', marginBottom: spacing.xxl },
+  title: { fontSize: 24, fontWeight: '800', color: colors.text, marginBottom: spacing.sm },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
+  statusText: { fontSize: 14, fontWeight: '600' },
+  section: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
     borderWidth: 1,
+    borderColor: colors.border,
   },
-  testBtn: {
-    width: 42,
-    height: 42,
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: spacing.lg },
+  field: { marginBottom: spacing.lg },
+  label: { fontSize: 13, color: colors.textSecondary, marginBottom: spacing.xs, fontWeight: '600' },
+  input: {
+    backgroundColor: colors.bgTertiary,
     borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    color: colors.text,
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tlsRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  tlsLabel: { color: colors.text, fontSize: 14 },
+  actions: { gap: spacing.md, marginBottom: spacing.lg },
+  connectBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.accent,
+    paddingVertical: spacing.lg,
+    borderRadius: radius.lg,
   },
-
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.sm },
-  statusDot: { width: 8, height: 8, borderRadius: 4 },
-  statusText: { fontSize: fontSize.xs, fontFamily: 'Inter_500Medium' },
-
-  toggle: {
-    width: 44,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.08)',
-    padding: 2,
+  connectBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  clearBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
+    paddingVertical: spacing.md,
   },
-  toggleOn: {},
-  toggleThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  toggleThumbOn: { alignSelf: 'flex-end' },
-
-  aboutRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
-  divider: { height: 0.5, marginVertical: spacing.md },
+  clearBtnText: { color: colors.error, fontSize: 14 },
+  hint: { color: colors.textSecondary, fontSize: 13, lineHeight: 20 },
+  code: { fontFamily: 'Courier', color: colors.terminalText, fontSize: 12 },
 });
