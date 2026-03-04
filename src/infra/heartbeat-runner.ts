@@ -66,6 +66,10 @@ import {
 } from "./outbound/targets.js";
 import { peekSystemEventEntries } from "./system-events.js";
 import { resolveTaskHeartbeatWork } from "../tasks/heartbeat.js";
+import {
+  resolveHeartbeatMemoryWork,
+  buildMemoryInsightsPrompt,
+} from "../memory/bubbles/heartbeat-surfacing.js";
 
 export type HeartbeatDeps = OutboundSendDeps &
   ChannelHeartbeatDeps & {
@@ -611,12 +615,32 @@ function resolveHeartbeatRunPrompt(params: {
     };
   }
 
-  return {
-    prompt: resolveHeartbeatPrompt(params.cfg, params.heartbeat),
-    hasExecCompletion: false,
-    hasCronEvents: false,
-    hasTaskWork: false,
-  };
+  // Append memory insights to the default heartbeat prompt.
+  const basePrompt = resolveHeartbeatPrompt(params.cfg, params.heartbeat);
+  try {
+    const workspaceDir = resolveAgentWorkspaceDir(params.cfg, params.agentId ?? resolveDefaultAgentId(params.cfg));
+    const memoryWork = resolveHeartbeatMemoryWork({ workspaceDir });
+    const insightsPrompt = buildMemoryInsightsPrompt(memoryWork.insights);
+    const parts = [basePrompt];
+    if (insightsPrompt) parts.push(insightsPrompt);
+    if (memoryWork.contextPrompt) parts.push(memoryWork.contextPrompt);
+    if (memoryWork.nodeScanDue) {
+      parts.push("[Node scan due] Run ambient context scan on connected nodes (apps, files, git, calendar). Use nodes tool.");
+    }
+    return {
+      prompt: parts.join("\n\n"),
+      hasExecCompletion: false,
+      hasCronEvents: false,
+      hasTaskWork: false,
+    };
+  } catch {
+    return {
+      prompt: basePrompt,
+      hasExecCompletion: false,
+      hasCronEvents: false,
+      hasTaskWork: false,
+    };
+  }
 }
 
 export async function runHeartbeatOnce(opts: {

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { buildRecentMemoryContext } from "../../memory/auto-extract.js";
+import { BubbleStore } from "../../memory/bubbles/store.js";
 
 const MAX_CONTEXT_CHARS = 3000;
 const MAX_MEMORY_CHARS = 1500;
@@ -38,6 +39,17 @@ export async function readPostCompactionContext(workspaceDir: string): Promise<s
           ? recentMemory.slice(0, MAX_MEMORY_CHARS) + "\n...[truncated]..."
           : recentMemory;
       parts.push(safeMemory);
+    }
+
+    // 3. Memory bubble structured context (entities, preferences, profile)
+    try {
+      const bubbleStore = new BubbleStore(workspaceDir);
+      const bubbleContext = bubbleStore.buildContextPrompt(1200);
+      if (bubbleContext) {
+        parts.push(bubbleContext);
+      }
+    } catch {
+      // bubble store not available — skip
     }
 
     if (parts.length === 0) {
