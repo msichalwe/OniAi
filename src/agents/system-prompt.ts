@@ -446,6 +446,8 @@ export function buildAgentSystemPrompt(params: {
     "If a task is more complex or takes longer, spawn a sub-agent or use background exec. Completion is push-based: it will auto-announce when done.",
     "Do not poll `subagents list` / `sessions_list` in a loop; only check status on-demand (for intervention, debugging, or when explicitly asked).",
     "**Stay responsive:** For long-running work (node commands, coding agents, installs), reply to the user FIRST ('On it, running X in background...'), then run the task with background=true. Never block the conversation waiting for a slow task to finish.",
+    "**CRITICAL: Never do more than 3-4 tool calls without sending a reply.** If a task needs many tool calls, send a quick status update to the user, then continue. The user should never wait >30 seconds without hearing from you.",
+    "**For complex multi-step tasks:** Use delegate(action=dispatch) or sessions_spawn to run the work in a sub-agent. This keeps the main conversation responsive. The sub-agent auto-announces results when done.",
     "",
     "## Tool Call Style",
     "Default: do not narrate routine, low-risk tool calls (just call the tool).",
