@@ -11,6 +11,7 @@ import {
   registerCaptureLoop,
   removeCaptureLoop,
 } from "../../interactive/server-capture.js";
+import { runPreflightChecks } from "../../interactive/preflight-check.js";
 import {
   InteractiveSessionManager,
   resolveInteractiveConfig,
@@ -316,12 +317,35 @@ export const interactiveHandlers: GatewayRequestHandlers = {
 
       const snapshot = mgr.start({ connId, sessionKey, agentId, config, inputs });
 
-      // Start server-side capture for screen/camera if those inputs are enabled.
-      // This enables interactive mode from text-only clients (TUI) where the
-      // client can't stream media data over WebSocket.
+      // ── Pre-flight permission & tool checks ──────────────────────
+      // Run before starting captures to detect missing tools and
+      // permission issues. Only enable inputs that pass.
+      const requestedInputs = new Set(snapshot.enabledInputs);
+      const preflight = await runPreflightChecks(requestedInputs);
+
+      // Broadcast full preflight results to TUI
+      context.broadcast("interactive.preflight", {
+        connId,
+        results: preflight.results,
+        summary: preflight.summary,
+      }, { dropIfSlow: true });
+
+      // Build the set of inputs that actually passed preflight
+      const passedInputs = new Set<string>();
+      for (const r of preflight.results) {
+        if (r.available && r.permission) {
+          passedInputs.add(r.input);
+        }
+      }
+
+      context.logGateway.info(
+        `interactive preflight: requested=[${[...requestedInputs].join(",")}] passed=[${[...passedInputs].join(",")}]`,
+      );
+
+      // Start server-side capture only for inputs that passed preflight.
       const captureLoop = new ServerCaptureLoop({
         loop,
-        enabledInputs: new Set(snapshot.enabledInputs),
+        enabledInputs: passedInputs,
         onStatus: (status) => {
           context.broadcast("interactive.capture.status", { connId, ...status }, { dropIfSlow: true });
         },
@@ -332,7 +356,7 @@ export const interactiveHandlers: GatewayRequestHandlers = {
       context.logGateway.info(
         `interactive session started connId=${connId} agent=${agentId} inputs=${snapshot.enabledInputs.join(",")}`,
       );
-      respond(true, snapshot);
+      respond(true, { ...snapshot, preflight: preflight.results });
     } catch (err) {
       respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, formatForLog(err)));
     }

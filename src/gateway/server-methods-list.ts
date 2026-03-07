@@ -137,6 +137,8 @@ export const GATEWAY_EVENTS = [
   GATEWAY_EVENT_UPDATE_AVAILABLE,
   GATEWAY_EVENT_CONFIG_RELOAD_ERROR,
   // Interactive mode
+  "interactive.preflight",
+  "interactive.capture.status",
   "interactive.state",
   "interactive.transcript",
   "interactive.response.start",

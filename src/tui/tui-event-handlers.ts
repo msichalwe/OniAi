@@ -328,6 +328,37 @@ export function createEventHandlers(context: EventHandlerContext) {
     const data = payload as Record<string, unknown>;
 
     switch (eventType) {
+      case "interactive.preflight": {
+        const results = Array.isArray(data.results) ? data.results as {
+          input: string;
+          available: boolean;
+          tool: string | null;
+          permission: boolean;
+          error: string | null;
+          fix: string | null;
+        }[] : [];
+
+        if (results.length > 0) {
+          chatLog.addSystem("[interactive] --- Pre-flight checks ---");
+          for (const r of results) {
+            const ok = r.available && r.permission;
+            const icon = ok ? "[OK]" : "[FAIL]";
+            const toolInfo = r.tool ? ` (${r.tool})` : "";
+            chatLog.addSystem(`  ${icon} ${r.input}${toolInfo}${r.error ? ` — ${r.error}` : ""}`);
+            if (r.fix && !ok) {
+              chatLog.addSystem(`        Fix: ${r.fix}`);
+            }
+          }
+          const passed = results.filter((r) => r.available && r.permission);
+          const failed = results.filter((r) => !r.available || !r.permission);
+          chatLog.addSystem(
+            `[interactive] ${passed.length}/${results.length} inputs ready` +
+            (failed.length > 0 ? ` — ${failed.map((f) => f.input).join(", ")} skipped` : ""),
+          );
+        }
+        tui.requestRender();
+        break;
+      }
       case "interactive.state": {
         const mode = typeof data.mode === "string" ? data.mode : "unknown";
         const inputs = Array.isArray(data.enabledInputs)

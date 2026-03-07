@@ -6,3 +6,4 @@ export * from "./intent-classifier.js";
 export * from "./vision-pipeline.js";
 export * from "./action-loop.js";
 export * from "./server-capture.js";
+export * from "./preflight-check.js";
