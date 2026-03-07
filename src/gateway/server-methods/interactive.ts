@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { loadConfig } from "../../config/io.js";
 import type { OniAIConfig } from "../../config/config.js";
 import {
@@ -23,6 +24,12 @@ import type { InteractiveEvent, InteractiveInput } from "../../interactive/types
 import type { VisionFrame } from "../../interactive/vision-pipeline.js";
 import { transcribeOpenAiCompatibleAudio } from "../../media-understanding/providers/openai/audio.js";
 import { resolveApiKeyForProvider } from "../../agents/model-auth.js";
+import { resolveSessionAgentId } from "../../agents/agent-scope.js";
+import { dispatchInboundMessage } from "../../auto-reply/dispatch.js";
+import { createReplyDispatcher } from "../../auto-reply/reply/reply-dispatcher.js";
+import type { MsgContext } from "../../auto-reply/templating.js";
+import { createReplyPrefixOptions } from "../../channels/reply-prefix.js";
+import { INTERNAL_MESSAGE_CHANNEL } from "../../utils/message-channel.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
 import { formatForLog } from "../ws-log.js";
 import type { GatewayRequestContext, GatewayRequestHandlers, RespondFn } from "./types.js";
@@ -159,6 +166,7 @@ async function createTranscribeFunction(
         mime: "audio/wav",
         apiKey: apiKey!,
         baseUrl,
+        model: "whisper-1",
         language: params.language || "en",
         timeoutMs: 30_000,
       });
@@ -277,28 +285,86 @@ export const interactiveHandlers: GatewayRequestHandlers = {
           transcribe,
           llmClassify,
           sendToAgent: async (p) => {
-            // Dispatch as a chat.send through the standard inbound pipeline
-            // so the agent gets the transcript with full context.
             const frameCount = (p.visionContext?.camera ? 1 : 0) + (p.visionContext?.screen ? 1 : 0);
             const message = p.visionContext
               ? `[Interactive mode — spoken input with ${frameCount} vision frame(s)]\n\n${p.transcript}`
               : `[Interactive mode — spoken input]\n\n${p.transcript}`;
             try {
-              // Use the broadcast system to inject a user message and trigger
-              // the agent run, then collect the response via the chat event.
-              // For now we emit a "chat.send" request internally.
-              const runId = `interactive-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+              const runId = `interactive-${Date.now()}-${randomUUID().slice(0, 8)}`;
               context.broadcast("interactive.action", {
                 connId: p.connId,
                 runId,
                 transcript: p.transcript,
                 hasVision: Boolean(p.visionContext),
               }, { dropIfSlow: true });
-              // The actual agent invocation happens through the gateway's
-              // standard chat pipeline — the interactive response events are
-              // broadcast by the action loop.
+
+              // Actually invoke the agent via dispatchInboundMessage
+              const latestCfg = loadConfig();
+              const ctx: MsgContext = {
+                Body: message,
+                BodyForAgent: message,
+                BodyForCommands: message,
+                RawBody: message,
+                CommandBody: message,
+                SessionKey: sessionKey,
+                Provider: INTERNAL_MESSAGE_CHANNEL,
+                Surface: INTERNAL_MESSAGE_CHANNEL,
+                OriginatingChannel: INTERNAL_MESSAGE_CHANNEL,
+                ChatType: "direct",
+                CommandAuthorized: true,
+                MessageSid: runId,
+                SenderId: `interactive-${connId}`,
+                SenderName: "Interactive Mode",
+              };
+
+              const resolvedAgentId = resolveSessionAgentId({
+                sessionKey,
+                config: latestCfg,
+              });
+              const { onModelSelected, ...prefixOptions } = createReplyPrefixOptions({
+                cfg: latestCfg,
+                agentId: resolvedAgentId,
+                channel: INTERNAL_MESSAGE_CHANNEL,
+              });
+              const dispatcher = createReplyDispatcher({
+                ...prefixOptions,
+                onError: (err) => {
+                  context.logGateway.warn(`interactive dispatch failed: ${formatForLog(err)}`);
+                },
+                deliver: async (payload, info) => {
+                  if (info.kind === "final") {
+                    const text = payload.text?.trim() ?? "";
+                    if (text) {
+                      context.broadcast("chat", {
+                        runId,
+                        sessionKey,
+                        seq: 0,
+                        state: "final",
+                        message: {
+                          role: "assistant",
+                          content: [{ type: "text", text }],
+                        },
+                      });
+                    }
+                  }
+                },
+              });
+
+              void dispatchInboundMessage({
+                ctx,
+                cfg: latestCfg,
+                dispatcher,
+                replyOptions: {
+                  runId,
+                  onModelSelected,
+                },
+              }).catch((err) => {
+                context.logGateway.warn(`interactive agent run failed: ${formatForLog(err)}`);
+              });
+
               return message;
-            } catch {
+            } catch (err) {
+              context.logGateway.warn(`interactive sendToAgent failed: ${formatForLog(err)}`);
               return null;
             }
           },
