@@ -1,4 +1,5 @@
 import { loadConfig } from "../../config/io.js";
+import type { OniAIConfig } from "../../config/config.js";
 import {
   InteractiveActionLoop,
   getActionLoop,
@@ -18,6 +19,8 @@ import type { TranscribeFunction } from "../../interactive/audio-pipeline.js";
 import type { LlmClassifyFunction } from "../../interactive/intent-classifier.js";
 import type { InteractiveEvent, InteractiveInput } from "../../interactive/types.js";
 import type { VisionFrame } from "../../interactive/vision-pipeline.js";
+import { transcribeOpenAiCompatibleAudio } from "../../media-understanding/providers/openai/audio.js";
+import { resolveApiKeyForProvider } from "../../agents/model-auth.js";
 import { ErrorCodes, errorShape } from "../protocol/index.js";
 import { formatForLog } from "../ws-log.js";
 import type { GatewayRequestContext, GatewayRequestHandlers, RespondFn } from "./types.js";
@@ -89,33 +92,145 @@ function broadcastInteractiveEvent(
   context.broadcast(event.type, event, { dropIfSlow: true });
 }
 
-// ── Transcribe stub ──────────────────────────────────────────────────
-// The real transcription is done by the media-understanding system.
-// For now we provide a best-effort stub that returns the base64 audio
-// length as a placeholder transcript. When STT providers are configured,
-// this will be replaced by the actual whisper/gemini/etc call.
+// ── WAV header for raw PCM16 ─────────────────────────────────────────
+
+function wrapPcm16AsWav(pcmBuffer: Buffer, sampleRate: number, channels = 1): Buffer {
+  const byteRate = sampleRate * channels * 2;
+  const blockAlign = channels * 2;
+  const header = Buffer.alloc(44);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(36 + pcmBuffer.length, 4);
+  header.write("WAVE", 8);
+  header.write("fmt ", 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20); // PCM
+  header.writeUInt16LE(channels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(blockAlign, 32);
+  header.writeUInt16LE(16, 34); // bits per sample
+  header.write("data", 36);
+  header.writeUInt32LE(pcmBuffer.length, 40);
+  return Buffer.concat([header, pcmBuffer]);
+}
+
+// ── Transcription (real) ─────────────────────────────────────────────
 
 async function createTranscribeFunction(
-  _cfg: ReturnType<typeof loadConfig>,
+  cfg: OniAIConfig,
 ): Promise<TranscribeFunction> {
-  return async (_params) => {
-    // Placeholder — in a real deployment the gateway's media-understanding
-    // pipeline would decode the audio buffer, call the configured STT
-    // provider (Whisper, Gemini, Deepgram, etc.), and return the text.
-    // Until that bridge is built, return null to avoid false positives.
-    return null;
+  // Try to resolve an OpenAI-compatible API key for STT.
+  // Supports openai, openai-codex, groq, or any OpenAI-compatible provider.
+  const sttProviders = ["openai", "openai-codex", "groq"];
+  let apiKey: string | undefined;
+  let baseUrl: string | undefined;
+
+  for (const provider of sttProviders) {
+    try {
+      const auth = await resolveApiKeyForProvider({ provider, cfg });
+      if (auth.apiKey) {
+        apiKey = auth.apiKey;
+        // Use custom base URL if configured
+        const providerConfig = cfg?.models?.providers?.[provider];
+        if (providerConfig && typeof providerConfig === "object" && "baseUrl" in providerConfig) {
+          baseUrl = (providerConfig as { baseUrl?: string }).baseUrl;
+        }
+        break;
+      }
+    } catch {
+      // Try next provider
+    }
+  }
+
+  if (!apiKey) {
+    console.warn("[interactive] No STT API key found — transcription disabled. Configure openai, groq, or similar.");
+    return async () => null;
+  }
+
+  return async (params) => {
+    try {
+      // Wrap raw PCM16 buffer in WAV header for the Whisper API
+      const wavBuffer = wrapPcm16AsWav(params.buffer, 24_000);
+      const result = await transcribeOpenAiCompatibleAudio({
+        buffer: wavBuffer,
+        fileName: params.fileName || "interactive-audio.wav",
+        mime: "audio/wav",
+        apiKey: apiKey!,
+        baseUrl,
+        language: params.language || "en",
+        timeoutMs: 30_000,
+      });
+      return { text: result.text };
+    } catch (err) {
+      console.error("[interactive] transcription error:", err);
+      return null;
+    }
   };
 }
 
-// ── LLM classify stub ────────────────────────────────────────────────
+// ── LLM classify (real) ──────────────────────────────────────────────
 
 async function createLlmClassifyFunction(
-  _cfg: ReturnType<typeof loadConfig>,
+  cfg: OniAIConfig,
 ): Promise<LlmClassifyFunction | undefined> {
-  // In a real deployment this would call the configured chat model with a
-  // micro-classifier prompt. For now return undefined so the classifier
-  // falls back to wake-word-only mode.
-  return undefined;
+  // Try to resolve an API key for chat-based classification.
+  const providers = ["openai", "openai-codex", "anthropic", "groq"];
+  let apiKey: string | undefined;
+  let baseUrl: string | undefined;
+
+  for (const provider of providers) {
+    try {
+      const auth = await resolveApiKeyForProvider({ provider, cfg });
+      if (auth.apiKey) {
+        apiKey = auth.apiKey;
+        const providerConfig = cfg?.models?.providers?.[provider];
+        if (providerConfig && typeof providerConfig === "object" && "baseUrl" in providerConfig) {
+          baseUrl = (providerConfig as { baseUrl?: string }).baseUrl;
+        }
+        break;
+      }
+    } catch {
+      // Try next provider
+    }
+  }
+
+  if (!apiKey) {
+    // Fall back to wake-word-only mode
+    return undefined;
+  }
+
+  return async (params) => {
+    try {
+      const url = `${baseUrl || "https://api.openai.com/v1"}/chat/completions`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          max_tokens: 20,
+          temperature: 0,
+          messages: [
+            { role: "system", content: params.systemPrompt },
+            { role: "user", content: params.userPrompt },
+          ],
+        }),
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!res.ok) return null;
+      const data = (await res.json()) as {
+        choices?: { message?: { content?: string } }[];
+      };
+      const text = data.choices?.[0]?.message?.content?.trim().toLowerCase() ?? "";
+      const directed = text.includes("yes") || text.includes("directed") || text.includes("true");
+      const confidence = directed ? 0.85 : 0.15;
+      return { directed, confidence };
+    } catch {
+      return null;
+    }
+  };
 }
 
 // ── Handlers ─────────────────────────────────────────────────────────
@@ -207,6 +322,9 @@ export const interactiveHandlers: GatewayRequestHandlers = {
       const captureLoop = new ServerCaptureLoop({
         loop,
         enabledInputs: new Set(snapshot.enabledInputs),
+        onStatus: (status) => {
+          context.broadcast("interactive.capture.status", { connId, ...status }, { dropIfSlow: true });
+        },
       });
       registerCaptureLoop(connId, captureLoop);
       void captureLoop.start();

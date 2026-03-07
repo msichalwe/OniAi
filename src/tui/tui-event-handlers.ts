@@ -298,6 +298,29 @@ export function createEventHandlers(context: EventHandlerContext) {
     }
   };
 
+  // Track capture status for building the status line
+  let captureStatus = { mic: "off", screen: "off", camera: "off" } as Record<string, string>;
+
+  const buildInteractiveStatusLine = (mode: string): string => {
+    const parts: string[] = [];
+    // Mode indicator
+    if (mode === "directed") {
+      parts.push("DIRECTED");
+    } else if (mode === "listening") {
+      parts.push("LISTENING");
+    } else if (mode === "responding") {
+      parts.push("RESPONDING");
+    } else if (mode === "processing") {
+      parts.push("PROCESSING");
+    }
+    // Capture indicators
+    const mic = captureStatus.mic === "on" ? "mic:ON" : captureStatus.mic === "error" ? "mic:ERR" : "mic:off";
+    const scr = captureStatus.screen === "on" ? "screen:ON" : captureStatus.screen === "error" ? "screen:ERR" : "screen:off";
+    const cam = captureStatus.camera === "on" ? "cam:ON" : captureStatus.camera === "error" ? "cam:ERR" : "cam:off";
+    parts.push(mic, scr, cam);
+    return parts.join(" | ");
+  };
+
   const handleInteractiveEvent = (eventType: string, payload: unknown) => {
     if (!payload || typeof payload !== "object") {
       return;
@@ -310,18 +333,40 @@ export function createEventHandlers(context: EventHandlerContext) {
         const inputs = Array.isArray(data.enabledInputs)
           ? (data.enabledInputs as string[]).join(", ")
           : "";
-        chatLog.addSystem(`[interactive] ${mode}${inputs ? ` · inputs: ${inputs}` : ""}`);
-        if (mode === "directed") {
-          setActivityStatus("listening (directed)");
-        } else if (mode === "listening") {
-          setActivityStatus("listening");
-        } else if (mode === "responding") {
-          setActivityStatus("responding");
-        } else if (mode === "processing") {
-          setActivityStatus("processing");
-        } else if (mode === "idle") {
+        chatLog.addSystem(`[interactive] ${mode}${inputs ? ` | inputs: ${inputs}` : ""}`);
+        if (mode === "idle") {
           setActivityStatus("idle");
+        } else {
+          setActivityStatus(buildInteractiveStatusLine(mode));
         }
+        tui.requestRender();
+        break;
+      }
+      case "interactive.capture.status": {
+        const mic = typeof data.mic === "string" ? data.mic : "off";
+        const screen = typeof data.screen === "string" ? data.screen : "off";
+        const camera = typeof data.camera === "string" ? data.camera : "off";
+        const prev = { ...captureStatus };
+        captureStatus = { mic, screen, camera };
+
+        // Log notable changes
+        if (mic !== prev.mic) {
+          if (mic === "on") chatLog.addSystem("[interactive] Microphone active — listening for speech");
+          else if (mic === "error") chatLog.addSystem("[interactive] Microphone error — check audio tools (sox/ffmpeg)");
+        }
+        if (screen !== prev.screen) {
+          if (screen === "on") chatLog.addSystem("[interactive] Screen capture active");
+          else if (screen === "error") chatLog.addSystem("[interactive] Screen capture error");
+        }
+        if (camera !== prev.camera) {
+          if (camera === "on") chatLog.addSystem("[interactive] Camera capture active");
+          else if (camera === "error") chatLog.addSystem("[interactive] Camera error — imagesnap not found");
+        }
+
+        // Rebuild status line with new capture info
+        const currentMode =
+          mic === "on" || screen === "on" || camera === "on" ? "listening" : "idle";
+        setActivityStatus(buildInteractiveStatusLine(currentMode));
         tui.requestRender();
         break;
       }
@@ -330,21 +375,22 @@ export function createEventHandlers(context: EventHandlerContext) {
         const directed = Boolean(data.directed);
         const final = Boolean(data.final);
         if (text) {
-          const prefix = directed ? "🎯" : "🎤";
-          const suffix = final ? "" : " …";
+          const prefix = directed ? "[directed]" : "[heard]";
+          const suffix = final ? "" : " ...";
           chatLog.addSystem(`${prefix} ${text}${suffix}`);
+          if (directed) {
+            setActivityStatus(buildInteractiveStatusLine("directed"));
+          }
           tui.requestRender();
         }
         break;
       }
       case "interactive.response.start": {
-        setActivityStatus("agent responding");
+        setActivityStatus(buildInteractiveStatusLine("responding"));
         tui.requestRender();
         break;
       }
       case "interactive.response.delta": {
-        // Streaming response text — could update a dedicated area
-        // For now, let the final event handle display.
         break;
       }
       case "interactive.response.done": {
@@ -352,13 +398,11 @@ export function createEventHandlers(context: EventHandlerContext) {
         if (fullText) {
           chatLog.addSystem(`[interactive response] ${fullText}`);
         }
-        setActivityStatus("idle");
+        setActivityStatus(buildInteractiveStatusLine("listening"));
         tui.requestRender();
         break;
       }
       case "interactive.response.audio": {
-        // Audio playback would be handled by a native client.
-        // The TUI just notes it.
         chatLog.addSystem("[interactive] audio response received");
         tui.requestRender();
         break;
@@ -367,6 +411,7 @@ export function createEventHandlers(context: EventHandlerContext) {
         const transcript = typeof data.transcript === "string" ? data.transcript : "";
         if (transcript) {
           chatLog.addSystem(`[interactive action] "${transcript}"`);
+          setActivityStatus(buildInteractiveStatusLine("processing"));
           tui.requestRender();
         }
         break;
