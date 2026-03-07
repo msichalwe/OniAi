@@ -303,21 +303,21 @@ export function createEventHandlers(context: EventHandlerContext) {
 
   const buildInteractiveStatusLine = (mode: string): string => {
     const parts: string[] = [];
-    // Mode indicator
+    // Mode indicator with PTT hint
     if (mode === "directed") {
       parts.push("DIRECTED");
     } else if (mode === "listening") {
-      parts.push("LISTENING");
+      parts.push("Press SPACE to speak");
     } else if (mode === "responding") {
       parts.push("RESPONDING");
     } else if (mode === "processing") {
       parts.push("PROCESSING");
     }
     // Capture indicators
-    const mic = captureStatus.mic === "on" ? "mic:ON" : captureStatus.mic === "error" ? "mic:ERR" : "mic:off";
-    const scr = captureStatus.screen === "on" ? "screen:ON" : captureStatus.screen === "error" ? "screen:ERR" : "screen:off";
-    const cam = captureStatus.camera === "on" ? "cam:ON" : captureStatus.camera === "error" ? "cam:ERR" : "cam:off";
-    parts.push(mic, scr, cam);
+    const scr = captureStatus.screen === "on" ? "screen:ON" : captureStatus.screen === "error" ? "screen:ERR" : "";
+    const cam = captureStatus.camera === "on" ? "cam:ON" : captureStatus.camera === "error" ? "cam:ERR" : "";
+    if (scr) parts.push(scr);
+    if (cam) parts.push(cam);
     return parts.join(" | ");
   };
 
@@ -366,9 +366,23 @@ export function createEventHandlers(context: EventHandlerContext) {
           : "";
         chatLog.addSystem(`[interactive] ${mode}${inputs ? ` | inputs: ${inputs}` : ""}`);
         if (mode === "idle") {
+          state.interactiveActive = false;
+          state.interactiveRecording = false;
           setActivityStatus("idle");
         } else {
+          state.interactiveActive = true;
           setActivityStatus(buildInteractiveStatusLine(mode));
+        }
+        tui.requestRender();
+        break;
+      }
+      case "interactive.ptt.state": {
+        const recording = Boolean(data.recording);
+        state.interactiveRecording = recording;
+        if (recording) {
+          setActivityStatus("RECORDING... press SPACE to stop");
+        } else {
+          setActivityStatus("Processing speech...");
         }
         tui.requestRender();
         break;
@@ -382,7 +396,8 @@ export function createEventHandlers(context: EventHandlerContext) {
 
         // Log notable changes
         if (mic !== prev.mic) {
-          if (mic === "on") chatLog.addSystem("[interactive] Microphone active — listening for speech");
+          if (mic === "on") chatLog.addSystem("[mic] Recording...");
+          else if (mic === "off" && prev.mic === "on") chatLog.addSystem("[mic] Stopped — processing speech");
           else if (mic === "error") chatLog.addSystem("[interactive] Microphone error — check audio tools (sox/ffmpeg)");
         }
         if (screen !== prev.screen) {
@@ -395,9 +410,9 @@ export function createEventHandlers(context: EventHandlerContext) {
         }
 
         // Rebuild status line with new capture info
-        const currentMode =
-          mic === "on" || screen === "on" || camera === "on" ? "listening" : "idle";
-        setActivityStatus(buildInteractiveStatusLine(currentMode));
+        if (state.interactiveActive && !state.interactiveRecording) {
+          setActivityStatus(buildInteractiveStatusLine("listening"));
+        }
         tui.requestRender();
         break;
       }

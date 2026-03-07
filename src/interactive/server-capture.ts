@@ -54,12 +54,14 @@ export class ServerCaptureLoop {
   private screenTimer: ReturnType<typeof setInterval> | null = null;
   private cameraTimer: ReturnType<typeof setInterval> | null = null;
   private micProcess: ChildProcess | null = null;
-  private micRestartTimer: ReturnType<typeof setTimeout> | null = null;
   private disposed = false;
   private loop: InteractiveActionLoop;
   private config: ResolvedCaptureConfig;
   private tmpDir: string;
   private onStatus: CaptureStatusCallback | null = null;
+  private audioTool: "sox" | "ffmpeg" | null = null;
+  private cameraTool: "imagesnap" | "ffmpeg" | null = null;
+  private micBuffer = Buffer.alloc(0);
 
   // Capture status tracking
   private micStatus: "on" | "off" | "error" = "off";
@@ -87,15 +89,21 @@ export class ServerCaptureLoop {
     };
   }
 
-  /** Start periodic capture loops. */
+  /** Start periodic capture loops (screen/camera only — mic is PTT). */
   async start(): Promise<void> {
     if (this.disposed) return;
 
     // Ensure temp directory exists
     await fs.mkdir(this.tmpDir, { recursive: true });
 
-    if (this.config.captureMic) {
-      void this.startMicCapture();
+    // Detect tools once at start
+    this.audioTool = await detectAudioTool();
+    this.cameraTool = await detectCameraTool();
+
+    if (this.config.captureMic && !this.audioTool) {
+      console.warn("[interactive] No audio capture tool found (install sox or ffmpeg for mic input)");
+      this.micStatus = "error";
+      this.emitStatus();
     }
 
     if (this.config.captureScreen) {
@@ -106,17 +114,22 @@ export class ServerCaptureLoop {
     }
 
     if (this.config.captureCamera) {
-      void this.captureCamera();
-      this.cameraTimer = setInterval(() => {
-        if (!this.disposed) void this.captureCamera();
-      }, this.config.cameraIntervalMs);
+      if (!this.cameraTool) {
+        this.cameraStatus = "error";
+        this.emitStatus();
+      } else {
+        void this.captureCamera();
+        this.cameraTimer = setInterval(() => {
+          if (!this.disposed) void this.captureCamera();
+        }, this.config.cameraIntervalMs);
+      }
     }
   }
 
   /** Stop all capture loops and clean up. */
   dispose(): void {
     this.disposed = true;
-    this.stopMicCapture();
+    this.killMicProcess();
     if (this.screenTimer) {
       clearInterval(this.screenTimer);
       this.screenTimer = null;
@@ -142,102 +155,95 @@ export class ServerCaptureLoop {
     };
   }
 
-  // ── Mic Capture ─────────────────────────────────────────────────
-
-  private async startMicCapture(): Promise<void> {
-    if (this.disposed) return;
-
-    // Try sox (rec) first, then ffmpeg
-    const tool = await detectAudioTool();
-    if (!tool) {
-      console.warn("[interactive] No audio capture tool found (install sox or ffmpeg for mic input)");
-      this.micStatus = "error";
-      this.emitStatus();
-      return;
-    }
-
-    this.startMicWithTool(tool);
+  /** Whether mic is available for PTT. */
+  get micAvailable(): boolean {
+    return this.config.captureMic && this.audioTool !== null;
   }
 
-  private startMicWithTool(tool: "sox" | "ffmpeg"): void {
-    if (this.disposed) return;
+  /** Whether mic is currently recording. */
+  get micRecording(): boolean {
+    return this.micStatus === "on";
+  }
 
+  // ── PTT Mic Control (public) ────────────────────────────────────
+
+  /**
+   * Toggle push-to-talk: start recording if off, stop + flush if on.
+   * Returns the new recording state.
+   */
+  toggleMic(): boolean {
+    if (this.micStatus === "on") {
+      this.stopMic();
+      return false;
+    } else {
+      this.startMic();
+      return true;
+    }
+  }
+
+  /** Start mic recording (PTT pressed). */
+  startMic(): void {
+    if (this.disposed || !this.audioTool || this.micProcess) return;
+
+    const tool = this.audioTool;
     const SAMPLE_RATE = 24_000;
     const CHANNELS = 1;
     const BITS = 16;
-    // Bytes per chunk: sampleRate * 2 bytes * channels * chunkDuration
-    const bytesPerChunk = SAMPLE_RATE * 2 * CHANNELS * this.config.micChunkDurationSec;
 
     let args: string[];
 
     if (tool === "sox") {
-      // sox's `rec` command: raw PCM16 mono at 24kHz to stdout
       args = [
-        "-q",               // quiet
-        "-t", "coreaudio",  // macOS audio input
-        "default",          // default input device
-        "-t", "raw",        // output raw PCM
+        "-q",
+        "-t", "coreaudio",
+        "default",
+        "-t", "raw",
         "-r", String(SAMPLE_RATE),
         "-c", String(CHANNELS),
         "-b", String(BITS),
         "-e", "signed-integer",
-        "-",                // stdout
+        "-",
       ];
     } else {
-      // ffmpeg: capture from default macOS audio input
       args = [
         "-f", "avfoundation",
-        "-i", ":0",         // default audio input
+        "-i", ":0",
         "-ar", String(SAMPLE_RATE),
         "-ac", String(CHANNELS),
-        "-f", "s16le",      // raw PCM16 LE
-        "-",                // stdout
+        "-f", "s16le",
+        "-",
       ];
     }
 
-    const cmd = tool === "sox" ? "sox" : "ffmpeg";
-
     try {
-      const proc = spawn(cmd, args, {
+      const proc = spawn(tool, args, {
         stdio: ["ignore", "pipe", "ignore"],
       });
 
       this.micProcess = proc;
+      this.micBuffer = Buffer.alloc(0);
       this.micStatus = "on";
       this.emitStatus();
 
-      let buffer = Buffer.alloc(0);
-
       proc.stdout?.on("data", (data: Buffer) => {
         if (this.disposed) return;
-
-        buffer = Buffer.concat([buffer, data]);
-
-        // When we have a full chunk, feed it to the ActionLoop
-        while (buffer.length >= bytesPerChunk) {
-          const chunk = buffer.subarray(0, bytesPerChunk);
-          buffer = buffer.subarray(bytesPerChunk);
-
-          const base64 = chunk.toString("base64");
-          void this.loop.handleAudioChunk(base64);
-          void this.loop.handleAudioEnd();
-        }
+        this.micBuffer = Buffer.concat([this.micBuffer, data]);
       });
 
       proc.on("error", () => {
+        this.micProcess = null;
         this.micStatus = "error";
         this.emitStatus();
-        this.scheduleRestart(tool);
       });
 
-      proc.on("close", (code) => {
-        if (this.disposed) return;
+      proc.on("close", () => {
         this.micProcess = null;
-        if (code !== 0) {
+        // If recording was stopped intentionally, status is already "off"
+        // If it closed unexpectedly while recording, mark error
+        if (this.micStatus === "on") {
           this.micStatus = "error";
           this.emitStatus();
         }
-        this.scheduleRestart(tool);
       });
     } catch {
       this.micStatus = "error";
@@ -245,24 +251,26 @@ export class ServerCaptureLoop {
     }
   }
 
-  private stopMicCapture(): void {
-    if (this.micRestartTimer) {
-      clearTimeout(this.micRestartTimer);
-      this.micRestartTimer = null;
+  /** Stop mic recording (PTT released) and flush audio to pipeline. */
+  stopMic(): void {
+    this.killMicProcess();
+    this.micStatus = "off";
+    this.emitStatus();
+
+    // Flush accumulated audio to the ActionLoop for transcription
+    if (this.micBuffer.length > 0) {
+      const base64 = this.micBuffer.toString("base64");
+      this.micBuffer = Buffer.alloc(0);
+      void this.loop.handleAudioChunk(base64);
+      void this.loop.handleAudioEnd();
     }
+  }
+
+  private killMicProcess(): void {
     if (this.micProcess) {
       this.micProcess.kill("SIGTERM");
       this.micProcess = null;
     }
-  }
-
-  private scheduleRestart(tool: "sox" | "ffmpeg"): void {
-    if (this.disposed) return;
-    this.micRestartTimer = setTimeout(() => {
-      if (!this.disposed) {
-        this.startMicWithTool(tool);
-      }
-    }, 3000);
   }
 
   // ── Screen Capture (macOS) ──────────────────────────────────────
@@ -273,7 +281,7 @@ export class ServerCaptureLoop {
     const filePath = path.join(this.tmpDir, `screen-${Date.now()}.jpg`);
 
     try {
-      await execFileAsync("screencapture", ["-x", "-t", "jpg", filePath]);
+      await execFileAsync("/usr/sbin/screencapture", ["-x", "-t", "jpg", filePath]);
 
       const buffer = await fs.readFile(filePath);
       const base64 = buffer.toString("base64");
@@ -304,8 +312,14 @@ export class ServerCaptureLoop {
     const filePath = path.join(this.tmpDir, `camera-${Date.now()}.jpg`);
 
     try {
-      // Try imagesnap first (common on macOS via homebrew)
-      await execFileAsync("imagesnap", ["-w", "0.5", filePath]);
+      if (this.cameraTool === "imagesnap") {
+        await execFileAsync("imagesnap", ["-w", "0.5", filePath]);
+      } else if (this.cameraTool === "ffmpeg") {
+        await execFileAsync("ffmpeg", [
+          "-f", "avfoundation", "-i", "0",
+          "-frames:v", "1", "-y", filePath,
+        ]);
+      }
 
       const buffer = await fs.readFile(filePath);
       const base64 = buffer.toString("base64");
@@ -385,4 +399,24 @@ async function detectAudioTool(): Promise<"sox" | "ffmpeg" | null> {
     }
   }
   return null;
+}
+
+async function detectCameraTool(): Promise<"imagesnap" | "ffmpeg" | null> {
+  try {
+    await execFileAsync("which", ["imagesnap"]);
+    return "imagesnap";
+  } catch {
+    // not found
+  }
+  try {
+    await execFileAsync("which", ["ffmpeg"]);
+    return "ffmpeg";
+  } catch {
+    // not found
+  }
+  return null;
+}
+
+export function getCaptureLoop(connId: string): ServerCaptureLoop | undefined {
+  return activeCaptureLoops.get(connId);
 }

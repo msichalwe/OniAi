@@ -106,4 +106,6 @@ export type TuiStateAccess = {
   activityStatus: string;
   statusTimeout: ReturnType<typeof setTimeout> | null;
   lastCtrlCAt: number;
+  interactiveActive: boolean;
+  interactiveRecording: boolean;
 };

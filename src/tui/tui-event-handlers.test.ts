@@ -54,6 +54,8 @@ describe("tui-event-handlers: handleAgentEvent", () => {
     activityStatus: "idle",
     statusTimeout: null,
     lastCtrlCAt: 0,
+    interactiveActive: false,
+    interactiveRecording: false,
     ...overrides,
   });
 

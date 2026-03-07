@@ -143,7 +143,7 @@ async function checkScreen(tmpDir: string): Promise<PreflightInputResult> {
   const testFile = path.join(tmpDir, "screen-test.jpg");
 
   try {
-    await execAsync("screencapture", ["-x", "-t", "jpg", testFile], 10_000);
+    await execAsync("/usr/sbin/screencapture", ["-x", "-t", "jpg", testFile], 10_000);
 
     // Check if file was created and has content
     const stat = await fs.stat(testFile).catch(() => null);
@@ -192,30 +192,40 @@ async function checkCamera(tmpDir: string): Promise<PreflightInputResult> {
     };
   }
 
-  // Check for imagesnap (needs homebrew install)
+  // Check for imagesnap first, then ffmpeg as fallback
   const tool = await findTool(["imagesnap"]);
-  if (!tool) {
+  const hasFfmpeg = !tool ? await findTool(["ffmpeg"]) : null;
+  const cameraTool = tool ?? hasFfmpeg;
+  if (!cameraTool) {
     return {
       input: "camera",
       available: false,
       tool: null,
       permission: false,
-      error: "imagesnap not installed",
-      fix: "Install imagesnap: brew install imagesnap",
+      error: "No camera tool found (imagesnap or ffmpeg)",
+      fix: "Install: brew install imagesnap  (or: brew install ffmpeg)",
     };
   }
 
   const testFile = path.join(tmpDir, "camera-test.jpg");
 
   try {
-    await execAsync("imagesnap", ["-w", "0.5", testFile], 10_000);
+    if (cameraTool === "imagesnap") {
+      await execAsync("imagesnap", ["-w", "0.5", testFile], 10_000);
+    } else {
+      // ffmpeg: capture one frame from default camera
+      await execAsync("ffmpeg", [
+        "-f", "avfoundation", "-i", "0",
+        "-frames:v", "1", "-y", testFile,
+      ], 10_000);
+    }
 
     const stat = await fs.stat(testFile).catch(() => null);
     if (!stat || stat.size < 100) {
       return {
         input: "camera",
         available: true,
-        tool: "imagesnap",
+        tool: cameraTool,
         permission: false,
         error: "Camera permission not granted or no camera found",
         fix: "System Settings → Privacy & Security → Camera → enable for Terminal",
@@ -226,7 +236,7 @@ async function checkCamera(tmpDir: string): Promise<PreflightInputResult> {
     return {
       input: "camera",
       available: true,
-      tool: "imagesnap",
+      tool: cameraTool,
       permission: true,
       error: null,
       fix: null,
@@ -237,7 +247,7 @@ async function checkCamera(tmpDir: string): Promise<PreflightInputResult> {
     return {
       input: "camera",
       available: true,
-      tool: "imagesnap",
+      tool: cameraTool,
       permission: false,
       error: isPermission
         ? "Camera permission denied"

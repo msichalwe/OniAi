@@ -10,6 +10,7 @@ import {
   ServerCaptureLoop,
   registerCaptureLoop,
   removeCaptureLoop,
+  getCaptureLoop,
 } from "../../interactive/server-capture.js";
 import { runPreflightChecks } from "../../interactive/preflight-check.js";
 import {
@@ -537,8 +538,8 @@ export const interactiveHandlers: GatewayRequestHandlers = {
     }
   },
 
-  /** Push-to-talk activation from the client. */
-  "interactive.ptt": async ({ client, respond }) => {
+  /** Push-to-talk toggle from the client. Starts/stops server-side mic capture. */
+  "interactive.ptt": async ({ client, respond, context }) => {
     try {
       const connId = requireConnId(client, respond);
       if (!connId) return;
@@ -548,8 +549,28 @@ export const interactiveHandlers: GatewayRequestHandlers = {
         respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, "No active interactive session"));
         return;
       }
+
+      const capture = getCaptureLoop(connId);
+      if (!capture) {
+        respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, "No capture loop for this session"));
+        return;
+      }
+
+      if (!capture.micAvailable) {
+        respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, "Mic not available — install sox or ffmpeg"));
+        return;
+      }
+
+      const nowRecording = capture.toggleMic();
       loop.pushToTalk();
-      respond(true, { ok: true });
+
+      // Broadcast recording state change to TUI
+      context.broadcast("interactive.ptt.state", {
+        connId,
+        recording: nowRecording,
+      }, { dropIfSlow: true });
+
+      respond(true, { recording: nowRecording });
     } catch (err) {
       respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, formatForLog(err)));
     }

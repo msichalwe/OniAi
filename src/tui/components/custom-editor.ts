@@ -11,8 +11,15 @@ export class CustomEditor extends Editor {
   onCtrlT?: () => void;
   onShiftTab?: () => void;
   onAltEnter?: () => void;
+  /** Fires when space is pressed while editor text is empty. */
+  onSpaceEmpty?: () => void;
 
   handleInput(data: string): void {
+    // PTT: space on empty editor triggers onSpaceEmpty
+    if (data === " " && this.getText().length === 0 && this.onSpaceEmpty) {
+      this.onSpaceEmpty();
+      return;
+    }
     if (matchesKey(data, Key.alt("enter")) && this.onAltEnter) {
       this.onAltEnter();
       return;

@@ -302,6 +302,8 @@ export async function runTui(opts: TuiOptions) {
   let exitRequested = false;
   let activityStatus = "idle";
   let connectionStatus = "connecting";
+  let interactiveActive = false;
+  let interactiveRecording = false;
   let statusTimeout: NodeJS.Timeout | null = null;
   let statusTimer: NodeJS.Timeout | null = null;
   let statusStartedAt: number | null = null;
@@ -421,6 +423,18 @@ export async function runTui(opts: TuiOptions) {
     },
     set lastCtrlCAt(value) {
       lastCtrlCAt = value;
+    },
+    get interactiveActive() {
+      return interactiveActive;
+    },
+    set interactiveActive(value) {
+      interactiveActive = value;
+    },
+    get interactiveRecording() {
+      return interactiveRecording;
+    },
+    set interactiveRecording(value) {
+      interactiveRecording = value;
     },
   };
 
@@ -863,6 +877,28 @@ export async function runTui(opts: TuiOptions) {
   editor.onCtrlT = () => {
     showThinking = !showThinking;
     void loadHistory();
+  };
+
+  // PTT: space on empty editor toggles mic recording in interactive mode
+  editor.onSpaceEmpty = () => {
+    if (!interactiveActive) return;
+    void (async () => {
+      try {
+        const result = await client.request<{ recording: boolean }>("interactive.ptt", {});
+        interactiveRecording = result.recording;
+        if (interactiveRecording) {
+          setActivityStatus("RECORDING... press SPACE to stop");
+          chatLog.addSystem("[mic] Recording started — speak now");
+        } else {
+          setActivityStatus("Processing speech...");
+          chatLog.addSystem("[mic] Recording stopped — processing...");
+        }
+        tui.requestRender();
+      } catch (err) {
+        chatLog.addSystem(`PTT failed: ${String(err)}`);
+        tui.requestRender();
+      }
+    })();
   };
 
   client.onEvent = (evt) => {

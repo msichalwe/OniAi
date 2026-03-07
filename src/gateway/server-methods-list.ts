@@ -139,6 +139,7 @@ export const GATEWAY_EVENTS = [
   // Interactive mode
   "interactive.preflight",
   "interactive.capture.status",
+  "interactive.ptt.state",
   "interactive.state",
   "interactive.transcript",
   "interactive.response.start",
