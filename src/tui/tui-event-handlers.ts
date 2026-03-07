@@ -298,5 +298,81 @@ export function createEventHandlers(context: EventHandlerContext) {
     }
   };
 
-  return { handleChatEvent, handleAgentEvent };
+  const handleInteractiveEvent = (eventType: string, payload: unknown) => {
+    if (!payload || typeof payload !== "object") {
+      return;
+    }
+    const data = payload as Record<string, unknown>;
+
+    switch (eventType) {
+      case "interactive.state": {
+        const mode = typeof data.mode === "string" ? data.mode : "unknown";
+        const inputs = Array.isArray(data.enabledInputs)
+          ? (data.enabledInputs as string[]).join(", ")
+          : "";
+        chatLog.addSystem(`[interactive] ${mode}${inputs ? ` · inputs: ${inputs}` : ""}`);
+        if (mode === "directed") {
+          setActivityStatus("listening (directed)");
+        } else if (mode === "listening") {
+          setActivityStatus("listening");
+        } else if (mode === "responding") {
+          setActivityStatus("responding");
+        } else if (mode === "processing") {
+          setActivityStatus("processing");
+        } else if (mode === "idle") {
+          setActivityStatus("idle");
+        }
+        tui.requestRender();
+        break;
+      }
+      case "interactive.transcript": {
+        const text = typeof data.text === "string" ? data.text : "";
+        const directed = Boolean(data.directed);
+        const final = Boolean(data.final);
+        if (text) {
+          const prefix = directed ? "🎯" : "🎤";
+          const suffix = final ? "" : " …";
+          chatLog.addSystem(`${prefix} ${text}${suffix}`);
+          tui.requestRender();
+        }
+        break;
+      }
+      case "interactive.response.start": {
+        setActivityStatus("agent responding");
+        tui.requestRender();
+        break;
+      }
+      case "interactive.response.delta": {
+        // Streaming response text — could update a dedicated area
+        // For now, let the final event handle display.
+        break;
+      }
+      case "interactive.response.done": {
+        const fullText = typeof data.fullText === "string" ? data.fullText : "";
+        if (fullText) {
+          chatLog.addSystem(`[interactive response] ${fullText}`);
+        }
+        setActivityStatus("idle");
+        tui.requestRender();
+        break;
+      }
+      case "interactive.response.audio": {
+        // Audio playback would be handled by a native client.
+        // The TUI just notes it.
+        chatLog.addSystem("[interactive] audio response received");
+        tui.requestRender();
+        break;
+      }
+      case "interactive.action": {
+        const transcript = typeof data.transcript === "string" ? data.transcript : "";
+        if (transcript) {
+          chatLog.addSystem(`[interactive action] "${transcript}"`);
+          tui.requestRender();
+        }
+        break;
+      }
+    }
+  };
+
+  return { handleChatEvent, handleAgentEvent, handleInteractiveEvent };
 }

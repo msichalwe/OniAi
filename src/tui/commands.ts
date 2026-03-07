@@ -107,6 +107,14 @@ export function getSlashCommands(options: SlashCommandOptions = {}): SlashComman
       getArgumentCompletions: activationCompletions,
     },
     { name: "abort", description: "Abort active run" },
+    {
+      name: "interactive",
+      description: "Start/stop interactive mode (mic, camera, screen)",
+      getArgumentCompletions: (prefix) =>
+        ["enable", "disable", "status", "mic", "camera", "screen", "ambient"]
+          .filter((v) => v.startsWith(prefix.toLowerCase()))
+          .map((value) => ({ value, label: value })),
+    },
     { name: "new", description: "Reset the session" },
     { name: "reset", description: "Reset the session" },
     { name: "settings", description: "Open settings" },
@@ -151,6 +159,8 @@ export function helpText(options: SlashCommandOptions = {}): string {
     "/new or /reset",
     "/abort",
     "/settings",
+    "/interactive [enable|disable|status] [mic,camera,screen,ambient]",
+    "/exit interactive",
     "/exit",
   ].join("\n");
 }

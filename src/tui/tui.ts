@@ -752,7 +752,7 @@ export async function runTui(opts: TuiOptions) {
     abortActive,
   } = sessionActions;
 
-  const { handleChatEvent, handleAgentEvent } = createEventHandlers({
+  const { handleChatEvent, handleAgentEvent, handleInteractiveEvent } = createEventHandlers({
     chatLog,
     tui,
     state,
@@ -871,6 +871,9 @@ export async function runTui(opts: TuiOptions) {
     }
     if (evt.event === "agent") {
       handleAgentEvent(evt.payload);
+    }
+    if (evt.event.startsWith("interactive.")) {
+      handleInteractiveEvent(evt.event, evt.payload);
     }
   };
 

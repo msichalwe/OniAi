@@ -232,6 +232,97 @@ export function createCommandHandlers(context: CommandHandlerContext) {
     tui.requestRender();
   };
 
+  const handleInteractive = async (args: string) => {
+    const sub = args.trim().toLowerCase();
+
+    // /interactive (no args) — start with defaults
+    if (!sub) {
+      try {
+        const result = await client.request<{
+          mode: string;
+          enabledInputs: string[];
+        }>("interactive.start", {
+          agentId: state.currentAgentId,
+          sessionKey: state.currentSessionKey,
+        });
+        chatLog.addSystem(
+          `Interactive mode started. Mode: ${result.mode}, Inputs: ${result.enabledInputs.join(", ")}`,
+        );
+      } catch (err) {
+        chatLog.addSystem(`interactive start failed: ${String(err)}`);
+      }
+      return;
+    }
+
+    // /interactive status
+    if (sub === "status") {
+      try {
+        const result = await client.request<{
+          active: boolean;
+          session: { mode: string; enabledInputs: string[]; startedAt: number; lastActivityAt: number } | null;
+          activeSessions: number;
+          hasActionLoop: boolean;
+        }>("interactive.status", {});
+        if (!result.active || !result.session) {
+          chatLog.addSystem("Interactive mode is not active. Use /interactive to start.");
+        } else {
+          const s = result.session;
+          chatLog.addSystem(
+            [
+              `Mode: ${s.mode}`,
+              `Inputs: ${s.enabledInputs.join(", ") || "none"}`,
+              `Action loop: ${result.hasActionLoop ? "active" : "none"}`,
+              `Started: ${new Date(s.startedAt).toISOString()}`,
+              `Last activity: ${new Date(s.lastActivityAt).toISOString()}`,
+              `Active sessions: ${result.activeSessions}`,
+            ].join("\n"),
+          );
+        }
+      } catch (err) {
+        chatLog.addSystem(`interactive status failed: ${String(err)}`);
+      }
+      return;
+    }
+
+    // /interactive enable <inputs>
+    if (sub.startsWith("enable")) {
+      const rest = sub.slice(6).trim();
+      const inputs = rest.split(/[\s,]+/).filter(Boolean);
+      if (inputs.length === 0) {
+        chatLog.addSystem("Usage: /interactive enable mic,camera,screen,ambient");
+        return;
+      }
+      try {
+        const result = await client.request<{ enabledInputs: string[] }>("interactive.enable", { inputs });
+        chatLog.addSystem(`Enabled. Active inputs: ${result.enabledInputs.join(", ")}`);
+      } catch (err) {
+        chatLog.addSystem(`interactive enable failed: ${String(err)}`);
+      }
+      return;
+    }
+
+    // /interactive disable <inputs>
+    if (sub.startsWith("disable")) {
+      const rest = sub.slice(7).trim();
+      const inputs = rest.split(/[\s,]+/).filter(Boolean);
+      if (inputs.length === 0) {
+        chatLog.addSystem("Usage: /interactive disable mic,camera,screen,ambient");
+        return;
+      }
+      try {
+        const result = await client.request<{ enabledInputs: string[] }>("interactive.disable", { inputs });
+        chatLog.addSystem(`Disabled. Active inputs: ${result.enabledInputs.join(", ")}`);
+      } catch (err) {
+        chatLog.addSystem(`interactive disable failed: ${String(err)}`);
+      }
+      return;
+    }
+
+    chatLog.addSystem(
+      "Usage: /interactive [enable|disable|status] [mic,camera,screen,ambient]",
+    );
+  };
+
   const handleCommand = async (raw: string) => {
     const { name, args } = parseCommand(raw);
     if (!name) {
@@ -441,10 +532,25 @@ export function createCommandHandlers(context: CommandHandlerContext) {
       case "abort":
         await abortActive();
         break;
+      case "interactive":
+        await handleInteractive(args);
+        break;
       case "settings":
         openSettings();
         break;
       case "exit":
+        // Handle "/exit interactive" before treating as a quit
+        if (args.toLowerCase().startsWith("interactive")) {
+          try {
+            await client.request("interactive.stop", {});
+            chatLog.addSystem("Interactive mode stopped.");
+          } catch (err) {
+            chatLog.addSystem(`interactive stop failed: ${String(err)}`);
+          }
+          break;
+        }
+        requestExit();
+        break;
       case "quit":
         requestExit();
         break;

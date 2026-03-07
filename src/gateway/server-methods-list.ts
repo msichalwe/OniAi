@@ -96,6 +96,18 @@ const BASE_METHODS = [
   "chat.history",
   "chat.abort",
   "chat.send",
+  "chat.inject",
+  // Interactive mode
+  "interactive.start",
+  "interactive.stop",
+  "interactive.enable",
+  "interactive.disable",
+  "interactive.status",
+  "interactive.configure",
+  "interactive.audio.chunk",
+  "interactive.audio.end",
+  "interactive.frame",
+  "interactive.ptt",
 ];
 
 export function listGatewayMethods(): string[] {
@@ -124,4 +136,12 @@ export const GATEWAY_EVENTS = [
   "exec.approval.resolved",
   GATEWAY_EVENT_UPDATE_AVAILABLE,
   GATEWAY_EVENT_CONFIG_RELOAD_ERROR,
+  // Interactive mode
+  "interactive.state",
+  "interactive.transcript",
+  "interactive.response.start",
+  "interactive.response.delta",
+  "interactive.response.done",
+  "interactive.response.audio",
+  "interactive.action",
 ];

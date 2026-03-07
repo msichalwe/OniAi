@@ -232,6 +232,11 @@ export class GatewayChatClient {
     const res = await this.client.request<{ models?: GatewayModelChoice[] }>("models.list");
     return Array.isArray(res?.models) ? res.models : [];
   }
+
+  /** Generic RPC request passthrough for arbitrary gateway methods. */
+  async request<T = unknown>(method: string, params?: Record<string, unknown>): Promise<T> {
+    return await this.client.request<T>(method, params);
+  }
 }
 
 export function resolveGatewayConnection(opts: GatewayConnectionOptions) {
