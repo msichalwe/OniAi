@@ -129,70 +129,135 @@ function wrapPcm16AsWav(pcmBuffer: Buffer, sampleRate: number, channels = 1): Bu
 async function createTranscribeFunction(
   cfg: OniAIConfig,
 ): Promise<TranscribeFunction> {
-  // Use the gateway's own media understanding provider system.
-  // This respects configured providers, API keys, and models.
+  // 1) Try dedicated STT providers first (groq/openai/deepgram etc.)
   const registry = buildMediaUnderstandingRegistry();
-
-  // Find first provider that has audio transcription + a valid API key
-  type Candidate = { providerId: string; apiKey: string; model: string; transcribe: NonNullable<import("../../media-understanding/types.js").MediaUnderstandingProvider["transcribeAudio"]> };
-  const candidates: Candidate[] = [];
+  type SttCandidate = { providerId: string; apiKey: string; model: string; transcribe: NonNullable<import("../../media-understanding/types.js").MediaUnderstandingProvider["transcribeAudio"]> };
+  const sttCandidates: SttCandidate[] = [];
 
   for (const providerId of AUTO_AUDIO_KEY_PROVIDERS) {
     const provider = getMediaUnderstandingProvider(providerId, registry);
     if (!provider?.transcribeAudio) continue;
-
     try {
       const auth = await resolveApiKeyForProvider({ provider: providerId, cfg });
       if (auth.apiKey) {
-        const model = DEFAULT_AUDIO_MODELS[providerId] ?? "";
-        candidates.push({
+        sttCandidates.push({
           providerId,
           apiKey: auth.apiKey,
-          model,
+          model: DEFAULT_AUDIO_MODELS[providerId] ?? "",
           transcribe: provider.transcribeAudio,
         });
       }
-    } catch {
-      // No key for this provider
-    }
+    } catch { /* no key */ }
   }
 
-  if (candidates.length === 0) {
-    console.warn("[interactive] No STT provider found — transcription disabled.");
-    return async () => null;
-  }
-
-  console.log(`[interactive] STT providers: ${candidates.map((c) => `${c.providerId}/${c.model}`).join(", ")}`);
-
-  return async (params) => {
-    const wavBuffer = wrapPcm16AsWav(params.buffer, 24_000);
-
-    for (const c of candidates) {
-      try {
-        const result = await c.transcribe({
-          buffer: wavBuffer,
-          fileName: params.fileName || "interactive-audio.wav",
-          mime: "audio/wav",
-          apiKey: c.apiKey,
-          model: c.model,
-          language: params.language || "en",
-          timeoutMs: 30_000,
-        });
-        return { text: result.text };
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        if (msg.includes("401") || msg.includes("403")) {
-          console.warn(`[interactive] STT ${c.providerId} auth failed, trying next...`);
-          continue;
+  if (sttCandidates.length > 0) {
+    console.log(`[interactive] STT via providers: ${sttCandidates.map((c) => `${c.providerId}/${c.model}`).join(", ")}`);
+    return async (params) => {
+      const wavBuffer = wrapPcm16AsWav(params.buffer, 24_000);
+      for (const c of sttCandidates) {
+        try {
+          const result = await c.transcribe({
+            buffer: wavBuffer,
+            fileName: params.fileName || "interactive-audio.wav",
+            mime: "audio/wav",
+            apiKey: c.apiKey,
+            model: c.model,
+            language: params.language || "en",
+            timeoutMs: 30_000,
+          });
+          return { text: result.text };
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (msg.includes("401") || msg.includes("403")) {
+            console.warn(`[interactive] STT ${c.providerId} auth failed, trying next...`);
+            continue;
+          }
+          console.error(`[interactive] STT ${c.providerId} error:`, err);
+          return null;
         }
-        console.error(`[interactive] STT ${c.providerId} error:`, err);
+      }
+      return null;
+    };
+  }
+
+  // 2) Fallback: use openai-codex chat model for transcription
+  //    (codex OAuth tokens can't access whisper, but the chat model can transcribe audio)
+  let codexApiKey: string | undefined;
+  try {
+    const auth = await resolveApiKeyForProvider({ provider: "openai-codex", cfg });
+    codexApiKey = auth.apiKey;
+  } catch { /* no codex key */ }
+
+  if (codexApiKey) {
+    console.log("[interactive] STT via openai-codex chat model (codex responses API)");
+    const token = codexApiKey;
+    return async (params) => {
+      try {
+        const wavBuffer = wrapPcm16AsWav(params.buffer, 24_000);
+        const base64Audio = wavBuffer.toString("base64");
+
+        const res = await fetch("https://chatgpt.com/backend-api/codex/responses", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini-transcribe",
+            input: base64Audio,
+            store: false,
+          }),
+          signal: AbortSignal.timeout(30_000),
+        });
+
+        if (!res.ok) {
+          // If transcribe model fails, try using chat model directly
+          const chatRes = await fetch("https://chatgpt.com/backend-api/codex/responses", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              input: [
+                {
+                  type: "message",
+                  role: "user",
+                  content: [
+                    { type: "input_audio", input_audio: { data: base64Audio, format: "wav" } },
+                    { type: "input_text", text: "Transcribe this audio exactly. Output only the transcription, nothing else." },
+                  ],
+                },
+              ],
+              store: false,
+            }),
+            signal: AbortSignal.timeout(30_000),
+          });
+
+          if (!chatRes.ok) {
+            const errText = await chatRes.text().catch(() => "");
+            console.error(`[interactive] codex STT chat fallback failed (${chatRes.status}): ${errText.slice(0, 200)}`);
+            return null;
+          }
+
+          const chatData = await chatRes.json() as { output?: { content?: string }[]; text?: string };
+          const text = chatData.text ?? chatData.output?.[0]?.content ?? "";
+          return text.trim() ? { text: text.trim() } : null;
+        }
+
+        const data = await res.json() as { text?: string; output?: { content?: string }[] };
+        const text = data.text ?? data.output?.[0]?.content ?? "";
+        return text.trim() ? { text: text.trim() } : null;
+      } catch (err) {
+        console.error("[interactive] codex STT error:", err);
         return null;
       }
-    }
+    };
+  }
 
-    console.error("[interactive] All STT providers failed");
-    return null;
-  };
+  console.warn("[interactive] No STT provider found — transcription disabled.");
+  return async () => null;
 }
 
 // ── LLM classify (real) ──────────────────────────────────────────────
@@ -200,64 +265,76 @@ async function createTranscribeFunction(
 async function createLlmClassifyFunction(
   cfg: OniAIConfig,
 ): Promise<LlmClassifyFunction | undefined> {
-  // Try to resolve an API key for chat-based classification.
-  const providers = ["openai", "openai-codex", "anthropic", "groq"];
-  let apiKey: string | undefined;
-  let baseUrl: string | undefined;
-
-  for (const provider of providers) {
+  // Try standard providers first (openai chat completions)
+  for (const provider of ["openai", "anthropic", "groq"] as const) {
     try {
       const auth = await resolveApiKeyForProvider({ provider, cfg });
       if (auth.apiKey) {
-        apiKey = auth.apiKey;
+        const key = auth.apiKey;
         const providerConfig = cfg?.models?.providers?.[provider];
-        if (providerConfig && typeof providerConfig === "object" && "baseUrl" in providerConfig) {
-          baseUrl = (providerConfig as { baseUrl?: string }).baseUrl;
-        }
-        break;
+        const baseUrl = providerConfig && typeof providerConfig === "object" && "baseUrl" in providerConfig
+          ? (providerConfig as { baseUrl?: string }).baseUrl
+          : undefined;
+        return async (params) => {
+          try {
+            const url = `${baseUrl || "https://api.openai.com/v1"}/chat/completions`;
+            const res = await fetch(url, {
+              method: "POST",
+              headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+              body: JSON.stringify({
+                model: "gpt-4o-mini",
+                max_tokens: 20,
+                temperature: 0,
+                messages: [
+                  { role: "system", content: params.systemPrompt },
+                  { role: "user", content: params.userPrompt },
+                ],
+              }),
+              signal: AbortSignal.timeout(10_000),
+            });
+            if (!res.ok) return null;
+            const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+            const text = data.choices?.[0]?.message?.content?.trim().toLowerCase() ?? "";
+            const directed = text.includes("yes") || text.includes("directed") || text.includes("true");
+            return { directed, confidence: directed ? 0.85 : 0.15 };
+          } catch { return null; }
+        };
       }
-    } catch {
-      // Try next provider
-    }
+    } catch { /* next */ }
   }
 
-  if (!apiKey) {
-    // Fall back to wake-word-only mode
-    return undefined;
-  }
-
-  return async (params) => {
-    try {
-      const url = `${baseUrl || "https://api.openai.com/v1"}/chat/completions`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          max_tokens: 20,
-          temperature: 0,
-          messages: [
-            { role: "system", content: params.systemPrompt },
-            { role: "user", content: params.userPrompt },
-          ],
-        }),
-        signal: AbortSignal.timeout(10_000),
-      });
-      if (!res.ok) return null;
-      const data = (await res.json()) as {
-        choices?: { message?: { content?: string } }[];
+  // Fallback: use codex responses API for classification
+  try {
+    const auth = await resolveApiKeyForProvider({ provider: "openai-codex", cfg });
+    if (auth.apiKey) {
+      const token = auth.apiKey;
+      return async (params) => {
+        try {
+          const res = await fetch("https://chatgpt.com/backend-api/codex/responses", {
+            method: "POST",
+            headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+            body: JSON.stringify({
+              model: "gpt-4o-mini",
+              input: [
+                { type: "message", role: "system", content: params.systemPrompt },
+                { type: "message", role: "user", content: params.userPrompt },
+              ],
+              store: false,
+            }),
+            signal: AbortSignal.timeout(10_000),
+          });
+          if (!res.ok) return null;
+          const data = await res.json() as { output?: { content?: string }[] };
+          const text = (data.output?.[0]?.content ?? "").trim().toLowerCase();
+          const directed = text.includes("yes") || text.includes("directed") || text.includes("true");
+          return { directed, confidence: directed ? 0.85 : 0.15 };
+        } catch { return null; }
       };
-      const text = data.choices?.[0]?.message?.content?.trim().toLowerCase() ?? "";
-      const directed = text.includes("yes") || text.includes("directed") || text.includes("true");
-      const confidence = directed ? 0.85 : 0.15;
-      return { directed, confidence };
-    } catch {
-      return null;
     }
-  };
+  } catch { /* no codex key */ }
+
+  // No LLM available — fall back to wake-word-only mode
+  return undefined;
 }
 
 // ── Handlers ─────────────────────────────────────────────────────────
