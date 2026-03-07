@@ -1,0 +1,114 @@
+openapi: 3.1.0
+info:
+  title: Oni Companion API
+  version: 0.1.0
+  description: Minimal API spec for the Oni companion real-time thinking endpoint.
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/think:
+    post:
+      operationId: think
+      summary: Analyze a vision frame or voice transcript
+      description: Accepts either a voice transcript or a vision frame request. Voice requests are proxied through the OniAI gateway OpenAI-compatible chat endpoint. Vision requests are currently acknowledged but return not implemented until a multimodal backend is configured.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/VisionThinkRequest"
+                - $ref: "#/components/schemas/VoiceThinkRequest"
+      responses:
+        "200":
+          description: Streamed plain text analysis response for supported voice requests.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: I can help summarize what you are doing, answer questions, and respond while you work.
+        "400":
+          description: Missing or invalid request payload.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Missing frame or text
+        "401":
+          description: Gateway authorization failed.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Unauthorized
+        "501":
+          description: Vision mode is not implemented on the current gateway-backed route.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Vision analysis is not enabled on the current OniAI gateway route yet. Use voice mode or configure a multimodal backend first.
+        "502":
+          description: The OniAI gateway could not be reached.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Cannot connect to OniAI gateway. Make sure the gateway is running (oni gateway run).
+        "500":
+          description: Server configuration or provider error.
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Gateway error: Method Not Allowed"
+components:
+  schemas:
+    VisionThinkRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - frame
+      properties:
+        type:
+          type: string
+          const: vision
+        frame:
+          type: string
+          description: Base64 data URL image frame.
+          example: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD...
+        context:
+          type: string
+          description: Recent short context from prior thoughts.
+          example: User is editing a TypeScript file in the Oni repo.
+        text:
+          type: string
+          description: Optional instruction to steer future image analysis once multimodal support is wired.
+          example: What do you see? Be brief and helpful.
+    VoiceThinkRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - type
+        - text
+      properties:
+        type:
+          type: string
+          const: voice
+        text:
+          type: string
+          description: Voice transcript to process.
+          example: Can you tell me what error is on my screen?
+        context:
+          type: string
+          description: Recent short context from prior thoughts.
+          example: User has screen sharing enabled and asked for debugging help.
+        gatewayUrl:
+          type: string
+          description: Optional override for the OniAI gateway base URL.
+          example: http://localhost:19100
+        gatewayToken:
+          type: string
+          description: Optional bearer token override for the OniAI gateway.
+          example: secret

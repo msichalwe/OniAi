@@ -1,7 +1,10 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
+import { resolveStateDir } from "../../config/paths.js";
 import { buildRecentMemoryContext } from "../../memory/auto-extract.js";
 import { BubbleStore } from "../../memory/bubbles/store.js";
+import { UnifiedMemoryStore } from "../../memory/unified-store.js";
 
 const MAX_CONTEXT_CHARS = 3000;
 const MAX_MEMORY_CHARS = 1500;
@@ -43,8 +46,17 @@ export async function readPostCompactionContext(workspaceDir: string): Promise<s
 
     // 3. Memory bubble structured context (entities, preferences, profile)
     try {
-      const bubbleStore = new BubbleStore(workspaceDir);
-      const bubbleContext = bubbleStore.buildContextPrompt(1200);
+      let bubbleContext: string | null = null;
+      try {
+        const stateDir = resolveStateDir(process.env, os.homedir);
+        const dbPath = path.join(stateDir, "memory", "bubbles-heartbeat.sqlite");
+        const unified = new UnifiedMemoryStore(dbPath);
+        bubbleContext = unified.buildContextPrompt(1200);
+      } catch {
+        // Unified store unavailable — fall back to legacy JSON store
+        const bubbleStore = new BubbleStore(workspaceDir);
+        bubbleContext = bubbleStore.buildContextPrompt(1200);
+      }
       if (bubbleContext) {
         parts.push(bubbleContext);
       }

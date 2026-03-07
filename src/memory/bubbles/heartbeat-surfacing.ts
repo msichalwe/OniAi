@@ -1,5 +1,16 @@
-import { BubbleStore } from "./store.js";
+import os from "node:os";
+import path from "node:path";
+import { resolveStateDir } from "../../config/paths.js";
+import { UnifiedMemoryStore } from "../unified-store.js";
+import type { NodeScanStore } from "./node-scanner.js";
 import { isNodeScanDue, buildNodeScanCommands } from "./node-scanner.js";
+import { BubbleStore, resolveStorePath } from "./store.js";
+
+type HeartbeatStore = NodeScanStore & {
+  surfaceRelevant(context: string, limit?: number): { bubbles: { createdAtMs: number; content: string }[]; entities: unknown[]; connections: string[] };
+  queryEntities(query: { minImportance?: number; limit?: number }): { lastSeenAtMs: number; name: string; mentionCount: number }[];
+  buildContextPrompt(maxChars?: number): string | null;
+};
 
 /**
  * Proactive Memory Surfacing for Heartbeat
@@ -29,7 +40,7 @@ export function resolveHeartbeatMemoryWork(params: {
   recentContext?: string;
 }): HeartbeatMemoryResult {
   try {
-    const store = new BubbleStore(params.workspaceDir);
+    const store = resolveMemoryStoreCompat(params.workspaceDir);
     const nodeScanDue = isNodeScanDue(store);
     const insights: string[] = [];
 
@@ -74,6 +85,25 @@ export function resolveHeartbeatMemoryWork(params: {
       insights: [],
       contextPrompt: null,
     };
+  }
+}
+
+function resolveMemoryStoreCompat(workspaceDir: string): HeartbeatStore {
+  try {
+    const stateDir = resolveStateDir(process.env, os.homedir);
+    // Use a generic db path for heartbeat (not agent-scoped)
+    const dbPath = path.join(stateDir, "memory", "bubbles-heartbeat.sqlite");
+    const store = new UnifiedMemoryStore(dbPath);
+    // Auto-migrate from legacy JSON if the unified store is empty
+    const stats = store.stats();
+    if (stats.bubbles === 0 && stats.entities === 0) {
+      const jsonPath = resolveStorePath(workspaceDir);
+      try { store.migrateFromJson(jsonPath); } catch { /* non-fatal */ }
+    }
+    return store as unknown as HeartbeatStore;
+  } catch {
+    // Fall back to legacy JSON store
+    return new BubbleStore(workspaceDir) as unknown as HeartbeatStore;
   }
 }
 

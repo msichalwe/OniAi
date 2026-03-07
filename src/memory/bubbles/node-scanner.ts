@@ -1,10 +1,28 @@
-import type { BubbleStore } from "./store.js";
-
 /**
  * Ambient Node Scanner — scans connected nodes (Mac, etc.) every ~12 hours
  * to capture context: running apps, recent files, clipboard, calendar events.
  * Creates memory bubbles from the collected data.
  */
+
+import type { BubbleCategory, BubbleSource, EntityType } from "./types.js";
+
+export type NodeScanStore = {
+  getLastNodeScanAt(): number | undefined;
+  recordNodeScan(): void;
+  addBubble(params: {
+    content: string;
+    category: BubbleCategory;
+    source: BubbleSource;
+    entityIds?: string[];
+    tags?: string[];
+    importance?: number;
+  }): { id: string };
+  addEntity(params: {
+    type: EntityType;
+    name: string;
+    facts?: string[];
+  }): { id: string };
+};
 
 export type NodeScanResult = {
   nodeId: string;
@@ -22,7 +40,7 @@ const SCAN_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 hours
 /**
  * Check if a node scan is due.
  */
-export function isNodeScanDue(store: BubbleStore): boolean {
+export function isNodeScanDue(store: NodeScanStore): boolean {
   const lastScan = store.getLastNodeScanAt();
   if (!lastScan) return true;
   return (Date.now() - lastScan) >= SCAN_INTERVAL_MS;
@@ -65,7 +83,7 @@ export function buildNodeScanCommands(): { label: string; command: string }[] {
  * Process scan results into memory bubbles.
  */
 export function processScanResults(
-  store: BubbleStore,
+  store: NodeScanStore,
   results: { label: string; output: string }[],
   nodeDisplayName: string,
 ): number {

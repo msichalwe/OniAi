@@ -2,9 +2,16 @@ import { escapeRegExp } from "../utils.js";
 import { HEARTBEAT_TOKEN } from "./tokens.js";
 
 // Default heartbeat prompt (used when config.agents.defaults.heartbeat.prompt is unset).
-// Keep it tight and avoid encouraging the model to invent/rehash "open loops" from prior chat context.
-export const HEARTBEAT_PROMPT =
-  "Read HEARTBEAT.md if it exists (workspace context). Follow it strictly. Do not infer or repeat old tasks from prior chats. If nothing needs attention, reply HEARTBEAT_OK.";
+// Drives proactive agentic behavior: check queued work, plans, follow-ups, then HEARTBEAT.md.
+export const HEARTBEAT_PROMPT = [
+  "Autonomous work cycle. In order:",
+  "1. task(next) — pick up queued autonomous work if any.",
+  "2. plan(get) — continue in-progress plan steps if any.",
+  "3. Read HEARTBEAT.md if it exists — follow it strictly.",
+  "4. Quick self-check: any recent errors to learn from? Any promises to follow up on? Use memory_bubble(query_bubbles) if useful.",
+  "5. If nothing needs attention, reply HEARTBEAT_OK.",
+  "Do not infer or repeat old tasks from prior chats. Be efficient — complete what you can in under 2 minutes.",
+].join(" ");
 export const DEFAULT_HEARTBEAT_EVERY = "30m";
 export const DEFAULT_HEARTBEAT_ACK_MAX_CHARS = 300;
 

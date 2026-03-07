@@ -107,7 +107,11 @@ export async function getReplyFromConfig(
   });
   const workspaceDir = workspace.dir;
   const agentDir = resolveAgentDir(cfg, agentId);
-  const timeoutMs = resolveAgentTimeoutMs({ cfg, overrideSeconds: opts?.timeoutOverrideSeconds });
+  const baseTimeoutMs = resolveAgentTimeoutMs({ cfg, overrideSeconds: opts?.timeoutOverrideSeconds });
+  // Heartbeat runs should complete quickly — cap at 2 minutes to prevent
+  // stuck heartbeat cycles (e.g. failing tool retries) from blocking for 10+ minutes.
+  const HEARTBEAT_MAX_TIMEOUT_MS = 120_000;
+  const timeoutMs = opts?.isHeartbeat ? Math.min(baseTimeoutMs, HEARTBEAT_MAX_TIMEOUT_MS) : baseTimeoutMs;
   const configuredTypingSeconds =
     agentCfg?.typingIntervalSeconds ?? sessionCfg?.typingIntervalSeconds;
   const typingIntervalSeconds =

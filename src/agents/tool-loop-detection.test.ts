@@ -207,7 +207,7 @@ describe("tool-loop-detection", () => {
   });
 
   describe("detectToolCallLoop", () => {
-    it("is disabled by default", () => {
+    it("is enabled by default", () => {
       const state = createState();
 
       for (let i = 0; i < 20; i += 1) {
@@ -215,7 +215,7 @@ describe("tool-loop-detection", () => {
       }
 
       const loopResult = detectToolCallLoop(state, "read", { path: "/same.txt" });
-      expect(loopResult.stuck).toBe(false);
+      expect(loopResult.stuck).toBe(true);
     });
 
     it("does not flag unique tool calls", () => {
@@ -257,7 +257,7 @@ describe("tool-loop-detection", () => {
       }
     });
 
-    it("keeps generic loops warn-only below global breaker threshold", () => {
+    it("blocks generic loops at critical threshold", () => {
       const state = createState();
       const params = { path: "/same.txt" };
       const result = {
@@ -272,7 +272,8 @@ describe("tool-loop-detection", () => {
       const loopResult = detectToolCallLoop(state, "read", params, enabledLoopDetectionConfig);
       expect(loopResult.stuck).toBe(true);
       if (loopResult.stuck) {
-        expect(loopResult.level).toBe("warning");
+        expect(loopResult.level).toBe("critical");
+        expect(loopResult.detector).toBe("generic_repeat");
       }
     });
 

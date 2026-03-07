@@ -77,7 +77,8 @@ export function shouldIncludeSkill(params: {
   const skillConfig = resolveSkillConfig(config, skillKey);
   const allowBundled = normalizeAllowlist(config?.skills?.allowBundled);
 
-  if (skillConfig?.enabled === false) {
+  const isAlwaysOn = entry.metadata?.always === true;
+  if (skillConfig?.enabled === false && !isAlwaysOn) {
     return false;
   }
   if (!isBundledSkillAllowed(entry, allowBundled)) {

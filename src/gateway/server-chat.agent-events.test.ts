@@ -460,7 +460,7 @@ describe("agent event handler", () => {
       stream: "assistant",
       ts: Date.now(),
       data: {
-        text: "HEARTBEAT_OK Read HEARTBEAT.md if it exists (workspace context). Follow it strictly.",
+        text: "HEARTBEAT_OK Autonomous work cycle. Nothing needs attention.",
       },
     });
 

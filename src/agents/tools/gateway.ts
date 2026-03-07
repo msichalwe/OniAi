@@ -129,7 +129,15 @@ export function resolveGatewayOptions(opts?: GatewayCallOptions) {
         target: validatedOverride.target,
         explicitToken,
       })
-    : explicitToken;
+    : explicitToken ??
+      // When no URL override and no explicit token, resolve local gateway
+      // credentials from config so agent tools can authenticate to their
+      // own gateway (e.g. heartbeat calling `nodes` tool).
+      resolveGatewayCredentialsFromConfig({
+        cfg,
+        env: process.env,
+        modeOverride: "local",
+      }).token;
   const timeoutMs =
     typeof opts?.timeoutMs === "number" && Number.isFinite(opts.timeoutMs)
       ? Math.max(1, Math.floor(opts.timeoutMs))

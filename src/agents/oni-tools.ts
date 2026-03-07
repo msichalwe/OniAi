@@ -20,6 +20,7 @@ import { createSessionsSendTool } from "./tools/sessions-send-tool.js";
 import { createSessionsSpawnTool } from "./tools/sessions-spawn-tool.js";
 import { createSubagentsTool } from "./tools/subagents-tool.js";
 import { createDelegateTool } from "./tools/delegate-tool.js";
+import { createMemoryBubbleTool } from "./tools/memory-bubble-tool.js";
 import { createSystemHealthTool } from "./tools/system-health-tool.js";
 import { createPlanTool } from "./tools/plan-tool.js";
 import { createTaskTool } from "./tools/task-tool.js";
@@ -188,6 +189,15 @@ export function createOniAITools(options?: {
     ...(webFetchTool ? [webFetchTool] : []),
     ...(imageTool ? [imageTool] : []),
   ];
+
+  const memoryBubbleTool = createMemoryBubbleTool({
+    config: options?.config,
+    agentSessionKey: options?.agentSessionKey,
+    workspaceDir,
+  });
+  if (memoryBubbleTool) {
+    tools.push(memoryBubbleTool);
+  }
 
   const pluginTools = resolvePluginTools({
     context: {

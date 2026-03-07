@@ -50,6 +50,7 @@ import {
   formatAuditWarning,
   readSessionMessages,
 } from "./post-compaction-audit.js";
+import { runPostTurnExtraction } from "../../memory/bubbles/auto-entity-extract.js";
 import { readPostCompactionContext } from "./post-compaction-context.js";
 import { resolveActiveRunQueueAction } from "./queue-policy.js";
 import { enqueueFollowupRun, type FollowupRun, type QueueSettings } from "./queue.js";
@@ -505,6 +506,22 @@ export async function runReplyAgent(params: {
       systemPromptReport: runResult.meta?.systemPromptReport,
       cliSessionId,
     });
+
+    // Post-turn auto-extraction: extract entities, relationships, preferences from user message
+    // Runs async/best-effort — does not block response delivery
+    if (!isHeartbeat && cfg) {
+      const agentId = resolveAgentIdFromSessionKey(sessionKey ?? "main");
+      try {
+        runPostTurnExtraction({
+          cfg,
+          agentId,
+          userMessage: commandBody,
+          sessionKey,
+        });
+      } catch {
+        // Silent failure — auto-extraction is best-effort
+      }
+    }
 
     // Drain any late tool/block deliveries before deciding there's "nothing to send".
     // Otherwise, a late typing trigger (e.g. from a tool callback) can outlive the run and

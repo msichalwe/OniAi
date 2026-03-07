@@ -113,7 +113,13 @@ export type RelationType =
   | "created-by"      // entity -> person
   | "part-of"         // entity -> entity (hierarchical)
   | "prefers"         // person -> topic/tool
-  | "dislikes";       // person -> topic/tool
+  | "dislikes"        // person -> topic/tool
+  | "spouse"          // person <-> person (marriage/partner)
+  | "parent"          // person -> person (parent of)
+  | "child"           // person -> person (child of)
+  | "sibling"         // person <-> person (brother/sister)
+  | "manages"         // person -> person/project
+  | "reports-to";     // person -> person
 
 export type Relationship = {
   id: string;

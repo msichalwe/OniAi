@@ -114,6 +114,14 @@ const CORE_TOOL_DEFINITIONS: CoreToolDefinition[] = [
     includeInOniAIGroup: true,
   },
   {
+    id: "memory_bubble",
+    label: "memory_bubble",
+    description: "Structured persistent memory (bubbles, entities, relationships, preferences)",
+    sectionId: "memory",
+    profiles: ["coding"],
+    includeInOniAIGroup: true,
+  },
+  {
     id: "sessions_list",
     label: "sessions_list",
     description: "List sessions",

@@ -29,7 +29,7 @@ export const WARNING_THRESHOLD = 10;
 export const CRITICAL_THRESHOLD = 20;
 export const GLOBAL_CIRCUIT_BREAKER_THRESHOLD = 30;
 const DEFAULT_LOOP_DETECTION_CONFIG = {
-  enabled: false,
+  enabled: true,
   historySize: TOOL_CALL_HISTORY_SIZE,
   warningThreshold: WARNING_THRESHOLD,
   criticalThreshold: CRITICAL_THRESHOLD,
@@ -148,11 +148,18 @@ function isKnownPollToolCall(toolName: string, params: unknown): boolean {
   if (toolName === "command_status") {
     return true;
   }
-  if (toolName !== "process" || !isPlainObject(params)) {
+  if (!isPlainObject(params)) {
     return false;
   }
-  const action = params.action;
-  return action === "poll" || action === "log";
+  if (toolName === "process") {
+    const action = params.action;
+    return action === "poll" || action === "log";
+  }
+  // nodes status is effectively polling node availability
+  if (toolName === "nodes") {
+    return params.action === "status";
+  }
+  return false;
 }
 
 function extractTextContent(result: unknown): string {
@@ -470,10 +477,26 @@ export function detectToolCallLoop(
     };
   }
 
-  // Generic detector: warn-only for repeated identical calls.
+  // Generic detector: warn at warningThreshold, block at criticalThreshold.
   const recentCount = history.filter(
     (h) => h.toolName === toolName && h.argsHash === currentHash,
   ).length;
+
+  if (
+    !knownPollTool &&
+    resolvedConfig.detectors.genericRepeat &&
+    recentCount >= resolvedConfig.criticalThreshold
+  ) {
+    log.error(`Blocking ${toolName} due to generic repeat loop: ${recentCount} identical calls`);
+    return {
+      stuck: true,
+      level: "critical",
+      detector: "generic_repeat",
+      count: recentCount,
+      message: `CRITICAL: ${toolName} has been called ${recentCount} times with identical arguments and no progress. Execution blocked. Stop retrying and report the issue.`,
+      warningKey: `generic:${toolName}:${currentHash}`,
+    };
+  }
 
   if (
     !knownPollTool &&

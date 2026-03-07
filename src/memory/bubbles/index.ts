@@ -8,6 +8,7 @@ export {
   buildNodeScanCommands,
   processScanResults,
 } from "./node-scanner.js";
+export type { NodeScanStore } from "./node-scanner.js";
 export type {
   MemoryBubble,
   MemoryBubbleStore,
