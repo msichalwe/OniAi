@@ -6,6 +6,11 @@ import {
   removeActionLoop,
 } from "../../interactive/action-loop.js";
 import {
+  ServerCaptureLoop,
+  registerCaptureLoop,
+  removeCaptureLoop,
+} from "../../interactive/server-capture.js";
+import {
   InteractiveSessionManager,
   resolveInteractiveConfig,
 } from "../../interactive/session.js";
@@ -195,6 +200,17 @@ export const interactiveHandlers: GatewayRequestHandlers = {
       registerActionLoop(connId, loop);
 
       const snapshot = mgr.start({ connId, sessionKey, agentId, config, inputs });
+
+      // Start server-side capture for screen/camera if those inputs are enabled.
+      // This enables interactive mode from text-only clients (TUI) where the
+      // client can't stream media data over WebSocket.
+      const captureLoop = new ServerCaptureLoop({
+        loop,
+        enabledInputs: new Set(snapshot.enabledInputs),
+      });
+      registerCaptureLoop(connId, captureLoop);
+      void captureLoop.start();
+
       context.logGateway.info(
         `interactive session started connId=${connId} agent=${agentId} inputs=${snapshot.enabledInputs.join(",")}`,
       );
@@ -210,6 +226,7 @@ export const interactiveHandlers: GatewayRequestHandlers = {
       if (!connId) return;
 
       const mgr = getInteractiveSessionManager();
+      removeCaptureLoop(connId);
       removeActionLoop(connId);
       mgr.stop(connId);
       context.logGateway.info(`interactive session stopped connId=${connId}`);
