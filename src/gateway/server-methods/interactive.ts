@@ -22,8 +22,9 @@ import type { TranscribeFunction } from "../../interactive/audio-pipeline.js";
 import type { LlmClassifyFunction } from "../../interactive/intent-classifier.js";
 import type { InteractiveEvent, InteractiveInput } from "../../interactive/types.js";
 import type { VisionFrame } from "../../interactive/vision-pipeline.js";
-import { transcribeOpenAiCompatibleAudio } from "../../media-understanding/providers/openai/audio.js";
 import { resolveApiKeyForProvider } from "../../agents/model-auth.js";
+import { AUTO_AUDIO_KEY_PROVIDERS, DEFAULT_AUDIO_MODELS } from "../../media-understanding/defaults.js";
+import { buildMediaUnderstandingRegistry, getMediaUnderstandingProvider } from "../../media-understanding/providers/index.js";
 import { resolveSessionAgentId } from "../../agents/agent-scope.js";
 import { dispatchInboundMessage } from "../../auto-reply/dispatch.js";
 import { createReplyDispatcher } from "../../auto-reply/reply/reply-dispatcher.js";
@@ -128,53 +129,69 @@ function wrapPcm16AsWav(pcmBuffer: Buffer, sampleRate: number, channels = 1): Bu
 async function createTranscribeFunction(
   cfg: OniAIConfig,
 ): Promise<TranscribeFunction> {
-  // Try to resolve an OpenAI-compatible API key for STT.
-  // Supports openai, openai-codex, groq, or any OpenAI-compatible provider.
-  const sttProviders = ["openai", "openai-codex", "groq"];
-  let apiKey: string | undefined;
-  let baseUrl: string | undefined;
+  // Use the gateway's own media understanding provider system.
+  // This respects configured providers, API keys, and models.
+  const registry = buildMediaUnderstandingRegistry();
 
-  for (const provider of sttProviders) {
+  // Find first provider that has audio transcription + a valid API key
+  type Candidate = { providerId: string; apiKey: string; model: string; transcribe: NonNullable<import("../../media-understanding/types.js").MediaUnderstandingProvider["transcribeAudio"]> };
+  const candidates: Candidate[] = [];
+
+  for (const providerId of AUTO_AUDIO_KEY_PROVIDERS) {
+    const provider = getMediaUnderstandingProvider(providerId, registry);
+    if (!provider?.transcribeAudio) continue;
+
     try {
-      const auth = await resolveApiKeyForProvider({ provider, cfg });
+      const auth = await resolveApiKeyForProvider({ provider: providerId, cfg });
       if (auth.apiKey) {
-        apiKey = auth.apiKey;
-        // Use custom base URL if configured
-        const providerConfig = cfg?.models?.providers?.[provider];
-        if (providerConfig && typeof providerConfig === "object" && "baseUrl" in providerConfig) {
-          baseUrl = (providerConfig as { baseUrl?: string }).baseUrl;
-        }
-        break;
+        const model = DEFAULT_AUDIO_MODELS[providerId] ?? "";
+        candidates.push({
+          providerId,
+          apiKey: auth.apiKey,
+          model,
+          transcribe: provider.transcribeAudio,
+        });
       }
     } catch {
-      // Try next provider
+      // No key for this provider
     }
   }
 
-  if (!apiKey) {
-    console.warn("[interactive] No STT API key found — transcription disabled. Configure openai, groq, or similar.");
+  if (candidates.length === 0) {
+    console.warn("[interactive] No STT provider found — transcription disabled.");
     return async () => null;
   }
 
+  console.log(`[interactive] STT providers: ${candidates.map((c) => `${c.providerId}/${c.model}`).join(", ")}`);
+
   return async (params) => {
-    try {
-      // Wrap raw PCM16 buffer in WAV header for the Whisper API
-      const wavBuffer = wrapPcm16AsWav(params.buffer, 24_000);
-      const result = await transcribeOpenAiCompatibleAudio({
-        buffer: wavBuffer,
-        fileName: params.fileName || "interactive-audio.wav",
-        mime: "audio/wav",
-        apiKey: apiKey!,
-        baseUrl,
-        model: "whisper-1",
-        language: params.language || "en",
-        timeoutMs: 30_000,
-      });
-      return { text: result.text };
-    } catch (err) {
-      console.error("[interactive] transcription error:", err);
-      return null;
+    const wavBuffer = wrapPcm16AsWav(params.buffer, 24_000);
+
+    for (const c of candidates) {
+      try {
+        const result = await c.transcribe({
+          buffer: wavBuffer,
+          fileName: params.fileName || "interactive-audio.wav",
+          mime: "audio/wav",
+          apiKey: c.apiKey,
+          model: c.model,
+          language: params.language || "en",
+          timeoutMs: 30_000,
+        });
+        return { text: result.text };
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes("401") || msg.includes("403")) {
+          console.warn(`[interactive] STT ${c.providerId} auth failed, trying next...`);
+          continue;
+        }
+        console.error(`[interactive] STT ${c.providerId} error:`, err);
+        return null;
+      }
     }
+
+    console.error("[interactive] All STT providers failed");
+    return null;
   };
 }
 
