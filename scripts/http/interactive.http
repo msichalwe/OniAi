@@ -1,0 +1,80 @@
+### Interactive Mode — Gateway WS Method Examples
+### These are JSON-RPC frames sent over the gateway WebSocket (ws://127.0.0.1:19100)
+
+### Start interactive mode with default inputs
+# WS ws://127.0.0.1:19100
+# {"type":"request","id":"1","method":"interactive.start","params":{"agentId":"default"}}
+
+### Start with specific inputs
+# {"type":"request","id":"2","method":"interactive.start","params":{"agentId":"default","inputs":["mic","camera","screen"]}}
+
+### Stop interactive mode
+# {"type":"request","id":"3","method":"interactive.stop","params":{}}
+
+### Enable camera and screen
+# {"type":"request","id":"4","method":"interactive.enable","params":{"inputs":["camera","screen"]}}
+
+### Disable camera
+# {"type":"request","id":"5","method":"interactive.disable","params":{"inputs":["camera"]}}
+
+### Get session status
+# {"type":"request","id":"6","method":"interactive.status","params":{}}
+
+### Get resolved config
+# {"type":"request","id":"7","method":"interactive.configure","params":{}}
+
+### --- cURL equivalents (HTTP hooks, if exposed) ---
+
+# Start interactive (slash command via chat.send)
+POST http://127.0.0.1:19100/v1/chat/completions
+Content-Type: application/json
+Authorization: Bearer {{$dotenv ONI_GATEWAY_TOKEN}}
+
+{
+  "model": "default",
+  "messages": [
+    {"role": "user", "content": "/interactive"}
+  ]
+}
+
+###
+
+# Enable camera + screen (slash command via chat.send)
+POST http://127.0.0.1:19100/v1/chat/completions
+Content-Type: application/json
+Authorization: Bearer {{$dotenv ONI_GATEWAY_TOKEN}}
+
+{
+  "model": "default",
+  "messages": [
+    {"role": "user", "content": "/interactive enable camera,screen"}
+  ]
+}
+
+###
+
+# Check status (slash command via chat.send)
+POST http://127.0.0.1:19100/v1/chat/completions
+Content-Type: application/json
+Authorization: Bearer {{$dotenv ONI_GATEWAY_TOKEN}}
+
+{
+  "model": "default",
+  "messages": [
+    {"role": "user", "content": "/interactive status"}
+  ]
+}
+
+###
+
+# Exit interactive (slash command via chat.send)
+POST http://127.0.0.1:19100/v1/chat/completions
+Content-Type: application/json
+Authorization: Bearer {{$dotenv ONI_GATEWAY_TOKEN}}
+
+{
+  "model": "default",
+  "messages": [
+    {"role": "user", "content": "/exit interactive"}
+  ]
+}

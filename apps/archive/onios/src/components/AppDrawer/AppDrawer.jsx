@@ -31,7 +31,7 @@ export default function AppDrawer({ onClose }) {
 
   const handleOpen = (type) => {
     const reg = WIDGET_REGISTRY[type];
-    if (!reg) return;
+    if (!reg) {return;}
     openWindow(
       type,
       {},

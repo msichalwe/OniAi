@@ -39,7 +39,7 @@ export default function Maps() {
   );
 
   const handleSearch = useCallback(async () => {
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {return;}
     setSearching(true);
 
     try {

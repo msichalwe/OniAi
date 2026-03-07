@@ -30,7 +30,7 @@ export default function DesktopSwitcher() {
 
   const [contextMenu, setContextMenu] = useState(null);
 
-  const sorted = [...desktops].sort((a, b) => a.order - b.order);
+  const sorted = [...desktops].toSorted((a, b) => a.order - b.order);
 
   const windowCountByDesktop = (desktopId) =>
     windows.filter((w) => w.desktopId === desktopId).length;
@@ -53,7 +53,7 @@ export default function DesktopSwitcher() {
         icon: <Pencil size={14} />,
         onClick: () => {
           const name = prompt("Desktop name:", desktop.name);
-          if (name && name.trim()) renameDesktop(desktop.id, name.trim());
+          if (name && name.trim()) {renameDesktop(desktop.id, name.trim());}
         },
       },
     ];

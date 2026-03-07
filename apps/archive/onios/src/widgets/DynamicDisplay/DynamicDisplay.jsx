@@ -90,8 +90,8 @@ const isElectron =
     navigator.userAgent.includes("Electron"));
 
 function openUrl(url, e) {
-  if (!url) return;
-  if (e) e.preventDefault();
+  if (!url) {return;}
+  if (e) {e.preventDefault();}
   if (isElectron) {
     // In Electron: use shell.openExternal for system browser, or open in OniOS browser widget
     try {
@@ -166,7 +166,7 @@ function sendToChat(item, action = "expand") {
 // ─── Detail Overlay ───────────────────────────────────
 
 function DetailOverlay({ item, onClose }) {
-  if (!item) return null;
+  if (!item) {return null;}
 
   const handleAskAI = (prompt) => {
     sendToChat(item, prompt);
@@ -396,7 +396,7 @@ function ListSection({ data, onSelect }) {
       {items.map((item, i) => {
         // Handle string items
         if (typeof item === "string") {
-          if (!item.trim()) return null;
+          if (!item.trim()) {return null;}
           return (
             <div key={i} className="dd-list-item">
               {ordered && <span className="dd-list-num">{i + 1}</span>}
@@ -411,7 +411,7 @@ function ListSection({ data, onSelect }) {
         const val = item.value;
         const hasDetail = item.details && typeof item.details === "object";
         // Skip empty items
-        if (!title && !desc && !val && !item.image && !hasDetail) return null;
+        if (!title && !desc && !val && !item.image && !hasDetail) {return null;}
         return (
           <div
             key={i}
@@ -521,7 +521,7 @@ function VideoSection({ data }) {
   // Extract YouTube embed URL
   const getYoutubeEmbed = () => {
     const vid = data.youtube || data.src;
-    if (vid.includes("embed/")) return vid;
+    if (vid.includes("embed/")) {return vid;}
     const videoId = vid.includes("youtu.be/")
       ? vid.split("youtu.be/")[1]?.split("?")[0]
       : vid.split("v=").pop()?.split("&")[0];
@@ -544,7 +544,7 @@ function VideoSection({ data }) {
 
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v) {return;}
     const onTime = () => setCurrentTime(v.currentTime);
     const onMeta = () => setDuration(v.duration);
     const onEnd = () => setIsPlaying(false);
@@ -560,21 +560,21 @@ function VideoSection({ data }) {
 
   const togglePlay = () => {
     const v = videoRef.current;
-    if (!v) return;
-    if (isPlaying) v.pause();
-    else v.play();
+    if (!v) {return;}
+    if (isPlaying) {v.pause();}
+    else {v.play();}
     setIsPlaying(!isPlaying);
   };
 
   const seek = (e) => {
     const v = videoRef.current;
-    if (!v || !duration) return;
+    if (!v || !duration) {return;}
     const rect = e.currentTarget.getBoundingClientRect();
     v.currentTime = ((e.clientX - rect.left) / rect.width) * duration;
   };
 
   const fmtTime = (t) => {
-    if (!t || isNaN(t)) return "0:00";
+    if (!t || isNaN(t)) {return "0:00";}
     const m = Math.floor(t / 60);
     const s = Math.floor(t % 60);
     return `${m}:${s.toString().padStart(2, "0")}`;
@@ -584,7 +584,7 @@ function VideoSection({ data }) {
 
   const openExternal = () => {
     const url = data.youtube || data.src;
-    if (url) openUrl(url);
+    if (url) {openUrl(url);}
   };
 
   return (
@@ -657,7 +657,7 @@ function VideoSection({ data }) {
                 <button
                   className="dd-ctrl-btn"
                   onClick={() => {
-                    if (videoRef.current) videoRef.current.currentTime -= 10;
+                    if (videoRef.current) {videoRef.current.currentTime -= 10;}
                   }}
                 >
                   <SkipBack size={14} />
@@ -675,7 +675,7 @@ function VideoSection({ data }) {
                 <button
                   className="dd-ctrl-btn"
                   onClick={() => {
-                    if (videoRef.current) videoRef.current.currentTime += 10;
+                    if (videoRef.current) {videoRef.current.currentTime += 10;}
                   }}
                 >
                   <SkipForward size={14} />
@@ -700,7 +700,7 @@ function VideoSection({ data }) {
                   className="dd-ctrl-btn"
                   onClick={() => {
                     if (videoRef.current?.requestFullscreen)
-                      videoRef.current.requestFullscreen();
+                      {videoRef.current.requestFullscreen();}
                   }}
                 >
                   <Maximize size={14} />
@@ -856,7 +856,7 @@ function CodeSection({ data }) {
         return hljs.highlight(code, { language: lang }).value;
       }
       const auto = hljs.highlightAuto(code);
-      if (auto.relevance > 4) return auto.value;
+      if (auto.relevance > 4) {return auto.value;}
     } catch {}
     return null;
   }, [code, lang]);
@@ -1027,7 +1027,7 @@ function SearchResultsSection({ data }) {
         const url = r.url || r.link;
         const source =
           r.source || (url ? new URL(url).hostname.replace("www.", "") : null);
-        if (!title && !desc) return null;
+        if (!title && !desc) {return null;}
         return (
           <div key={i} className="dd-search-result">
             {source && <div className="dd-search-source">{source}</div>}
@@ -1309,7 +1309,7 @@ export default function DynamicDisplay({ windowId, displayId }) {
     setError(null);
     try {
       const res = await fetch(`/api/oni/display/${displayId}`);
-      if (!res.ok) throw new Error(`Failed to load (${res.status})`);
+      if (!res.ok) {throw new Error(`Failed to load (${res.status})`);}
       const json = await res.json();
       setData(json);
     } catch (err) {

@@ -95,10 +95,10 @@ export default function Notes({ windowId, widgetType }) {
   const formatDate = (ts) => {
     const d = new Date(ts);
     const now = new Date();
-    if (d.toDateString() === now.toDateString()) return "Today";
+    if (d.toDateString() === now.toDateString()) {return "Today";}
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
-    if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+    if (d.toDateString() === yesterday.toDateString()) {return "Yesterday";}
     return d.toLocaleDateString([], { month: "short", day: "numeric" });
   };
 

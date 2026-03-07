@@ -33,7 +33,7 @@ const nanoid = () => `oni_${++_nanoid}_${Date.now().toString(36)}`;
  * Matches patterns like {"success":true,"id":"d_..."} on their own line.
  */
 function stripToolResultJSON(text) {
-  if (!text) return text;
+  if (!text) {return text;}
   return text
     .replace(/^\s*\{"(?:success|error|id|updated|result)"[^}]*\}\s*$/gm, "")
     .replace(
@@ -71,7 +71,7 @@ export default function OniChatWidget() {
   const [messages, setMessages] = useState(() => {
     try {
       const saved = localStorage.getItem(CHAT_STORAGE_KEY);
-      if (saved) return JSON.parse(saved).filter((m) => m.role !== "status");
+      if (saved) {return JSON.parse(saved).filter((m) => m.role !== "status");}
     } catch {
       /* corrupt */
     }
@@ -110,9 +110,9 @@ export default function OniChatWidget() {
   useEffect(() => {
     const unsub = gateway.onAction((event) => {
       // Only show events that happened during an active chat
-      if (!streamingRef.current) return;
-      if (!chatStartTimeRef.current) return;
-      if (event.timestamp < chatStartTimeRef.current) return;
+      if (!streamingRef.current) {return;}
+      if (!chatStartTimeRef.current) {return;}
+      if (event.timestamp < chatStartTimeRef.current) {return;}
 
       const actionInfo = ACTION_LABELS[event.actionType] || {
         label: event.actionType,
@@ -312,7 +312,7 @@ export default function OniChatWidget() {
 
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {break;}
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split("\n");
@@ -341,7 +341,7 @@ export default function OniChatWidget() {
                   throw new Error(data.error || "Gateway response error");
                 }
               } catch (e) {
-                if (e.message && !e.message.includes("JSON")) throw e;
+                if (e.message && !e.message.includes("JSON")) {throw e;}
               }
             } else if (line.trim() === "") {
               currentEvent = "";
@@ -368,7 +368,7 @@ export default function OniChatWidget() {
         setAction("success");
         setEmotion("happy");
       } catch (err) {
-        if (err.name === "AbortError") return;
+        if (err.name === "AbortError") {return;}
         console.warn("[OniChat] Error:", err);
         setAction("error");
         setEmotion("frustrated");
@@ -495,42 +495,42 @@ function describeAction(actionType, params) {
   switch (actionType) {
     case "task":
       if (action === "create")
-        return `Creating task: "${params.title || "Untitled"}"`;
-      if (action === "list") return "Listing tasks...";
-      if (action === "complete") return `Completing task ${params.id}`;
+        {return `Creating task: "${params.title || "Untitled"}"`;}
+      if (action === "list") {return "Listing tasks...";}
+      if (action === "complete") {return `Completing task ${params.id}`;}
       return `Task: ${action}`;
     case "window":
       if (action === "open")
-        return `Opening ${params.widgetType || "widget"}...`;
-      if (action === "close") return `Closing window ${params.windowId}`;
-      if (action === "list") return "Listing windows...";
+        {return `Opening ${params.widgetType || "widget"}...`;}
+      if (action === "close") {return `Closing window ${params.windowId}`;}
+      if (action === "list") {return "Listing windows...";}
       return `Window: ${action}`;
     case "note":
       if (action === "create")
-        return `Creating note: "${params.title || "Untitled"}"`;
-      if (action === "list") return "Listing notes...";
-      if (action === "read") return `Reading note...`;
+        {return `Creating note: "${params.title || "Untitled"}"`;}
+      if (action === "list") {return "Listing notes...";}
+      if (action === "read") {return `Reading note...`;}
       return `Note: ${action}`;
     case "terminal":
-      if (action === "open") return "Opening terminal...";
+      if (action === "open") {return "Opening terminal...";}
       if (action === "run")
-        return `Running: ${params.command?.substring(0, 60) || "command"}`;
+        {return `Running: ${params.command?.substring(0, 60) || "command"}`;}
       return `Terminal: ${action}`;
     case "file":
-      if (action === "list") return `Listing files in ${params.path || "~"}`;
-      if (action === "read") return `Reading ${params.path}`;
-      if (action === "write") return `Writing to ${params.path}`;
+      if (action === "list") {return `Listing files in ${params.path || "~"}`;}
+      if (action === "read") {return `Reading ${params.path}`;}
+      if (action === "write") {return `Writing to ${params.path}`;}
       return `File: ${action}`;
     case "notification":
       return `Sending notification: "${params.message || params.title || ""}"`;
     case "search":
       return `Searching: "${params.query || ""}"`;
     case "calendar":
-      if (params.title) return `Adding event: "${params.title}"`;
+      if (params.title) {return `Adding event: "${params.title}"`;}
       return "Calendar operation...";
     case "scheduler":
       if (action === "create_job")
-        return `Creating job: "${params.name || ""}"`;
+        {return `Creating job: "${params.name || ""}"`;}
       return `Scheduler: ${action}`;
     case "workflow":
       return `Workflow: ${action}`;

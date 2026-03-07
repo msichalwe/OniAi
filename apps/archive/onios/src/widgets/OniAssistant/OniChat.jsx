@@ -40,12 +40,12 @@ const markdownComponents = {
           (c) => c === null || c === undefined || c === "" || c === "\n",
         ))
     )
-      return null;
+      {return null;}
     return <p>{children}</p>;
   },
   // Handle images — open in media player if local, otherwise render normally
   img: ({ src, alt }) => {
-    if (!src) return null;
+    if (!src) {return null;}
     const isLocal =
       src.startsWith("/") || src.startsWith("~") || src.startsWith("file://");
     if (isLocal) {
@@ -71,7 +71,7 @@ const markdownComponents = {
   },
   // Make links that point to local files open in OniOS widgets
   a: ({ href, children }) => {
-    if (!href) return <span>{children}</span>;
+    if (!href) {return <span>{children}</span>;}
     const isFilePath =
       href.startsWith("/") ||
       href.startsWith("~") ||
@@ -95,23 +95,23 @@ const markdownComponents = {
   },
   // Collapse empty pre blocks (wraps fenced code blocks)
   pre: ({ children }) => {
-    if (!children) return null;
+    if (!children) {return null;}
     // Check if the inner code element is empty
     if (React.isValidElement(children)) {
       const codeChildren = children.props?.children;
-      if (!codeChildren || String(codeChildren).trim() === "") return null;
+      if (!codeChildren || String(codeChildren).trim() === "") {return null;}
     }
     return <pre>{children}</pre>;
   },
   // Collapse empty code blocks
   code: ({ children, className }) => {
     const text = String(children || "").trim();
-    if (!text) return null;
+    if (!text) {return null;}
     if (className) {
       return <code className={className}>{children}</code>;
     }
     // Check if it's a file path
-    if (/^[\/~].*\.\w+$/.test(text) || /^\/Users\//.test(text)) {
+    if (/^[/~].*\.\w+$/.test(text) || text.startsWith('/Users/')) {
       return (
         <button
           className="oni-chat-file-link oni-chat-file-path"
@@ -175,7 +175,7 @@ function openFileInOniOS(path) {
 }
 
 function formatTime(ts) {
-  if (!ts) return "";
+  if (!ts) {return "";}
   const d = new Date(ts);
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
@@ -217,7 +217,7 @@ export default function OniChat({
   // Show scroll button when not at bottom
   const handleScroll = useCallback(() => {
     const el = messagesContainerRef.current;
-    if (!el) return;
+    if (!el) {return;}
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
     setShowScrollBtn(!atBottom);
   }, []);
@@ -229,7 +229,7 @@ export default function OniChat({
   // Auto-grow textarea up to 5 lines
   const autoGrow = useCallback(() => {
     const el = inputRef.current;
-    if (!el) return;
+    if (!el) {return;}
     el.style.height = "auto";
     const lineHeight = 18;
     const maxHeight = lineHeight * 5 + 14; // 5 lines + padding
@@ -242,10 +242,10 @@ export default function OniChat({
 
   const handleSend = useCallback(() => {
     const text = input.trim();
-    if (!text || isStreaming) return;
+    if (!text || isStreaming) {return;}
     onSend?.(text);
     setInput("");
-    if (inputRef.current) inputRef.current.style.height = "auto";
+    if (inputRef.current) {inputRef.current.style.height = "auto";}
     inputRef.current?.focus();
   }, [input, isStreaming, onSend]);
 

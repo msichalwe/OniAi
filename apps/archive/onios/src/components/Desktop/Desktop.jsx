@@ -153,7 +153,7 @@ export default function Desktop() {
 
   const handleShortcutClick = (type) => {
     const reg = WIDGET_REGISTRY[type];
-    if (!reg) return;
+    if (!reg) {return;}
     openWindow(
       type,
       {},
@@ -287,7 +287,7 @@ export default function Desktop() {
         {/* Render all windows */}
         {windows.map((win) => {
           const reg = WIDGET_REGISTRY[win.widgetType];
-          if (!reg) return null;
+          if (!reg) {return null;}
           const WidgetComponent = reg.component;
           const IconComponent = reg.icon;
 

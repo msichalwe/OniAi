@@ -110,12 +110,12 @@ const useWorkflowStore = create(
                     workflows: s.workflows.filter((w) => w.id !== id),
                     activeWorkflowId: s.activeWorkflowId === id ? null : s.activeWorkflowId,
                 }));
-                if (wf) eventBus.emit('workflow:deleted', { id, name: wf.name });
+                if (wf) {eventBus.emit('workflow:deleted', { id, name: wf.name });}
             },
 
             duplicateWorkflow: (id) => {
                 const wf = get().workflows.find((w) => w.id === id);
-                if (!wf) return null;
+                if (!wf) {return null;}
                 const copy = {
                     ...JSON.parse(JSON.stringify(wf)),
                     id: nanoid(10),
@@ -251,9 +251,9 @@ const useWorkflowStore = create(
             addConnection: (wfId, from, to, label = null) => {
                 // Prevent duplicates and self-connections
                 const wf = get().workflows.find((w) => w.id === wfId);
-                if (!wf) return null;
-                if (from === to) return null;
-                if (wf.connections.find((c) => c.from === from && c.to === to)) return null;
+                if (!wf) {return null;}
+                if (from === to) {return null;}
+                if (wf.connections.find((c) => c.from === from && c.to === to)) {return null;}
 
                 const conn = {
                     id: nanoid(8),
@@ -291,7 +291,7 @@ const useWorkflowStore = create(
 
             getDownstream: (wfId, nodeId) => {
                 const wf = get().workflows.find((w) => w.id === wfId);
-                if (!wf) return [];
+                if (!wf) {return [];}
                 return wf.connections
                     .filter((c) => c.from === nodeId)
                     .map((c) => wf.nodes.find((n) => n.id === c.to))
@@ -300,7 +300,7 @@ const useWorkflowStore = create(
 
             getUpstream: (wfId, nodeId) => {
                 const wf = get().workflows.find((w) => w.id === wfId);
-                if (!wf) return [];
+                if (!wf) {return [];}
                 return wf.connections
                     .filter((c) => c.to === nodeId)
                     .map((c) => wf.nodes.find((n) => n.id === c.from))

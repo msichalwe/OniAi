@@ -135,9 +135,9 @@ export default function TaskManager({ windowId, widgetType }) {
     // Sort
     list.sort((a, b) => {
       if (sortBy === "date") {
-        if (!a.dueDate && !b.dueDate) return 0;
-        if (!a.dueDate) return 1;
-        if (!b.dueDate) return -1;
+        if (!a.dueDate && !b.dueDate) {return 0;}
+        if (!a.dueDate) {return 1;}
+        if (!b.dueDate) {return -1;}
         return a.dueDate.localeCompare(b.dueDate);
       }
       if (sortBy === "priority") {
@@ -151,7 +151,7 @@ export default function TaskManager({ windowId, widgetType }) {
   }, [tasks, filter, sortBy, todayStr]);
 
   const handleAddTask = () => {
-    if (!taskForm.title.trim()) return;
+    if (!taskForm.title.trim()) {return;}
     addTask({
       title: taskForm.title,
       description: taskForm.description,
@@ -172,7 +172,7 @@ export default function TaskManager({ windowId, widgetType }) {
   };
 
   const handleAddJob = () => {
-    if (!jobForm.name.trim() || !jobForm.command.trim()) return;
+    if (!jobForm.name.trim() || !jobForm.command.trim()) {return;}
     addScheduledJob({
       name: jobForm.name,
       command: jobForm.command,

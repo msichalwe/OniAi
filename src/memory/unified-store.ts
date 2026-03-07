@@ -159,7 +159,7 @@ export class UnifiedMemoryStore {
 
   constructor(dbPath: string) {
     const dir = path.dirname(dbPath);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(dir)) {fs.mkdirSync(dir, { recursive: true });}
     this.db = new DatabaseSync(dbPath);
     this.db.exec("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;");
     const { ftsAvailable } = ensureUnifiedSchema(this.db);
@@ -265,7 +265,7 @@ export class UnifiedMemoryStore {
     if (query.tags?.length) {
       const tagConds = query.tags.map(() => "b.tags LIKE ?");
       conditions.push(`(${tagConds.join(" OR ")})`);
-      for (const t of query.tags) params.push(`%"${t}"%`);
+      for (const t of query.tags) {params.push(`%"${t}"%`);}
     }
     if (query.after != null) { conditions.push("b.created_at_ms >= ?"); params.push(query.after); }
     if (query.before != null) { conditions.push("b.created_at_ms < ?"); params.push(query.before); }
@@ -355,7 +355,7 @@ export class UnifiedMemoryStore {
 
   updateEntity(id: string, patch: Partial<Pick<Entity, "name" | "aliases" | "facts" | "importance" | "mentionCount" | "metadata">>): Entity | undefined {
     const row = this.db.prepare(`SELECT * FROM entities WHERE id = ?`).get(id) as Record<string, unknown> | undefined;
-    if (!row) return undefined;
+    if (!row) {return undefined;}
     const prev = this.rowToEntity(row);
     const now = Date.now();
 
@@ -385,7 +385,7 @@ export class UnifiedMemoryStore {
     const params: (string | number | null)[] = [nameParam];
     if (type) { sql += " AND type = ?"; params.push(type); }
     let row = this.db.prepare(sql).get(...params) as Record<string, unknown> | undefined;
-    if (row) return this.rowToEntity(row);
+    if (row) {return this.rowToEntity(row);}
 
     // Fallback: scan aliases (JSON LIKE match, then verify in JS)
     sql = `SELECT * FROM entities WHERE aliases LIKE ?`;
@@ -394,7 +394,7 @@ export class UnifiedMemoryStore {
     const rows = this.db.prepare(sql).all(...aliasParams) as Record<string, unknown>[];
     for (const r of rows) {
       const entity = this.rowToEntity(r);
-      if (entity.aliases.some((a) => a.toLowerCase() === nameParam)) return entity;
+      if (entity.aliases.some((a) => a.toLowerCase() === nameParam)) {return entity;}
     }
     return undefined;
   }
@@ -402,10 +402,10 @@ export class UnifiedMemoryStore {
   /** Fuzzy entity search — matches partial names, substrings in aliases/facts. Returns ranked results. */
   fuzzyFindEntity(query: string, limit = 5): Entity[] {
     const q = query.toLowerCase().trim();
-    if (!q) return [];
+    if (!q) {return [];}
     // 1. Exact name match
     const exact = this.findEntity(query);
-    if (exact) return [exact];
+    if (exact) {return [exact];}
     // 2. Substring match on name, aliases, facts
     const like = `%${q}%`;
     const rows = this.db.prepare(
@@ -433,7 +433,7 @@ export class UnifiedMemoryStore {
   /** Deep detail on a single entity — all facts, relationships (with names), linked bubbles. */
   entityDetail(entityId: string): { entity: Entity; relationships: { relationship: Relationship; otherEntity: Entity | null }[]; linkedBubbles: MemoryBubble[] } | null {
     const row = this.db.prepare(`SELECT * FROM entities WHERE id = ?`).get(entityId) as Record<string, unknown> | undefined;
-    if (!row) return null;
+    if (!row) {return null;}
     const entity = this.rowToEntity(row);
     const rels = this.getRelationships(entityId);
     const relationships = rels.map((rel) => {
@@ -615,7 +615,7 @@ export class UnifiedMemoryStore {
 
   getProfile(): UserProfile {
     const row = this.db.prepare(`SELECT data FROM user_profile WHERE id = 'default'`).get() as { data: string } | undefined;
-    if (row) return JSON.parse(row.data) as UserProfile;
+    if (row) {return JSON.parse(row.data) as UserProfile;}
     return emptyProfile();
   }
 
@@ -668,13 +668,13 @@ export class UnifiedMemoryStore {
     connections: string[];
   } {
     const words = context.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
-    if (words.length === 0) return { bubbles: [], entities: [], connections: [] };
+    if (words.length === 0) {return { bubbles: [], entities: [], connections: [] };}
 
     const allBubbles = this.queryBubbles({ limit: 200 });
     const scoredBubbles = allBubbles.map((b) => {
       const contentLower = b.content.toLowerCase();
       const matchCount = words.filter((w) => contentLower.includes(w)).length;
-      if (matchCount === 0) return { bubble: b, score: 0 };
+      if (matchCount === 0) {return { bubble: b, score: 0 };}
       const recencyBoost = Math.max(0, 1 - (Date.now() - b.createdAtMs) / (30 * 86_400_000));
       return { bubble: b, score: matchCount * 0.6 + b.importance * 0.2 + recencyBoost * 0.2 };
     }).filter((s) => s.score > 0);
@@ -686,7 +686,7 @@ export class UnifiedMemoryStore {
     const entities: Entity[] = [];
     for (const eid of entityIds) {
       const row = this.db.prepare(`SELECT * FROM entities WHERE id = ?`).get(eid) as Record<string, unknown> | undefined;
-      if (row) entities.push(this.rowToEntity(row));
+      if (row) {entities.push(this.rowToEntity(row));}
     }
 
     const connections: string[] = [];
@@ -708,7 +708,7 @@ export class UnifiedMemoryStore {
   buildContextPrompt(maxChars = 2000): string | null {
     const bCount = (this.db.prepare(`SELECT COUNT(*) as c FROM bubbles WHERE superseded_by IS NULL`).get() as { c: number }).c;
     const eCount = (this.db.prepare(`SELECT COUNT(*) as c FROM entities`).get() as { c: number }).c;
-    if (bCount === 0 && eCount === 0) return null;
+    if (bCount === 0 && eCount === 0) {return null;}
 
     const lines: string[] = [];
     lines.push("[Memory Bubbles — structured context]");
@@ -758,7 +758,7 @@ export class UnifiedMemoryStore {
 
   deleteBubble(id: string): boolean {
     const row = this.db.prepare(`SELECT * FROM bubbles WHERE id = ?`).get(id) as Record<string, unknown> | undefined;
-    if (!row) return false;
+    if (!row) {return false;}
     const bubble = this.rowToBubble(row);
     this.db.prepare(`DELETE FROM bubbles WHERE id = ?`).run(id);
     if (this.ftsAvailable) {
@@ -770,7 +770,7 @@ export class UnifiedMemoryStore {
 
   deleteEntity(id: string): boolean {
     const row = this.db.prepare(`SELECT * FROM entities WHERE id = ?`).get(id) as Record<string, unknown> | undefined;
-    if (!row) return false;
+    if (!row) {return false;}
     this.db.prepare(`DELETE FROM entities WHERE id = ?`).run(id);
     this.db.prepare(`DELETE FROM relationships WHERE from_entity_id = ? OR to_entity_id = ?`).run(id, id);
     this.recordHistory(id, "entity", "delete", this.rowToEntity(row), null);
@@ -779,7 +779,7 @@ export class UnifiedMemoryStore {
 
   deletePreference(id: string): boolean {
     const row = this.db.prepare(`SELECT * FROM preferences WHERE id = ?`).get(id) as Record<string, unknown> | undefined;
-    if (!row) return false;
+    if (!row) {return false;}
     this.db.prepare(`DELETE FROM preferences WHERE id = ?`).run(id);
     this.recordHistory(id, "preference", "delete", this.rowToPreference(row), null);
     return true;
@@ -816,10 +816,10 @@ export class UnifiedMemoryStore {
 
   /** Import data from a legacy JSON bubble store file. */
   migrateFromJson(jsonStorePath: string) {
-    if (!fs.existsSync(jsonStorePath)) return;
+    if (!fs.existsSync(jsonStorePath)) {return;}
     const raw = fs.readFileSync(jsonStorePath, "utf-8");
     const store = JSON.parse(raw) as MemoryBubbleStore;
-    if (store.version !== 2) return;
+    if (store.version !== 2) {return;}
 
     const insertBubble = this.db.prepare(
       `INSERT OR IGNORE INTO bubbles (id, content, category, source, entity_ids, linked_bubble_ids, tags, importance, session_key, created_at_ms, last_accessed_at_ms, recall_count)

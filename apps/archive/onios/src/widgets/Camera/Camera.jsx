@@ -74,7 +74,7 @@ export default function CameraWidget({ windowId, widgetType }) {
               (f) =>
                 !f.isDirectory && /\.(jpg|jpeg|png|webp|gif)$/i.test(f.name),
             )
-            .sort((a, b) => (b.modified || 0) - (a.modified || 0));
+            .toSorted((a, b) => (b.modified || 0) - (a.modified || 0));
           setPhotos(imageFiles);
         }
       }
@@ -136,13 +136,13 @@ export default function CameraWidget({ windowId, widgetType }) {
       if (stream) {
         stream.getTracks().forEach((t) => t.stop());
       }
-      if (countdownRef.current) clearInterval(countdownRef.current);
+      if (countdownRef.current) {clearInterval(countdownRef.current);}
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Switch camera
   const switchCamera = useCallback(() => {
-    if (devices.length <= 1) return;
+    if (devices.length <= 1) {return;}
     const currentIdx = devices.findIndex((d) => d.deviceId === activeDeviceId);
     const nextIdx = (currentIdx + 1) % devices.length;
     startCamera(devices[nextIdx].deviceId);
@@ -150,7 +150,7 @@ export default function CameraWidget({ windowId, widgetType }) {
 
   // Capture photo
   const capturePhoto = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current) {return;}
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -201,7 +201,7 @@ export default function CameraWidget({ windowId, widgetType }) {
   captureRef.current = capturePhoto;
   useEffect(() => {
     const handler = () => {
-      if (captureRef.current) captureRef.current();
+      if (captureRef.current) {captureRef.current();}
     };
     eventBus.on("camera:capture", handler);
     return () => eventBus.off("camera:capture", handler);
@@ -241,7 +241,7 @@ export default function CameraWidget({ windowId, widgetType }) {
       try {
         await fetch(`/api/fs/delete?path=${encodeURIComponent(photoPath)}`);
         await loadPhotos();
-        if (selectedPhoto?.path === photoPath) setSelectedPhoto(null);
+        if (selectedPhoto?.path === photoPath) {setSelectedPhoto(null);}
       } catch {
         /* ignore */
       }
@@ -252,7 +252,7 @@ export default function CameraWidget({ windowId, widgetType }) {
   // Gallery navigation
   const navigateGallery = useCallback(
     (dir) => {
-      if (!selectedPhoto || photos.length === 0) return;
+      if (!selectedPhoto || photos.length === 0) {return;}
       const idx = photos.findIndex((p) => p.path === selectedPhoto.path);
       const nextIdx = (idx + dir + photos.length) % photos.length;
       setSelectedPhoto(photos[nextIdx]);

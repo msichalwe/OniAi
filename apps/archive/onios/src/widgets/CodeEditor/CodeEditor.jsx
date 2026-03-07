@@ -46,7 +46,7 @@ const EXT_ICONS = {
 };
 
 const getIcon = (name, isDir) => {
-  if (isDir) return <Folder size={14} className="ce-icon-folder" />;
+  if (isDir) {return <Folder size={14} className="ce-icon-folder" />;}
   const ext = name.includes(".") ? name.split(".").pop().toLowerCase() : "";
   const Icon = EXT_ICONS[ext] || File;
   return <Icon size={14} className="ce-icon-file" />;
@@ -67,7 +67,7 @@ export default function CodeEditor({
 }) {
   // Derive initial root: explicit projectPath > file's parent dir > empty (shows picker)
   const deriveRoot = () => {
-    if (projectPath) return projectPath;
+    if (projectPath) {return projectPath;}
     if (initialFile) {
       const parts = initialFile.split("/");
       parts.pop();
@@ -120,7 +120,7 @@ export default function CodeEditor({
       getContent: (path) => fileContents[path || activeTab] || null,
       setContent: (path, content) => {
         const target = path || activeTab;
-        if (!target) return false;
+        if (!target) {return false;}
         setFileContents((prev) => ({ ...prev, [target]: content }));
         setDirtyFiles((prev) => new Set(prev).add(target));
         return true;
@@ -131,7 +131,7 @@ export default function CodeEditor({
       isDirty: (path) => dirtyFiles.has(path || activeTab),
       closeFile: (path) => {
         const target = path || activeTab;
-        if (target) closeTabByPath(target);
+        if (target) {closeTabByPath(target);}
       },
     };
     return () => {
@@ -146,15 +146,15 @@ export default function CodeEditor({
         `/api/fs/list?path=${encodeURIComponent(dirPath)}`,
       );
       const data = await res.json();
-      if (data.error) return [];
+      if (data.error) {return [];}
       return data.items
         .map((item) => ({
           ...item,
           children: item.isDirectory ? null : undefined,
         }))
-        .sort((a, b) => {
-          if (a.isDirectory && !b.isDirectory) return -1;
-          if (!a.isDirectory && b.isDirectory) return 1;
+        .toSorted((a, b) => {
+          if (a.isDirectory && !b.isDirectory) {return -1;}
+          if (!a.isDirectory && b.isDirectory) {return 1;}
           return a.name.localeCompare(b.name);
         });
     } catch {
@@ -164,7 +164,7 @@ export default function CodeEditor({
 
   // Load tree when rootPath is set (either from props or folder picker)
   useEffect(() => {
-    if (!rootPath) return;
+    if (!rootPath) {return;}
     let active = true;
     setTreeLoading(true);
 
@@ -176,7 +176,7 @@ export default function CodeEditor({
         }
       })
       .catch(() => {
-        if (active) setTreeLoading(false);
+        if (active) {setTreeLoading(false);}
       });
 
     return () => {
@@ -186,7 +186,7 @@ export default function CodeEditor({
 
   // Load quick-access folders for the picker (only when no root)
   useEffect(() => {
-    if (rootPath) return;
+    if (rootPath) {return;}
     fetch("/api/fs/home")
       .then((r) => r.json())
       .then((data) => {
@@ -198,7 +198,7 @@ export default function CodeEditor({
             if (d.items) {
               const dirs = d.items
                 .filter((i) => i.isDirectory && !i.name.startsWith("."))
-                .sort((a, b) => a.name.localeCompare(b.name))
+                .toSorted((a, b) => a.name.localeCompare(b.name))
                 .slice(0, 20);
               setQuickFolders(dirs);
               setFolderInput(home);
@@ -317,7 +317,7 @@ export default function CodeEditor({
 
   // Save active file
   const saveActiveFile = async () => {
-    if (!activeTab || !dirtyFiles.has(activeTab)) return;
+    if (!activeTab || !dirtyFiles.has(activeTab)) {return;}
     setSaving(true);
     try {
       const res = await fetch("/api/fs/write", {
@@ -427,7 +427,7 @@ export default function CodeEditor({
   };
 
   const renderTree = (items, depth = 0) => {
-    if (!items) return null;
+    if (!items) {return null;}
     return items.map((item) => {
       const isExpanded = expandedDirs.has(item.path);
       // Filter by search

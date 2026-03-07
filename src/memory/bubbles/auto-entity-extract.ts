@@ -23,7 +23,7 @@ function getStore(cfg: OniAIConfig, agentId: string): UnifiedMemoryStore {
   const stateDir = resolveStateDir(process.env, os.homedir);
   const dbPath = path.join(stateDir, "memory", `${agentId}-bubbles.sqlite`);
   const cached = STORE_CACHE.get(dbPath);
-  if (cached) return cached;
+  if (cached) {return cached;}
 
   const store = new UnifiedMemoryStore(dbPath);
   // Auto-migrate from legacy JSON
@@ -89,12 +89,12 @@ export function extractFromText(text: string): ExtractionResult {
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(text)) !== null) {
       // Handle "my X <Name>" vs "<Name> is my X" patterns
-      const relationWord = match[1]!;
+      const relationWord = match[1];
       let name: string;
-      if (/kids?|children/i.test(match[0]!) && match[1] && match[2]) {
+      if (/kids?|children/i.test(match[0]) && match[1] && match[2]) {
         // "kids named X and Y" — extract both names from groups 1 and 2
-        const name1 = match[1]!.trim();
-        const name2 = match[2]!.trim();
+        const name1 = match[1].trim();
+        const name2 = match[2].trim();
         for (const n of [name1, name2]) {
           if (n.length >= 2 && !seenEntityNames.has(n.toLowerCase())) {
             seenEntityNames.add(n.toLowerCase());
@@ -115,10 +115,10 @@ export function extractFromText(text: string): ExtractionResult {
         name = (match[2] ?? "").trim();
       }
 
-      if (name.length < 2 || seenEntityNames.has(name.toLowerCase())) continue;
+      if (name.length < 2 || seenEntityNames.has(name.toLowerCase())) {continue;}
       seenEntityNames.add(name.toLowerCase());
 
-      const cleanRelation = match[0]!.replace(name, "").replace(/\bmy\s+/i, "").replace(/\s+is\s+/i, "").trim();
+      const cleanRelation = match[0].replace(name, "").replace(/\bmy\s+/i, "").replace(/\s+is\s+/i, "").trim();
       entities.push({
         name,
         type: entityType,
@@ -134,17 +134,17 @@ export function extractFromText(text: string): ExtractionResult {
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(text)) !== null) {
       const value = match[1]?.trim();
-      if (!value || value.length < 3) continue;
+      if (!value || value.length < 3) {continue;}
 
       // "call me X" → name preference
-      if (/call me|my name is|I'm|i am|I go by/i.test(match[0]!)) {
+      if (/call me|my name is|I'm|i am|I go by/i.test(match[0])) {
         preferences.push({ category: "personal", subject: "Preferred name", value });
         continue;
       }
 
       // Clean up the value — stop at sentence boundaries
       const cleanValue = value.replace(/[.!?].*$/, "").trim();
-      if (cleanValue.length < 3) continue;
+      if (cleanValue.length < 3) {continue;}
 
       const subject = cleanValue.slice(0, 40).replace(/\s+\S*$/, ""); // First ~40 chars as subject
       preferences.push({ category, subject, value: cleanValue });

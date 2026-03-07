@@ -50,7 +50,7 @@ const BASE_CATEGORIES = [
 ];
 
 function formatDate(ts) {
-  if (!ts) return "--";
+  if (!ts) {return "--";}
   const d = new Date(ts);
   return (
     d.toLocaleDateString() +
@@ -148,7 +148,7 @@ export default function Storage({ windowId, widgetType }) {
   const handleFileImport = useCallback(
     (e) => {
       const file = e.target.files?.[0];
-      if (!file) return;
+      if (!file) {return;}
       const reader = new FileReader();
       reader.onload = (ev) => {
         try {
@@ -166,7 +166,7 @@ export default function Storage({ windowId, widgetType }) {
   );
 
   const handleAdd = useCallback(() => {
-    if (!addForm.namespace || !addForm.key) return;
+    if (!addForm.namespace || !addForm.key) {return;}
     let value;
     try {
       value = JSON.parse(addForm.value);
@@ -183,7 +183,7 @@ export default function Storage({ windowId, widgetType }) {
     (fullKey, e) => {
       e.stopPropagation();
       deleteKey(fullKey);
-      if (inspectingKey === fullKey) setInspecting(null);
+      if (inspectingKey === fullKey) {setInspecting(null);}
     },
     [deleteKey, inspectingKey, setInspecting],
   );

@@ -27,12 +27,12 @@ export default function Window({ windowData, isFocused, children }) {
   // --- Dragging (direct DOM during move, commit on mouseup) ---
   const handleDragStart = useCallback(
     (e) => {
-      if (isMaximized) return;
+      if (isMaximized) {return;}
       e.preventDefault();
       focusWindow(id);
 
       const el = windowRef.current;
-      if (!el) return;
+      if (!el) {return;}
 
       const startX = e.clientX - position.x;
       const startY = e.clientY - position.y;
@@ -42,7 +42,7 @@ export default function Window({ windowData, isFocused, children }) {
       el.classList.add("dragging");
 
       const handleDrag = (e) => {
-        if (rafRef.current) return;
+        if (rafRef.current) {return;}
         rafRef.current = requestAnimationFrame(() => {
           const maxX = window.innerWidth - 100;
           const maxY = window.innerHeight - 64;
@@ -77,13 +77,13 @@ export default function Window({ windowData, isFocused, children }) {
   // --- Resizing (direct DOM during resize, commit on mouseup) ---
   const handleResizeStart = useCallback(
     (dir, e) => {
-      if (isMaximized) return;
+      if (isMaximized) {return;}
       e.preventDefault();
       e.stopPropagation();
       focusWindow(id);
 
       const el = windowRef.current;
-      if (!el) return;
+      if (!el) {return;}
 
       const startX = e.clientX;
       const startY = e.clientY;
@@ -102,7 +102,7 @@ export default function Window({ windowData, isFocused, children }) {
       el.classList.add("dragging");
 
       const handleResize = (e) => {
-        if (rafRef.current) return;
+        if (rafRef.current) {return;}
         rafRef.current = requestAnimationFrame(() => {
           const dx = e.clientX - startX;
           const dy = e.clientY - startY;
@@ -111,12 +111,12 @@ export default function Window({ windowData, isFocused, children }) {
           curX = startPosX;
           curY = startPosY;
 
-          if (dir.includes("e")) curW = Math.max(minW, startW + dx);
+          if (dir.includes("e")) {curW = Math.max(minW, startW + dx);}
           if (dir.includes("w")) {
             curW = Math.max(minW, startW - dx);
             curX = startPosX + (startW - curW);
           }
-          if (dir.includes("s")) curH = Math.max(minH, startH + dy);
+          if (dir.includes("s")) {curH = Math.max(minH, startH + dy);}
           if (dir.includes("n")) {
             curH = Math.max(minH, startH - dy);
             curY = startPosY + (startH - curH);

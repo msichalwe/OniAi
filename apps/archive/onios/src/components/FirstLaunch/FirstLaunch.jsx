@@ -154,7 +154,7 @@ export default function FirstLaunch({ onComplete }) {
   const selectGateway = useCallback((type) => {
     setGatewayType(type);
     const gw = GATEWAY_TYPES.find((g) => g.id === type);
-    if (gw) setGatewayUrl(gw.defaultUrl);
+    if (gw) {setGatewayUrl(gw.defaultUrl);}
   }, []);
 
   // ─── Connection Test ────────────────────────────────
@@ -180,7 +180,7 @@ export default function FirstLaunch({ onComplete }) {
       const res = await fetch("/api/oni/status", {
         signal: AbortSignal.timeout(8000),
       });
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      if (!res.ok) {throw new Error(`Server returned ${res.status}`);}
       const data = await res.json();
 
       // Check if gateway is reachable
@@ -335,8 +335,8 @@ export default function FirstLaunch({ onComplete }) {
 
   const handleCustomUpload = useCallback((e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) return;
+    if (!file) {return;}
+    if (!file.type.startsWith("image/")) {return;}
     if (file.size > 5 * 1024 * 1024) {
       alert("Image must be under 5 MB");
       return;
@@ -352,22 +352,22 @@ export default function FirstLaunch({ onComplete }) {
   const clearCustom = useCallback(() => {
     setCustomWallpaper(null);
     setSelectedWallpaper("gradient-dusk");
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (fileInputRef.current) {fileInputRef.current.value = "";}
   }, []);
 
   const canGoNext = () => {
-    if (currentStep === "welcome") return true;
-    if (currentStep === "connect") return connectionStatus === "success";
-    if (currentStep === "skills") return allSkillsReady;
-    if (currentStep === "personalize") return true;
+    if (currentStep === "welcome") {return true;}
+    if (currentStep === "connect") {return connectionStatus === "success";}
+    if (currentStep === "skills") {return allSkillsReady;}
+    if (currentStep === "personalize") {return true;}
     return false;
   };
 
   const goNext = () => {
-    if (step < STEPS.length - 1 && canGoNext()) setStep(step + 1);
+    if (step < STEPS.length - 1 && canGoNext()) {setStep(step + 1);}
   };
   const goBack = () => {
-    if (step > 0) setStep(step - 1);
+    if (step > 0) {setStep(step - 1);}
   };
 
   // ─── Render ─────────────────────────────────────────

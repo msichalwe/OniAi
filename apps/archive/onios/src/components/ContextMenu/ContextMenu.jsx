@@ -26,7 +26,7 @@ export default function ContextMenu({ x, y, items, onClose }) {
     };
     const handleScroll = () => onClose();
     const handleKey = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {onClose();}
     };
 
     document.addEventListener("mousedown", handleClick);

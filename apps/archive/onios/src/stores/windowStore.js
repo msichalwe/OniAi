@@ -66,7 +66,7 @@ function findBestPosition(existingWindows, width, height) {
         }
     }
 
-    if (bestPos) return { position: bestPos, hasRoom: false };
+    if (bestPos) {return { position: bestPos, hasRoom: false };}
 
     const offset = (existingWindows.length % 8) * 30;
     return { position: { x: 80 + offset, y: 60 + offset }, hasRoom: false };
@@ -80,15 +80,15 @@ function findBestPosition(existingWindows, width, height) {
 function pickWindowToClose(windows, focusedId) {
     const candidates = windows
         .filter(w => w.id !== focusedId)
-        .sort((a, b) => {
+        .toSorted((a, b) => {
             // Prefer closing minimized windows
-            if (a.isMinimized && !b.isMinimized) return -1;
-            if (!a.isMinimized && b.isMinimized) return 1;
+            if (a.isMinimized && !b.isMinimized) {return -1;}
+            if (!a.isMinimized && b.isMinimized) {return 1;}
             // Prefer closing non-singleton
             const aReg = WIDGET_REGISTRY[a.widgetType];
             const bReg = WIDGET_REGISTRY[b.widgetType];
-            if (!aReg?.singleton && bReg?.singleton) return -1;
-            if (aReg?.singleton && !bReg?.singleton) return 1;
+            if (!aReg?.singleton && bReg?.singleton) {return -1;}
+            if (aReg?.singleton && !bReg?.singleton) {return 1;}
             // Oldest interaction first
             return (a.lastInteractedAt || 0) - (b.lastInteractedAt || 0);
         });
@@ -198,7 +198,7 @@ const useWindowStore = create(
                 set(state => ({
                     windows: state.windows.filter(w => w.id !== id),
                 }));
-                if (win) eventBus.emit('window:closed', { id, widgetType: win.widgetType, title: win.title });
+                if (win) {eventBus.emit('window:closed', { id, widgetType: win.widgetType, title: win.title });}
             },
 
             focusWindow: (id) => {
@@ -211,7 +211,7 @@ const useWindowStore = create(
                     ),
                 }));
                 const win = get().windows.find(w => w.id === id);
-                if (win) eventBus.emit('window:focused', { id, widgetType: win.widgetType, title: win.title });
+                if (win) {eventBus.emit('window:focused', { id, widgetType: win.widgetType, title: win.title });}
             },
 
             minimizeWindow: (id) => {
@@ -221,7 +221,7 @@ const useWindowStore = create(
                     ),
                 }));
                 const win = get().windows.find(w => w.id === id);
-                if (win) eventBus.emit('window:minimized', { id, widgetType: win.widgetType, title: win.title });
+                if (win) {eventBus.emit('window:minimized', { id, widgetType: win.widgetType, title: win.title });}
             },
 
             restoreWindow: (id) => {
@@ -237,7 +237,7 @@ const useWindowStore = create(
                 const before = get().windows.find(w => w.id === id);
                 set(state => ({
                     windows: state.windows.map(w => {
-                        if (w.id !== id) return w;
+                        if (w.id !== id) {return w;}
                         if (w.isMaximized) {
                             const restored = w.preMaximizeState || { position: w.position, size: w.size };
                             return {
@@ -341,7 +341,7 @@ const useWindowStore = create(
              */
             getFocusedWindow: () => {
                 const wins = get().windows.filter(w => !w.isMinimized);
-                if (wins.length === 0) return null;
+                if (wins.length === 0) {return null;}
                 return wins.reduce((a, b) => (a.zIndex > b.zIndex ? a : b));
             },
 

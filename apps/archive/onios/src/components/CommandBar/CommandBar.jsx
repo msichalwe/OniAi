@@ -54,7 +54,7 @@ export default function CommandBar() {
 
     if (!query.trim()) {
       // Show recent commands when empty
-      const recent = [...commandHistory].reverse().slice(0, 6);
+      const recent = [...commandHistory].toReversed().slice(0, 6);
       recent.forEach((h) => {
         items.push({
           type: "recent",
@@ -130,7 +130,7 @@ export default function CommandBar() {
 
   // Debounced universal search for document content
   const doUniversalSearch = useCallback((q) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (debounceRef.current) {clearTimeout(debounceRef.current);}
     if (!q.trim() || q.trim().length < 2) {
       setUniversalResults(null);
       return;
@@ -202,7 +202,7 @@ export default function CommandBar() {
     closeCommandBar();
   };
 
-  if (!isCommandBarOpen) return null;
+  if (!isCommandBarOpen) {return null;}
 
   // Group suggestions by type for section headers
   const grouped = [];

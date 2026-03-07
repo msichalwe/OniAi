@@ -50,14 +50,14 @@ export default function OniWidget({ visible, onClose }) {
   const handleDragStart = useCallback((e) => {
     e.preventDefault();
     const el = widgetRef.current;
-    if (!el) return;
+    if (!el) {return;}
     const rect = el.getBoundingClientRect();
     dragOffset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
     setIsDragging(true);
   }, []);
 
   useEffect(() => {
-    if (!isDragging) return;
+    if (!isDragging) {return;}
     const onMove = (e) => {
       setPosition({
         x: e.clientX - dragOffset.current.x,
@@ -77,7 +77,7 @@ export default function OniWidget({ visible, onClose }) {
   const openChat = useCallback(() => {
     const { openWindow } = useWindowStore.getState();
     const reg = WIDGET_REGISTRY["oni-chat"];
-    if (!reg) return;
+    if (!reg) {return;}
     openWindow(
       "oni-chat",
       {},
@@ -92,7 +92,7 @@ export default function OniWidget({ visible, onClose }) {
     );
   }, []);
 
-  if (!visible) return null;
+  if (!visible) {return null;}
 
   const style = {};
   if (position.x !== null) {

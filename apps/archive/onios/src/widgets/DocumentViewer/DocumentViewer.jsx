@@ -74,7 +74,7 @@ export default function DocumentViewer({ filePath: initialPath }) {
   // ─── Load Document ───────────────────────────────────────
 
   const loadDocument = useCallback(async (path) => {
-    if (!path) return;
+    if (!path) {return;}
     setLoading(true);
     setError(null);
     setDocText(null);
@@ -114,7 +114,7 @@ export default function DocumentViewer({ filePath: initialPath }) {
   }, []);
 
   useEffect(() => {
-    if (initialPath) loadDocument(initialPath);
+    if (initialPath) {loadDocument(initialPath);}
   }, [initialPath]);
 
   // ─── Instance API ────────────────────────────────────────
@@ -152,12 +152,12 @@ export default function DocumentViewer({ filePath: initialPath }) {
       const start = Math.max(0, idx - 30);
       const end = Math.min(docText.length, idx + search.length + 30);
       let snippet = docText.substring(start, end).replace(/\n/g, " ");
-      if (start > 0) snippet = "..." + snippet;
-      if (end < docText.length) snippet += "...";
+      if (start > 0) {snippet = "..." + snippet;}
+      if (end < docText.length) {snippet += "...";}
 
       matches.push({ line, position: idx, snippet });
       idx += search.length;
-      if (matches.length >= 200) break;
+      if (matches.length >= 200) {break;}
     }
 
     setSearchResults(matches);
@@ -166,8 +166,8 @@ export default function DocumentViewer({ filePath: initialPath }) {
   }, [docText]);
 
   useEffect(() => {
-    if (searchQuery) performSearch(searchQuery);
-    else setSearchResults([]);
+    if (searchQuery) {performSearch(searchQuery);}
+    else {setSearchResults([]);}
   }, [searchQuery, performSearch]);
 
   // ─── Keyboard Shortcuts ──────────────────────────────────
@@ -196,7 +196,7 @@ export default function DocumentViewer({ filePath: initialPath }) {
   // ─── Save (plain text) ──────────────────────────────────
 
   const saveFile = async () => {
-    if (!filePath || !isDirty) return;
+    if (!filePath || !isDirty) {return;}
     setSaving(true);
     try {
       const res = await fetch("/api/fs/write", {
@@ -225,7 +225,7 @@ export default function DocumentViewer({ filePath: initialPath }) {
   // ─── Highlight search matches in text ────────────────────
 
   const highlightText = (text) => {
-    if (!searchQuery || searchResults.length === 0) return text;
+    if (!searchQuery || searchResults.length === 0) {return text;}
     const parts = [];
     const lower = text.toLowerCase();
     const needle = searchQuery.toLowerCase();
@@ -237,7 +237,7 @@ export default function DocumentViewer({ filePath: initialPath }) {
     let idx = 0;
 
     while ((idx = lower.indexOf(needle, idx)) !== -1 && count < maxHighlights) {
-      if (idx > lastIdx) parts.push(text.substring(lastIdx, idx));
+      if (idx > lastIdx) {parts.push(text.substring(lastIdx, idx));}
       parts.push(
         <mark key={idx} className="dv-highlight">
           {text.substring(idx, idx + searchQuery.length)}
@@ -248,14 +248,14 @@ export default function DocumentViewer({ filePath: initialPath }) {
       count++;
     }
 
-    if (lastIdx < text.length) parts.push(text.substring(lastIdx));
+    if (lastIdx < text.length) {parts.push(text.substring(lastIdx));}
     return parts;
   };
 
   // ─── Render ──────────────────────────────────────────────
 
   const renderDocType = () => {
-    if (!docMeta) return null;
+    if (!docMeta) {return null;}
     const ext = docMeta.ext?.toUpperCase() || "FILE";
     const icons = {
       PDF: <FileText size={14} />,
@@ -273,12 +273,12 @@ export default function DocumentViewer({ filePath: initialPath }) {
   };
 
   const renderSpreadsheet = () => {
-    if (!sheetData || !activeSheet) return null;
+    if (!sheetData || !activeSheet) {return null;}
     const sheet = sheetData[activeSheet];
-    if (!sheet) return null;
+    if (!sheet) {return null;}
 
     const rows = sheet.json || [];
-    if (rows.length === 0) return <div className="dv-empty-sheet">Empty sheet</div>;
+    if (rows.length === 0) {return <div className="dv-empty-sheet">Empty sheet</div>;}
 
     const headers = Object.keys(rows[0]);
 
@@ -329,7 +329,7 @@ export default function DocumentViewer({ filePath: initialPath }) {
   };
 
   const renderTextContent = () => {
-    if (!docText) return null;
+    if (!docText) {return null;}
 
     if (isEditing) {
       return (
@@ -399,7 +399,7 @@ export default function DocumentViewer({ filePath: initialPath }) {
             className={`dv-tool-btn ${showSearch ? "active" : ""}`}
             onClick={() => {
               setShowSearch(!showSearch);
-              if (!showSearch) setTimeout(() => searchInputRef.current?.focus(), 50);
+              if (!showSearch) {setTimeout(() => searchInputRef.current?.focus(), 50);}
             }}
             title="Search (Ctrl+F)"
           >
@@ -475,7 +475,7 @@ export default function DocumentViewer({ filePath: initialPath }) {
                 value={pickerPath}
                 onChange={(e) => setPickerPath(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") openFilePath(pickerPath);
+                  if (e.key === "Enter") {openFilePath(pickerPath);}
                 }}
                 autoFocus
               />

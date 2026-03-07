@@ -67,7 +67,7 @@ const STORE_CACHE = new Map<string, UnifiedMemoryStore>();
 function getOrCreateStore(cfg: OniAIConfig, agentId: string): UnifiedMemoryStore {
   const dbPath = resolveUnifiedDbPath(cfg, agentId);
   const cached = STORE_CACHE.get(dbPath);
-  if (cached) return cached;
+  if (cached) {return cached;}
 
   const store = new UnifiedMemoryStore(dbPath);
 
@@ -93,7 +93,7 @@ export function createMemoryBubbleTool(options: {
   workspaceDir?: string;
 }): AnyAgentTool | null {
   const cfg = options.config;
-  if (!cfg) return null;
+  if (!cfg) {return null;}
 
   const agentId = resolveSessionAgentId({
     sessionKey: options.agentSessionKey,
@@ -185,7 +185,7 @@ function executeAction(
         { agentId },
       );
       // Touch returned bubbles to track recall
-      for (const b of bubbles) store.touchBubble(b.id);
+      for (const b of bubbles) {store.touchBubble(b.id);}
       return { ok: true, count: bubbles.length, bubbles };
     }
 
@@ -264,9 +264,9 @@ function executeAction(
 
     case "entity_detail": {
       const entityId = readStringParam(params, "entity_id") ?? readStringParam(params, "id");
-      if (!entityId) return { error: "entity_id or id is required" };
+      if (!entityId) {return { error: "entity_id or id is required" };}
       const detail = store.entityDetail(entityId);
-      if (!detail) return { ok: false, message: "entity not found" };
+      if (!detail) {return { ok: false, message: "entity not found" };}
       return { ok: true, ...detail };
     }
 
@@ -308,13 +308,13 @@ function executeAction(
     case "update_profile": {
       const patch: Record<string, unknown> = {};
       const name = readStringParam(params, "name");
-      if (name) patch.name = name;
+      if (name) {patch.name = name;}
       const activeProjects = params.active_projects as string[] | undefined;
-      if (activeProjects) patch.activeProjects = activeProjects;
+      if (activeProjects) {patch.activeProjects = activeProjects;}
       const interests = params.interests as string[] | undefined;
-      if (interests) patch.interests = interests;
+      if (interests) {patch.interests = interests;}
       const goals = params.goals as string[] | undefined;
-      if (goals) patch.goals = goals;
+      if (goals) {patch.goals = goals;}
       store.updateProfile(patch);
       return { ok: true, profile: store.getProfile() };
     }

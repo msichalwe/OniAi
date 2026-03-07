@@ -11,23 +11,23 @@ describe("extractFromText", () => {
   it("extracts 'my wife <Name>' pattern", () => {
     const result = extractFromText("I was talking to my wife Chioni today");
     expect(result.entities).toHaveLength(1);
-    expect(result.entities[0]!.name).toBe("Chioni");
-    expect(result.entities[0]!.type).toBe("person");
-    expect(result.entities[0]!.relation?.type).toBe("spouse");
+    expect(result.entities[0].name).toBe("Chioni");
+    expect(result.entities[0].type).toBe("person");
+    expect(result.entities[0].relation?.type).toBe("spouse");
   });
 
   it("extracts 'my husband <Name>' pattern", () => {
     const result = extractFromText("my husband James went to work");
     expect(result.entities).toHaveLength(1);
-    expect(result.entities[0]!.name).toBe("James");
-    expect(result.entities[0]!.relation?.type).toBe("spouse");
+    expect(result.entities[0].name).toBe("James");
+    expect(result.entities[0].relation?.type).toBe("spouse");
   });
 
   it("extracts '<Name> is my wife' pattern", () => {
     const result = extractFromText("Chioni is my wife");
     expect(result.entities).toHaveLength(1);
-    expect(result.entities[0]!.name).toBe("Chioni");
-    expect(result.entities[0]!.relation?.type).toBe("spouse");
+    expect(result.entities[0].name).toBe("Chioni");
+    expect(result.entities[0].relation?.type).toBe("spouse");
   });
 
   it("extracts 'my son/daughter <Name>' pattern", () => {
@@ -44,8 +44,8 @@ describe("extractFromText", () => {
   it("extracts 'my friend <Name>' pattern", () => {
     const result = extractFromText("I met my friend David at the park");
     expect(result.entities).toHaveLength(1);
-    expect(result.entities[0]!.name).toBe("David");
-    expect(result.entities[0]!.relation?.type).toBe("knows");
+    expect(result.entities[0].name).toBe("David");
+    expect(result.entities[0].relation?.type).toBe("knows");
   });
 
   it("deduplicates entities mentioned multiple times", () => {
@@ -65,13 +65,13 @@ describe("extractFromText", () => {
   it("extracts 'I prefer ...' preference", () => {
     const result = extractFromText("I prefer dark mode for all my editors");
     expect(result.preferences.length).toBeGreaterThanOrEqual(1);
-    expect(result.preferences[0]!.category).toBe("personal");
+    expect(result.preferences[0].category).toBe("personal");
   });
 
   it("extracts 'I always ...' workflow preference", () => {
     const result = extractFromText("I always start my day with a standup meeting");
     expect(result.preferences.length).toBeGreaterThanOrEqual(1);
-    expect(result.preferences[0]!.category).toBe("workflow");
+    expect(result.preferences[0].category).toBe("workflow");
   });
 
   it("returns empty for text with no extractable entities or preferences", () => {
@@ -109,14 +109,14 @@ describe("UnifiedMemoryStore graph methods", () => {
       store.addEntity({ type: "person", name: "Chioni", facts: ["Wife of owner"] });
       const results = store.fuzzyFindEntity("Chioni");
       expect(results).toHaveLength(1);
-      expect(results[0]!.name).toBe("Chioni");
+      expect(results[0].name).toBe("Chioni");
     });
 
     it("finds entity by partial name", () => {
       store.addEntity({ type: "person", name: "Chioni Sichalwe", facts: [] });
       const results = store.fuzzyFindEntity("Chio");
       expect(results).toHaveLength(1);
-      expect(results[0]!.name).toBe("Chioni Sichalwe");
+      expect(results[0].name).toBe("Chioni Sichalwe");
     });
 
     it("finds entity by alias substring", () => {
@@ -129,7 +129,7 @@ describe("UnifiedMemoryStore graph methods", () => {
       store.addEntity({ type: "person", name: "Jamie", facts: ["Loves ice cream"] });
       const results = store.fuzzyFindEntity("ice cream");
       expect(results).toHaveLength(1);
-      expect(results[0]!.name).toBe("Jamie");
+      expect(results[0].name).toBe("Jamie");
     });
 
     it("returns empty for no match", () => {
@@ -196,9 +196,9 @@ describe("UnifiedMemoryStore graph methods", () => {
       expect(detail).not.toBeNull();
       expect(detail!.entity.name).toBe("Chioni");
       expect(detail!.relationships).toHaveLength(1);
-      expect(detail!.relationships[0]!.otherEntity?.name).toBe("Mr S");
+      expect(detail!.relationships[0].otherEntity?.name).toBe("Mr S");
       expect(detail!.linkedBubbles).toHaveLength(1);
-      expect(detail!.linkedBubbles[0]!.content).toContain("ice cream");
+      expect(detail!.linkedBubbles[0].content).toContain("ice cream");
     });
 
     it("returns relationships with resolved other entity names", () => {
@@ -210,7 +210,7 @@ describe("UnifiedMemoryStore graph methods", () => {
 
       const detail = store.entityDetail(a.id);
       expect(detail!.relationships).toHaveLength(2);
-      const otherNames = detail!.relationships.map((r) => r.otherEntity?.name).sort();
+      const otherNames = detail!.relationships.map((r) => r.otherEntity?.name).toSorted();
       expect(otherNames).toEqual(["Bob", "ProjectX"]);
     });
   });

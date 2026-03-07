@@ -33,7 +33,7 @@ import "./SpaceLens.css";
 // ─── Helpers ───────────────────────────────────────────
 
 function formatSize(bytes) {
-  if (!bytes || bytes <= 0) return "0 B";
+  if (!bytes || bytes <= 0) {return "0 B";}
   const units = ["B", "KB", "MB", "GB", "TB"];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   return (bytes / Math.pow(1024, i)).toFixed(i > 1 ? 1 : 0) + " " + units[i];
@@ -55,14 +55,14 @@ const BUBBLE_COLORS = [
 function getFileIcon(item) {
   if (item.isDir) {
     const n = item.name.toLowerCase();
-    if (n === "applications") return <Package size={13} />;
-    if (n === "downloads") return <Download size={13} />;
-    if (n === "pictures" || n === "photos") return <Image size={13} />;
-    if (n === "movies" || n === "videos") return <Film size={13} />;
-    if (n === "music") return <Music size={13} />;
-    if (n === "documents") return <FileText size={13} />;
-    if (n === "desktop") return <Monitor size={13} />;
-    if (n === "library") return <Archive size={13} />;
+    if (n === "applications") {return <Package size={13} />;}
+    if (n === "downloads") {return <Download size={13} />;}
+    if (n === "pictures" || n === "photos") {return <Image size={13} />;}
+    if (n === "movies" || n === "videos") {return <Film size={13} />;}
+    if (n === "music") {return <Music size={13} />;}
+    if (n === "documents") {return <FileText size={13} />;}
+    if (n === "desktop") {return <Monitor size={13} />;}
+    if (n === "library") {return <Archive size={13} />;}
     return <Folder size={13} />;
   }
   const ext = item.ext || "";
@@ -79,11 +79,11 @@ function getFileIcon(item) {
       "ico",
     ].includes(ext)
   )
-    return <Image size={13} />;
+    {return <Image size={13} />;}
   if (["mp4", "mov", "avi", "mkv", "webm"].includes(ext))
-    return <Film size={13} />;
+    {return <Film size={13} />;}
   if (["mp3", "wav", "flac", "aac", "ogg"].includes(ext))
-    return <Music size={13} />;
+    {return <Music size={13} />;}
   if (
     [
       "js",
@@ -105,9 +105,9 @@ function getFileIcon(item) {
       "sh",
     ].includes(ext)
   )
-    return <Code size={13} />;
+    {return <Code size={13} />;}
   if (["zip", "tar", "gz", "rar", "7z", "dmg"].includes(ext))
-    return <Archive size={13} />;
+    {return <Archive size={13} />;}
   if (
     [
       "pdf",
@@ -122,19 +122,19 @@ function getFileIcon(item) {
       "pptx",
     ].includes(ext)
   )
-    return <FileText size={13} />;
+    {return <FileText size={13} />;}
   return <File size={13} />;
 }
 
 function getIconBg(item, index) {
   if (item.isDir) {
     const n = item.name.toLowerCase();
-    if (n === "applications") return "rgba(99,102,241,0.2)";
-    if (n === "downloads") return "rgba(59,130,246,0.2)";
-    if (n === "pictures" || n === "photos") return "rgba(236,72,153,0.2)";
-    if (n === "movies" || n === "videos") return "rgba(245,158,11,0.2)";
-    if (n === "music") return "rgba(239,68,68,0.2)";
-    if (n === "library") return "rgba(168,85,247,0.2)";
+    if (n === "applications") {return "rgba(99,102,241,0.2)";}
+    if (n === "downloads") {return "rgba(59,130,246,0.2)";}
+    if (n === "pictures" || n === "photos") {return "rgba(236,72,153,0.2)";}
+    if (n === "movies" || n === "videos") {return "rgba(245,158,11,0.2)";}
+    if (n === "music") {return "rgba(239,68,68,0.2)";}
+    if (n === "library") {return "rgba(168,85,247,0.2)";}
     return "rgba(99,102,241,0.12)";
   }
   return "rgba(255,255,255,0.06)";
@@ -143,7 +143,7 @@ function getIconBg(item, index) {
 // ─── Bubble Layout (circle packing) ────────────────────
 
 function layoutBubbles(items, containerW, containerH) {
-  if (!items.length || !containerW || !containerH) return [];
+  if (!items.length || !containerW || !containerH) {return [];}
   const maxSize = items[0]?.size || 1;
   const totalSize = items.reduce((s, i) => s + i.size, 0) || 1;
   const area = containerW * containerH;
@@ -234,7 +234,7 @@ export default function SpaceLens({ windowId }) {
 
   // Measure bubble container
   useEffect(() => {
-    if (!bubblesRef.current) return;
+    if (!bubblesRef.current) {return;}
     const obs = new ResizeObserver((entries) => {
       for (const e of entries) {
         setBubbleSize({ w: e.contentRect.width, h: e.contentRect.height });
@@ -300,7 +300,7 @@ export default function SpaceLens({ windowId }) {
   );
 
   const goBack = useCallback(() => {
-    if (pathHistory.length === 0) return;
+    if (pathHistory.length === 0) {return;}
     const prev = pathHistory[pathHistory.length - 1];
     setPathHistory((h) => h.slice(0, -1));
     scan(prev);
@@ -308,7 +308,7 @@ export default function SpaceLens({ windowId }) {
 
   const navigateTo = useCallback(
     (targetPath) => {
-      if (targetPath === currentPath) return;
+      if (targetPath === currentPath) {return;}
       // Find index in breadcrumb
       const crumbs = buildBreadcrumb(currentPath);
       const idx = crumbs.findIndex((c) => c.path === targetPath);
@@ -337,7 +337,7 @@ export default function SpaceLens({ windowId }) {
       setChecked(new Set());
       setConfirmDelete(null);
       // Re-scan current dir
-      if (currentPath) scan(currentPath);
+      if (currentPath) {scan(currentPath);}
     },
     [currentPath, scan],
   );
@@ -383,7 +383,7 @@ export default function SpaceLens({ windowId }) {
   }, [items, checked]);
 
   function buildBreadcrumb(p) {
-    if (!p) return [];
+    if (!p) {return [];}
     const home = p.match(/^\/Users\/[^/]+/)?.[0] || "";
     const parts = p.replace(home, "~").split("/").filter(Boolean);
     const crumbs = [];
@@ -405,8 +405,8 @@ export default function SpaceLens({ windowId }) {
     e?.stopPropagation();
     setChecked((prev) => {
       const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
+      if (next.has(path)) {next.delete(path);}
+      else {next.add(path);}
       return next;
     });
   };

@@ -71,7 +71,7 @@ async function callMcpTool(serverConfig, toolName, args = {}) {
         const timeout = 30000;
         const command = serverConfig.command;
         const cmdArgs = serverConfig.args || [];
-        const env = { ...process.env, ...(serverConfig.env || {}) };
+        const env = { ...process.env, ...serverConfig.env };
 
         let proc;
         try {
@@ -180,7 +180,7 @@ async function listMcpTools(serverConfig) {
         const timeout = 15000;
         const command = serverConfig.command;
         const cmdArgs = serverConfig.args || [];
-        const env = { ...process.env, ...(serverConfig.env || {}) };
+        const env = { ...process.env, ...serverConfig.env };
 
         let proc;
         try {

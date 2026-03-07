@@ -44,7 +44,7 @@ describe("UnifiedMemoryStore — new methods", () => {
 
       const result = store.surfaceRelevant("working on memory for OniAI");
       expect(result.bubbles.length).toBeGreaterThan(0);
-      expect(result.bubbles[0]!.content).toContain("memory");
+      expect(result.bubbles[0].content).toContain("memory");
     });
 
     it("returns empty for unrelated context", () => {
@@ -234,7 +234,7 @@ describe("UnifiedMemoryStore — new methods", () => {
 
       store.migrateFromJson(jsonPath);
       expect(store.queryBubbles({})).toHaveLength(1);
-      expect(store.queryBubbles({})[0]!.content).toBe("Legacy fact");
+      expect(store.queryBubbles({})[0].content).toBe("Legacy fact");
       expect(store.findEntity("LegacyUser")).toBeDefined();
 
       fs.rmSync(jsonDir, { recursive: true, force: true });
@@ -268,7 +268,7 @@ describe("UnifiedMemoryStore — new methods", () => {
 
       const agentA = store.queryBubbles({}, { agentId: "agentA" });
       expect(agentA).toHaveLength(1);
-      expect(agentA[0]!.content).toBe("Agent A fact");
+      expect(agentA[0].content).toBe("Agent A fact");
     });
 
     it("includes shared bubbles for any agent", () => {
@@ -277,7 +277,7 @@ describe("UnifiedMemoryStore — new methods", () => {
 
       const agentB = store.queryBubbles({}, { agentId: "agentB" });
       expect(agentB).toHaveLength(1);
-      expect(agentB[0]!.content).toBe("Shared fact");
+      expect(agentB[0].content).toBe("Shared fact");
     });
   });
 });

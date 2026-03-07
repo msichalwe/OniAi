@@ -48,7 +48,7 @@ const useDesktopStore = create(
          */
         switchToIndex: (index) => {
             const { desktops } = get();
-            const sorted = [...desktops].sort((a, b) => a.order - b.order);
+            const sorted = [...desktops].toSorted((a, b) => a.order - b.order);
             if (sorted[index]) {
                 set({ activeDesktopId: sorted[index].id });
             }
@@ -59,10 +59,10 @@ const useDesktopStore = create(
          */
         nextDesktop: () => {
             const { desktops, activeDesktopId } = get();
-            const sorted = [...desktops].sort((a, b) => a.order - b.order);
+            const sorted = [...desktops].toSorted((a, b) => a.order - b.order);
             const idx = sorted.findIndex(d => d.id === activeDesktopId);
             const next = sorted[(idx + 1) % sorted.length];
-            if (next) set({ activeDesktopId: next.id });
+            if (next) {set({ activeDesktopId: next.id });}
         },
 
         /**
@@ -70,10 +70,10 @@ const useDesktopStore = create(
          */
         prevDesktop: () => {
             const { desktops, activeDesktopId } = get();
-            const sorted = [...desktops].sort((a, b) => a.order - b.order);
+            const sorted = [...desktops].toSorted((a, b) => a.order - b.order);
             const idx = sorted.findIndex(d => d.id === activeDesktopId);
             const prev = sorted[(idx - 1 + sorted.length) % sorted.length];
-            if (prev) set({ activeDesktopId: prev.id });
+            if (prev) {set({ activeDesktopId: prev.id });}
         },
 
         /**
@@ -103,9 +103,9 @@ const useDesktopStore = create(
          */
         removeDesktop: (desktopId) => {
             const { desktops, activeDesktopId } = get();
-            if (desktops.length <= 1) return null;
+            if (desktops.length <= 1) {return null;}
 
-            const sorted = [...desktops].sort((a, b) => a.order - b.order);
+            const sorted = [...desktops].toSorted((a, b) => a.order - b.order);
             const idx = sorted.findIndex(d => d.id === desktopId);
             const fallbackDesktop = sorted[idx > 0 ? idx - 1 : 1];
 
@@ -140,7 +140,7 @@ const useDesktopStore = create(
          * Get desktops sorted by order.
          */
         getSortedDesktops: () => {
-            return [...get().desktops].sort((a, b) => a.order - b.order);
+            return [...get().desktops].toSorted((a, b) => a.order - b.order);
         },
 
         /**
@@ -149,7 +149,7 @@ const useDesktopStore = create(
          */
         getOrCreateNextDesktop: () => {
             const { desktops, activeDesktopId } = get();
-            const sorted = [...desktops].sort((a, b) => a.order - b.order);
+            const sorted = [...desktops].toSorted((a, b) => a.order - b.order);
             const idx = sorted.findIndex(d => d.id === activeDesktopId);
 
             if (idx < sorted.length - 1) {
@@ -165,7 +165,7 @@ const useDesktopStore = create(
          */
         getContext: () => {
             const { desktops, activeDesktopId } = get();
-            const sorted = [...desktops].sort((a, b) => a.order - b.order);
+            const sorted = [...desktops].toSorted((a, b) => a.order - b.order);
             return {
                 desktopCount: desktops.length,
                 activeDesktopId,

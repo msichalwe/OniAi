@@ -164,28 +164,28 @@ export default function Calendar({ windowId, widgetType }) {
     tasks.forEach((t) => {
       if (t.dueDate) {
         if (!counts[t.dueDate])
-          counts[t.dueDate] = {
+          {counts[t.dueDate] = {
             tasks: 0,
             events: 0,
             overdue: false,
             hasUrgent: false,
-          };
+          };}
         counts[t.dueDate].tasks++;
         if (t.dueDate < todayStr && t.status !== "done")
-          counts[t.dueDate].overdue = true;
+          {counts[t.dueDate].overdue = true;}
         if (t.priority === "urgent" || t.priority === "high")
-          counts[t.dueDate].hasUrgent = true;
+          {counts[t.dueDate].hasUrgent = true;}
       }
     });
     events.forEach((e) => {
       if (e.date) {
         if (!counts[e.date])
-          counts[e.date] = {
+          {counts[e.date] = {
             tasks: 0,
             events: 0,
             overdue: false,
             hasUrgent: false,
-          };
+          };}
         counts[e.date].events++;
       }
     });
@@ -207,7 +207,7 @@ export default function Calendar({ windowId, widgetType }) {
   };
 
   const handleAddSubmit = () => {
-    if (!formData.title.trim()) return;
+    if (!formData.title.trim()) {return;}
     if (addType === "task") {
       addTask({
         title: formData.title,

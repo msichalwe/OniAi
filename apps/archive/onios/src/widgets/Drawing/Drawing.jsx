@@ -126,12 +126,12 @@ function boardReducer(state, action) {
         textColor: "rgba(255,255,255,0.9)",
         ...action.payload,
       };
-      if (!shape.id) shape.id = uid("s");
+      if (!shape.id) {shape.id = uid("s");}
       return { ...state, shapes: { ...state.shapes, [shape.id]: shape } };
     }
     case "SHAPE_UPDATE": {
       const { id, ...updates } = action.payload;
-      if (!state.shapes[id]) return state;
+      if (!state.shapes[id]) {return state;}
       return {
         ...state,
         shapes: { ...state.shapes, [id]: { ...state.shapes[id], ...updates } },
@@ -143,7 +143,7 @@ function boardReducer(state, action) {
       const newEdges = {};
       for (const [k, e] of Object.entries(state.edges)) {
         if (e.from !== action.payload.id && e.to !== action.payload.id)
-          newEdges[k] = e;
+          {newEdges[k] = e;}
       }
       return { ...state, shapes: newShapes, edges: newEdges };
     }
@@ -155,12 +155,12 @@ function boardReducer(state, action) {
         label: "",
         ...action.payload,
       };
-      if (!edge.id) edge.id = uid("e");
+      if (!edge.id) {edge.id = uid("e");}
       return { ...state, edges: { ...state.edges, [edge.id]: edge } };
     }
     case "EDGE_UPDATE": {
       const { id, ...updates } = action.payload;
-      if (!state.edges[id]) return state;
+      if (!state.edges[id]) {return state;}
       return {
         ...state,
         edges: { ...state.edges, [id]: { ...state.edges[id], ...updates } },
@@ -186,7 +186,7 @@ function boardReducer(state, action) {
     }
     case "SIM_UPDATE": {
       const { id, ...updates } = action.payload;
-      if (!state.simulations[id]) return state;
+      if (!state.simulations[id]) {return state;}
       return {
         ...state,
         simulations: {
@@ -203,7 +203,7 @@ function boardReducer(state, action) {
       const algo = action.payload?.algorithm || "grid";
       const shapes = { ...state.shapes };
       const ids = Object.keys(shapes);
-      if (ids.length === 0) return state;
+      if (ids.length === 0) {return state;}
       const pad = action.payload?.padding || 40;
       if (algo === "grid") {
         const cols = Math.ceil(Math.sqrt(ids.length));
@@ -243,7 +243,7 @@ function boardReducer(state, action) {
             let fx = 0,
               fy = 0;
             ids.forEach((b) => {
-              if (a === b) return;
+              if (a === b) {return;}
               const dx = positions[a].x - positions[b].x || 0.1;
               const dy = positions[a].y - positions[b].y || 0.1;
               const dist = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -253,9 +253,9 @@ function boardReducer(state, action) {
             });
             edgeList.forEach((e) => {
               let other = null;
-              if (e.from === a) other = e.to;
-              else if (e.to === a) other = e.from;
-              if (!other || !positions[other]) return;
+              if (e.from === a) {other = e.to;}
+              else if (e.to === a) {other = e.from;}
+              if (!other || !positions[other]) {return;}
               const dx = positions[other].x - positions[a].x;
               const dy = positions[other].y - positions[a].y;
               const dist = Math.sqrt(dx * dx + dy * dy) || 1;
@@ -535,7 +535,7 @@ function getEdgePoints(from, to) {
 function RenderEdge({ edge, shapes }) {
   const from = shapes[edge.from];
   const to = shapes[edge.to];
-  if (!from || !to) return null;
+  if (!from || !to) {return null;}
   const { fx, fy, tx, ty } = getEdgePoints(from, to);
   const mid = { x: (fx + tx) / 2, y: (fy + ty) / 2 };
   return (
@@ -569,7 +569,7 @@ function RenderEdge({ edge, shapes }) {
 
 function RenderChart({ annotation }) {
   const { chartType, data, x, y, w, h, title } = annotation;
-  if (!data || !data.length) return null;
+  if (!data || !data.length) {return null;}
   const maxVal = Math.max(...data.map((d) => d.value || 0), 1);
   const barW = (w - 40) / data.length;
 
@@ -727,7 +727,7 @@ export default function DrawingWidget({ windowId }) {
   // Execute a draw command (from AI or internal)
   const execCommand = useCallback(
     (cmd) => {
-      if (!cmd || !cmd.type) return;
+      if (!cmd || !cmd.type) {return;}
       const [category, verb] = cmd.type.split(".");
       const p = cmd.payload || {};
 
@@ -762,8 +762,8 @@ export default function DrawingWidget({ windowId }) {
           setSelectedId(null);
           break;
         case "board.setView":
-          if (p.zoom) setZoom(p.zoom);
-          if (p.pan) setPan(p.pan);
+          if (p.zoom) {setZoom(p.zoom);}
+          if (p.pan) {setPan(p.pan);}
           break;
         case "board.setMode":
           dispatch({ type: "SET_MODE", payload: p.mode || "diagram" });
@@ -864,7 +864,7 @@ export default function DrawingWidget({ windowId }) {
       } else if (tool !== "select") {
         // Place a new shape
         const rect = svgRef.current?.getBoundingClientRect();
-        if (!rect) return;
+        if (!rect) {return;}
         const pt = svgPoint(e.clientX - rect.left, e.clientY - rect.top);
         const shapeType = tool === "arrow" ? null : tool;
         if (shapeType) {
@@ -895,7 +895,7 @@ export default function DrawingWidget({ windowId }) {
       }
       if (dragging) {
         const rect = svgRef.current?.getBoundingClientRect();
-        if (!rect) return;
+        if (!rect) {return;}
         const pt = svgPoint(e.clientX - rect.left, e.clientY - rect.top);
         dispatch({
           type: "SHAPE_UPDATE",
@@ -915,7 +915,7 @@ export default function DrawingWidget({ windowId }) {
     if (dragging) {
       const s = board.shapes[dragging.id];
       if (s)
-        record({ type: "SHAPE_UPDATE", payload: { id: s.id, x: s.x, y: s.y } });
+        {record({ type: "SHAPE_UPDATE", payload: { id: s.id, x: s.x, y: s.y } });}
     }
     setDragging(null);
   }, [dragging, board.shapes, record]);
@@ -923,12 +923,12 @@ export default function DrawingWidget({ windowId }) {
   const handleShapeMouseDown = useCallback(
     (e, shapeId) => {
       e.stopPropagation();
-      if (tool !== "select") return;
+      if (tool !== "select") {return;}
       setSelectedId(shapeId);
       const s = board.shapes[shapeId];
-      if (!s) return;
+      if (!s) {return;}
       const rect = svgRef.current?.getBoundingClientRect();
-      if (!rect) return;
+      if (!rect) {return;}
       const pt = svgPoint(e.clientX - rect.left, e.clientY - rect.top);
       setDragging({ id: shapeId, offX: pt.x - s.x, offY: pt.y - s.y });
     },
@@ -984,7 +984,7 @@ export default function DrawingWidget({ windowId }) {
   // ─── Export ─────────────────────────────────────────
   const exportSVG = () => {
     const svg = svgRef.current;
-    if (!svg) return;
+    if (!svg) {return;}
     const clone = svg.cloneNode(true);
     const blob = new Blob([new XMLSerializer().serializeToString(clone)], {
       type: "image/svg+xml",
@@ -999,7 +999,7 @@ export default function DrawingWidget({ windowId }) {
 
   const exportPNG = () => {
     const svg = svgRef.current;
-    if (!svg) return;
+    if (!svg) {return;}
     const svgData = new XMLSerializer().serializeToString(svg);
     const canvas = document.createElement("canvas");
     canvas.width = 1920;
@@ -1039,8 +1039,8 @@ export default function DrawingWidget({ windowId }) {
     const keys = Object.keys(localStorage).filter((k) =>
       k.startsWith("onios_drawing_"),
     );
-    if (keys.length === 0) return;
-    const latest = keys.sort().pop();
+    if (keys.length === 0) {return;}
+    const latest = keys.toSorted().pop();
     try {
       const session = JSON.parse(localStorage.getItem(latest));
       if (session?.board) {

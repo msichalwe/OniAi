@@ -30,7 +30,7 @@ function ensureDir() {
 
 function readStore() {
     ensureDir();
-    if (!fs.existsSync(STORAGE_FILE)) return {};
+    if (!fs.existsSync(STORAGE_FILE)) {return {};}
     try {
         return JSON.parse(fs.readFileSync(STORAGE_FILE, 'utf-8'));
     } catch {
@@ -90,7 +90,7 @@ export default function storagePlugin() {
                 if (!ns || !key) { json(res, { error: 'ns and key required' }, 400); return; }
 
                 const store = readStore();
-                if (!store[ns]) store[ns] = {};
+                if (!store[ns]) {store[ns] = {};}
                 const now = Date.now();
                 const existing = store[ns][key];
                 store[ns][key] = {
@@ -116,7 +116,7 @@ export default function storagePlugin() {
                 const store = readStore();
                 if (store[ns]) {
                     delete store[ns][key];
-                    if (Object.keys(store[ns]).length === 0) delete store[ns];
+                    if (Object.keys(store[ns]).length === 0) {delete store[ns];}
                     writeStore(store);
                 }
                 json(res, { ok: true, ns, key });
@@ -176,8 +176,8 @@ export default function storagePlugin() {
                 const now = Date.now();
                 let count = 0;
                 for (const entry of entries) {
-                    if (!entry.ns || !entry.key) continue;
-                    if (!store[entry.ns]) store[entry.ns] = {};
+                    if (!entry.ns || !entry.key) {continue;}
+                    if (!store[entry.ns]) {store[entry.ns] = {};}
                     store[entry.ns][entry.key] = {
                         value: entry.value,
                         meta: {
@@ -241,7 +241,7 @@ export default function storagePlugin() {
 }
 
 function formatBytes(bytes) {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) {return '0 B';}
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));

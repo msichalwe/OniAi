@@ -42,7 +42,7 @@ const SCAN_INTERVAL_MS = 12 * 60 * 60 * 1000; // 12 hours
  */
 export function isNodeScanDue(store: NodeScanStore): boolean {
   const lastScan = store.getLastNodeScanAt();
-  if (!lastScan) return true;
+  if (!lastScan) {return true;}
   return (Date.now() - lastScan) >= SCAN_INTERVAL_MS;
 }
 
@@ -91,7 +91,7 @@ export function processScanResults(
 
   for (const { label, output } of results) {
     const trimmed = output.trim();
-    if (!trimmed) continue;
+    if (!trimmed) {continue;}
 
     switch (label) {
       case "running-apps": {

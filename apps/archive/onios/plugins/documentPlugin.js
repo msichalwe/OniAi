@@ -17,8 +17,8 @@ import os from 'os';
 const docIndex = new Map();
 
 function resolvePath(p) {
-    if (!p) return null;
-    if (p.startsWith('~')) p = path.join(os.homedir(), p.slice(1));
+    if (!p) {return null;}
+    if (p.startsWith('~')) {p = path.join(os.homedir(), p.slice(1));}
     return path.resolve(p);
 }
 
@@ -60,7 +60,7 @@ async function extractText(filePath) {
         if (ext === 'docx') {
             const mammoth = await import('mammoth');
             const fn = mammoth.extractRawText || mammoth.default?.extractRawText;
-            if (!fn) throw new Error('mammoth.extractRawText not found');
+            if (!fn) {throw new Error('mammoth.extractRawText not found');}
             const result = await fn({ path: filePath });
             return { text: result.value, meta };
         }
@@ -164,7 +164,7 @@ function tokenize(text) {
  */
 function searchIndex(query, limit = 20) {
     const queryTokens = query.toLowerCase().match(/\b[a-z0-9_]+\b/g) || [];
-    if (queryTokens.length === 0) return [];
+    if (queryTokens.length === 0) {return [];}
 
     const results = [];
 
@@ -211,7 +211,7 @@ function searchIndex(query, limit = 20) {
         }
     }
 
-    return results.sort((a, b) => b.score - a.score).slice(0, limit);
+    return results.toSorted((a, b) => b.score - a.score).slice(0, limit);
 }
 
 /**
@@ -219,7 +219,7 @@ function searchIndex(query, limit = 20) {
  */
 function findInDocument(filePath, needle, caseSensitive = false) {
     const doc = docIndex.get(filePath);
-    if (!doc || !doc.text) return { matches: [], total: 0 };
+    if (!doc || !doc.text) {return { matches: [], total: 0 };}
 
     const text = caseSensitive ? doc.text : doc.text.toLowerCase();
     const search = caseSensitive ? needle : needle.toLowerCase();
@@ -279,15 +279,15 @@ export default function documentPlugin() {
                 let indexed = 0;
 
                 for (const dir of dirsToIndex) {
-                    if (!fs.existsSync(dir)) continue;
+                    if (!fs.existsSync(dir)) {continue;}
                     const files = walkDir(dir, 2); // depth 2
                     for (const f of files) {
                         const ext = getExtension(f);
-                        if (!docExts.has(ext)) continue;
+                        if (!docExts.has(ext)) {continue;}
                         // Skip large files (> 10MB)
                         try {
                             const stat = fs.statSync(f);
-                            if (stat.size > 10 * 1024 * 1024) continue;
+                            if (stat.size > 10 * 1024 * 1024) {continue;}
                         } catch { continue; }
                         try {
                             await indexDocument(f);
@@ -295,9 +295,9 @@ export default function documentPlugin() {
                         } catch {
                             // Skip files that fail to parse
                         }
-                        if (indexed >= 200) break; // Safety cap
+                        if (indexed >= 200) {break;} // Safety cap
                     }
-                    if (indexed >= 200) break;
+                    if (indexed >= 200) {break;}
                 }
 
                 if (indexed > 0) {
@@ -310,8 +310,8 @@ export default function documentPlugin() {
                 try {
                     const url = new URL(req.url, 'http://localhost');
                     const filePath = resolvePath(url.searchParams.get('path'));
-                    if (!filePath) return json(res, 400, { error: 'Missing path' });
-                    if (!fs.existsSync(filePath)) return json(res, 404, { error: 'File not found' });
+                    if (!filePath) {return json(res, 400, { error: 'Missing path' });}
+                    if (!fs.existsSync(filePath)) {return json(res, 404, { error: 'File not found' });}
 
                     const result = await indexDocument(filePath);
                     json(res, 200, result);
@@ -325,8 +325,8 @@ export default function documentPlugin() {
                 try {
                     const url = new URL(req.url, 'http://localhost');
                     const filePath = resolvePath(url.searchParams.get('path'));
-                    if (!filePath) return json(res, 400, { error: 'Missing path' });
-                    if (!fs.existsSync(filePath)) return json(res, 404, { error: 'File not found' });
+                    if (!filePath) {return json(res, 400, { error: 'Missing path' });}
+                    if (!fs.existsSync(filePath)) {return json(res, 404, { error: 'File not found' });}
 
                     const stat = fs.statSync(filePath);
                     const ext = getExtension(filePath);
@@ -346,10 +346,10 @@ export default function documentPlugin() {
             // POST /api/docs/search — Search indexed documents
             // Body: { query, limit? }
             server.middlewares.use('/api/docs/search', async (req, res) => {
-                if (req.method !== 'POST') return json(res, 405, { error: 'POST only' });
+                if (req.method !== 'POST') {return json(res, 405, { error: 'POST only' });}
                 try {
                     const body = await collectBody(req);
-                    if (!body.query) return json(res, 400, { error: 'Missing query' });
+                    if (!body.query) {return json(res, 400, { error: 'Missing query' });}
                     const results = searchIndex(body.query, body.limit || 20);
                     json(res, 200, {
                         query: body.query,
@@ -365,16 +365,16 @@ export default function documentPlugin() {
             // POST /api/docs/find — Find text in a specific document
             // Body: { path, needle, caseSensitive? }
             server.middlewares.use('/api/docs/find', async (req, res) => {
-                if (req.method !== 'POST') return json(res, 405, { error: 'POST only' });
+                if (req.method !== 'POST') {return json(res, 405, { error: 'POST only' });}
                 try {
                     const body = await collectBody(req);
                     const filePath = resolvePath(body.path);
-                    if (!filePath) return json(res, 400, { error: 'Missing path' });
-                    if (!body.needle) return json(res, 400, { error: 'Missing needle' });
+                    if (!filePath) {return json(res, 400, { error: 'Missing path' });}
+                    if (!body.needle) {return json(res, 400, { error: 'Missing needle' });}
 
                     // Index if not already indexed
                     if (!docIndex.has(filePath)) {
-                        if (!fs.existsSync(filePath)) return json(res, 404, { error: 'File not found' });
+                        if (!fs.existsSync(filePath)) {return json(res, 404, { error: 'File not found' });}
                         await indexDocument(filePath);
                     }
 
@@ -388,12 +388,12 @@ export default function documentPlugin() {
             // POST /api/docs/index — Index a file or directory
             // Body: { path, recursive? }
             server.middlewares.use('/api/docs/index', async (req, res) => {
-                if (req.method !== 'POST') return json(res, 405, { error: 'POST only' });
+                if (req.method !== 'POST') {return json(res, 405, { error: 'POST only' });}
                 try {
                     const body = await collectBody(req);
                     const targetPath = resolvePath(body.path);
-                    if (!targetPath) return json(res, 400, { error: 'Missing path' });
-                    if (!fs.existsSync(targetPath)) return json(res, 404, { error: 'Path not found' });
+                    if (!targetPath) {return json(res, 400, { error: 'Missing path' });}
+                    if (!fs.existsSync(targetPath)) {return json(res, 404, { error: 'Path not found' });}
 
                     const stat = fs.statSync(targetPath);
                     const indexed = [];
@@ -442,11 +442,11 @@ export default function documentPlugin() {
             // POST /api/docs/create — Create a new document
             // Body: { path, content, type? }
             server.middlewares.use('/api/docs/create', async (req, res) => {
-                if (req.method !== 'POST') return json(res, 405, { error: 'POST only' });
+                if (req.method !== 'POST') {return json(res, 405, { error: 'POST only' });}
                 try {
                     const body = await collectBody(req);
                     const filePath = resolvePath(body.path);
-                    if (!filePath) return json(res, 400, { error: 'Missing path' });
+                    if (!filePath) {return json(res, 400, { error: 'Missing path' });}
 
                     const dir = path.dirname(filePath);
                     if (!fs.existsSync(dir)) {
@@ -490,13 +490,13 @@ export default function documentPlugin() {
  * Walk a directory tree up to maxDepth, collecting file paths.
  */
 function walkDir(dir, maxDepth, currentDepth = 0) {
-    if (currentDepth >= maxDepth) return [];
+    if (currentDepth >= maxDepth) {return [];}
     const files = [];
     try {
         const entries = fs.readdirSync(dir, { withFileTypes: true });
         for (const entry of entries) {
-            if (entry.name.startsWith('.')) continue;
-            if (entry.name === 'node_modules') continue;
+            if (entry.name.startsWith('.')) {continue;}
+            if (entry.name === 'node_modules') {continue;}
             const full = path.join(dir, entry.name);
             if (entry.isFile()) {
                 files.push(full);

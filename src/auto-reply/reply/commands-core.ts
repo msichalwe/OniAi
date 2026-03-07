@@ -30,6 +30,7 @@ import {
 } from "./commands-session.js";
 import { handleSubagentsCommand } from "./commands-subagents.js";
 import { handleTtsCommands } from "./commands-tts.js";
+import { handleInteractiveCommand } from "./commands-interactive.js";
 import type {
   CommandHandler,
   CommandHandlerResult,
@@ -155,6 +156,7 @@ export async function handleCommands(params: HandleCommandsParams): Promise<Comm
       handleModelsCommand,
       handleStopCommand,
       handleCompactCommand,
+      handleInteractiveCommand,
       handleAbortTrigger,
     ];
   }

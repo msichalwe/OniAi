@@ -51,7 +51,7 @@ export function resolveHeartbeatMemoryWork(params: {
         insights.push(`Memory connections found: ${surfaced.connections.join("; ")}`);
       }
       if (surfaced.bubbles.length > 0) {
-        const recentBubble = surfaced.bubbles[0]!;
+        const recentBubble = surfaced.bubbles[0];
         const daysAgo = Math.floor((Date.now() - recentBubble.createdAtMs) / 86_400_000);
         if (daysAgo > 0) {
           insights.push(`Related memory from ${daysAgo}d ago: ${recentBubble.content.slice(0, 100)}`);
@@ -111,7 +111,7 @@ function resolveMemoryStoreCompat(workspaceDir: string): HeartbeatStore {
  * Build a heartbeat prompt section with memory insights.
  */
 export function buildMemoryInsightsPrompt(insights: string[]): string | null {
-  if (insights.length === 0) return null;
+  if (insights.length === 0) {return null;}
   const lines = [
     "[Memory insights — proactive surfacing]",
     ...insights.map((i) => `- ${i}`),

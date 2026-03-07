@@ -494,8 +494,8 @@ export default function Settings() {
 
   const handleCustomWallpaper = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) return;
+    if (!file) {return;}
+    if (!file.type.startsWith("image/")) {return;}
     if (file.size > 5 * 1024 * 1024) {
       alert("Image must be under 5MB");
       return;

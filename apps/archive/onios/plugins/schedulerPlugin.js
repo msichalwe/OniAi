@@ -55,7 +55,7 @@ let notifiedKeys = new Set();
 
 function loadState() {
     try {
-        if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+        if (!fs.existsSync(DATA_DIR)) {fs.mkdirSync(DATA_DIR, { recursive: true });}
         if (fs.existsSync(DATA_FILE)) {
             const raw = fs.readFileSync(DATA_FILE, 'utf8');
             const loaded = JSON.parse(raw);
@@ -72,7 +72,7 @@ function loadState() {
 
 function saveState() {
     try {
-        if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+        if (!fs.existsSync(DATA_DIR)) {fs.mkdirSync(DATA_DIR, { recursive: true });}
         fs.writeFileSync(DATA_FILE, JSON.stringify({
             tasks: state.tasks,
             events: state.events,
@@ -116,7 +116,7 @@ function tick() {
 
 function reloadFromDisk() {
     try {
-        if (!fs.existsSync(DATA_FILE)) return;
+        if (!fs.existsSync(DATA_FILE)) {return;}
         const raw = fs.readFileSync(DATA_FILE, 'utf8');
         const loaded = JSON.parse(raw);
         // Merge: keep notifications (ephemeral) but reload persistent data
@@ -130,7 +130,7 @@ function checkScheduledJobs() {
     const now = Date.now();
     const toRemove = [];
     for (const job of state.scheduledJobs) {
-        if (!job.enabled) continue;
+        if (!job.enabled) {continue;}
         const nextRun = calcNextRun(job);
         if (nextRun && now >= nextRun) {
             const label = job.message || job.name;
@@ -177,8 +177,8 @@ function fireNativeNotification(title, message) {
 }
 
 function calcNextRun(job) {
-    if (job.nextRun) return job.nextRun;
-    if (!job.lastRun) return Date.now();
+    if (job.nextRun) {return job.nextRun;}
+    if (!job.lastRun) {return Date.now();}
     return calcNextRunFrom(job, job.lastRun);
 }
 
@@ -188,7 +188,7 @@ function calcNextRunAfterNow(job) {
 
 function calcNextRunFrom(job, fromTs) {
     const s = job.schedule;
-    if (!s || !s.interval || !s.unit) return null;
+    if (!s || !s.interval || !s.unit) {return null;}
     const multipliers = {
         seconds: 1000,
         minutes: 60 * 1000,
@@ -222,8 +222,8 @@ function checkTaskReminders() {
                     now.getMinutes().toString().padStart(2, '0');
 
     for (const task of state.tasks) {
-        if (task.status === 'done' || task.status === 'cancelled') continue;
-        if (!task.dueDate) continue;
+        if (task.status === 'done' || task.status === 'cancelled') {continue;}
+        if (!task.dueDate) {continue;}
 
         if (task.dueDate === nowStr && task.dueTime && !task.notifiedServer) {
             const dueMin = timeToMinutes(task.dueTime);
@@ -312,7 +312,7 @@ export default function schedulerPlugin() {
             // ─── GET /api/scheduler/state ──────────────
 
             server.middlewares.use('/api/scheduler/state', (req, res, next) => {
-                if (req.method !== 'GET') return next();
+                if (req.method !== 'GET') {return next();}
                 json(res, {
                     tasks: state.tasks,
                     events: state.events,
@@ -325,7 +325,7 @@ export default function schedulerPlugin() {
             // ─── GET /api/scheduler/status ─────────────
 
             server.middlewares.use('/api/scheduler/status', (req, res, next) => {
-                if (req.method !== 'GET') return next();
+                if (req.method !== 'GET') {return next();}
                 json(res, {
                     running: !!schedulerInterval,
                     tickCount,
@@ -342,7 +342,7 @@ export default function schedulerPlugin() {
             // Returns queued notifications and clears them
 
             server.middlewares.use('/api/scheduler/notifications', (req, res, next) => {
-                if (req.method !== 'GET') return next();
+                if (req.method !== 'GET') {return next();}
                 const notifications = [...state.notifications];
                 state.notifications = [];
                 json(res, { notifications });
@@ -352,12 +352,12 @@ export default function schedulerPlugin() {
             // Client pushes its full state to the server
 
             server.middlewares.use('/api/scheduler/sync', async (req, res, next) => {
-                if (req.method !== 'POST') return next();
+                if (req.method !== 'POST') {return next();}
                 try {
                     const body = await parseBody(req);
-                    if (body.tasks) state.tasks = body.tasks;
-                    if (body.events) state.events = body.events;
-                    if (body.scheduledJobs) state.scheduledJobs = body.scheduledJobs;
+                    if (body.tasks) {state.tasks = body.tasks;}
+                    if (body.events) {state.events = body.events;}
+                    if (body.scheduledJobs) {state.scheduledJobs = body.scheduledJobs;}
                     saveState();
                     json(res, { ok: true, saved: true });
                 } catch (err) {
@@ -407,7 +407,7 @@ export default function schedulerPlugin() {
                     try {
                         const body = await parseBody(req);
                         const idx = state.tasks.findIndex((t) => t.id === idParam);
-                        if (idx === -1) return json(res, { error: 'Not found' }, 404);
+                        if (idx === -1) {return json(res, { error: 'Not found' }, 404);}
                         state.tasks[idx] = { ...state.tasks[idx], ...body };
                         saveState();
                         json(res, { task: state.tasks[idx] });
@@ -419,7 +419,7 @@ export default function schedulerPlugin() {
 
                 if (req.method === 'DELETE' && idParam) {
                     const idx = state.tasks.findIndex((t) => t.id === idParam);
-                    if (idx === -1) return json(res, { error: 'Not found' }, 404);
+                    if (idx === -1) {return json(res, { error: 'Not found' }, 404);}
                     state.tasks.splice(idx, 1);
                     saveState();
                     json(res, { ok: true });
@@ -468,7 +468,7 @@ export default function schedulerPlugin() {
                     try {
                         const body = await parseBody(req);
                         const idx = state.events.findIndex((e) => e.id === idParam);
-                        if (idx === -1) return json(res, { error: 'Not found' }, 404);
+                        if (idx === -1) {return json(res, { error: 'Not found' }, 404);}
                         state.events[idx] = { ...state.events[idx], ...body };
                         saveState();
                         json(res, { event: state.events[idx] });
@@ -480,7 +480,7 @@ export default function schedulerPlugin() {
 
                 if (req.method === 'DELETE' && idParam) {
                     const idx = state.events.findIndex((e) => e.id === idParam);
-                    if (idx === -1) return json(res, { error: 'Not found' }, 404);
+                    if (idx === -1) {return json(res, { error: 'Not found' }, 404);}
                     state.events.splice(idx, 1);
                     saveState();
                     json(res, { ok: true });
@@ -528,7 +528,7 @@ export default function schedulerPlugin() {
                     try {
                         const body = await parseBody(req);
                         const idx = state.scheduledJobs.findIndex((j) => j.id === idParam);
-                        if (idx === -1) return json(res, { error: 'Not found' }, 404);
+                        if (idx === -1) {return json(res, { error: 'Not found' }, 404);}
                         state.scheduledJobs[idx] = { ...state.scheduledJobs[idx], ...body };
                         saveState();
                         json(res, { job: state.scheduledJobs[idx] });
@@ -540,7 +540,7 @@ export default function schedulerPlugin() {
 
                 if (req.method === 'DELETE' && idParam) {
                     const idx = state.scheduledJobs.findIndex((j) => j.id === idParam);
-                    if (idx === -1) return json(res, { error: 'Not found' }, 404);
+                    if (idx === -1) {return json(res, { error: 'Not found' }, 404);}
                     state.scheduledJobs.splice(idx, 1);
                     saveState();
                     json(res, { ok: true });

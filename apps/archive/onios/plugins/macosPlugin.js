@@ -75,8 +75,8 @@ export default function macosPlugin() {
 
                 try {
                     let script = `display notification "${message.replace(/"/g, '\\"')}" with title "${title.replace(/"/g, '\\"')}"`;
-                    if (subtitle) script += ` subtitle "${subtitle.replace(/"/g, '\\"')}"`;
-                    if (sound) script += ' sound name "Glass"';
+                    if (subtitle) {script += ` subtitle "${subtitle.replace(/"/g, '\\"')}"`;}
+                    if (sound) {script += ' sound name "Glass"';}
 
                     execSync(`osascript -e '${script}'`, { timeout: 5000 });
                     json(res, { success: true, title, message });
@@ -203,7 +203,7 @@ export default function macosPlugin() {
                     info.interfaces = {};
                     for (const [name, addrs] of Object.entries(ifaces)) {
                         const ipv4 = addrs?.find(a => a.family === 'IPv4' && !a.internal);
-                        if (ipv4) info.interfaces[name] = ipv4.address;
+                        if (ipv4) {info.interfaces[name] = ipv4.address;}
                     }
                 } catch { info.interfaces = {}; }
                 json(res, info);
@@ -252,7 +252,7 @@ export default function macosPlugin() {
                 const dest = path.join(os.homedir(), '.onios', 'screenshots', filename);
                 try {
                     const dir = path.dirname(dest);
-                    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+                    if (!fs.existsSync(dir)) {fs.mkdirSync(dir, { recursive: true });}
                     execSync(`screencapture -x "${dest}"`, { timeout: 10000 });
                     json(res, { success: true, path: dest, filename });
                 } catch (err) {

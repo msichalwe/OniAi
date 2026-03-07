@@ -39,8 +39,8 @@ import { useWidgetContext } from "../../core/useWidgetContext";
 import "./FileExplorer.css";
 
 const getFileIcon = (name, isDir) => {
-  if (isDir) return <Folder size={48} className="fe-icon-folder" />;
-  if (!name.includes(".")) return <File size={48} className="fe-icon-file" />;
+  if (isDir) {return <Folder size={48} className="fe-icon-folder" />;}
+  if (!name.includes(".")) {return <File size={48} className="fe-icon-file" />;}
   const ext = name.split(".").pop().toLowerCase();
 
   const textExts = ["txt", "md", "csv", "log"];
@@ -67,26 +67,26 @@ const getFileIcon = (name, isDir) => {
   const jsonExts = ["json", "yaml", "yml", "toml"];
 
   if (textExts.includes(ext) || ext === "pdf" || ext === "docx")
-    return <FileText size={48} className="fe-icon-text" />;
+    {return <FileText size={48} className="fe-icon-text" />;}
   if (codeExts.includes(ext))
-    return <FileCode size={48} className="fe-icon-code" />;
+    {return <FileCode size={48} className="fe-icon-code" />;}
   if (imgExts.includes(ext))
-    return <FileImage size={48} className="fe-icon-image" />;
+    {return <FileImage size={48} className="fe-icon-image" />;}
   if (audioExts.includes(ext))
-    return <FileAudio size={48} className="fe-icon-audio" />;
+    {return <FileAudio size={48} className="fe-icon-audio" />;}
   if (videoExts.includes(ext))
-    return <FileVideo size={48} className="fe-icon-video" />;
+    {return <FileVideo size={48} className="fe-icon-video" />;}
   if (archiveExts.includes(ext))
-    return <FileArchive size={48} className="fe-icon-archive" />;
+    {return <FileArchive size={48} className="fe-icon-archive" />;}
   if (jsonExts.includes(ext))
-    return <FileJson size={48} className="fe-icon-code" />;
+    {return <FileJson size={48} className="fe-icon-code" />;}
 
   return <File size={48} className="fe-icon-file" />;
 };
 
 const getSmallFileIcon = (name, isDir) => {
-  if (isDir) return <Folder size={18} className="fe-icon-folder" />;
-  if (!name.includes(".")) return <File size={18} className="fe-icon-file" />;
+  if (isDir) {return <Folder size={18} className="fe-icon-folder" />;}
+  if (!name.includes(".")) {return <File size={18} className="fe-icon-file" />;}
   const ext = name.split(".").pop().toLowerCase();
 
   const textExts = ["txt", "md", "csv", "log"];
@@ -113,34 +113,34 @@ const getSmallFileIcon = (name, isDir) => {
   const jsonExts = ["json", "yaml", "yml", "toml"];
 
   if (textExts.includes(ext) || ext === "pdf" || ext === "docx")
-    return <FileText size={18} className="fe-icon-text" />;
+    {return <FileText size={18} className="fe-icon-text" />;}
   if (codeExts.includes(ext))
-    return <FileCode size={18} className="fe-icon-code" />;
+    {return <FileCode size={18} className="fe-icon-code" />;}
   if (imgExts.includes(ext))
-    return <FileImage size={18} className="fe-icon-image" />;
+    {return <FileImage size={18} className="fe-icon-image" />;}
   if (audioExts.includes(ext))
-    return <FileAudio size={18} className="fe-icon-audio" />;
+    {return <FileAudio size={18} className="fe-icon-audio" />;}
   if (videoExts.includes(ext))
-    return <FileVideo size={18} className="fe-icon-video" />;
+    {return <FileVideo size={18} className="fe-icon-video" />;}
   if (archiveExts.includes(ext))
-    return <FileArchive size={18} className="fe-icon-archive" />;
+    {return <FileArchive size={18} className="fe-icon-archive" />;}
   if (jsonExts.includes(ext))
-    return <FileJson size={18} className="fe-icon-code" />;
+    {return <FileJson size={18} className="fe-icon-code" />;}
 
   return <File size={18} className="fe-icon-file" />;
 };
 
 const formatSize = (bytes) => {
-  if (bytes === null || bytes === undefined) return "—";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes === null || bytes === undefined) {return "—";}
+  if (bytes < 1024) {return `${bytes} B`;}
+  if (bytes < 1024 * 1024) {return `${(bytes / 1024).toFixed(1)} KB`;}
   if (bytes < 1024 * 1024 * 1024)
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    {return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;}
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 };
 
 const formatDate = (iso) => {
-  if (!iso) return "—";
+  if (!iso) {return "—";}
   const d = new Date(iso);
   const now = new Date();
   if (d.toDateString() === now.toDateString()) {
@@ -230,7 +230,7 @@ export default function FileExplorer({ initialPath, windowId, widgetType }) {
       // Deduplicate items by path to prevent React key errors
       const seen = new Set();
       const deduped = (data.items || []).filter((item) => {
-        if (seen.has(item.path || item.name)) return false;
+        if (seen.has(item.path || item.name)) {return false;}
         seen.add(item.path || item.name);
         return true;
       });
@@ -246,7 +246,7 @@ export default function FileExplorer({ initialPath, windowId, widgetType }) {
   const handleCreateNew = useCallback(
     async (type) => {
       const name = createName.trim();
-      if (!name) return;
+      if (!name) {return;}
       try {
         if (type === "folder") {
           await fetch("/api/fs/mkdir", {
@@ -275,7 +275,7 @@ export default function FileExplorer({ initialPath, windowId, widgetType }) {
   );
 
   const handleRename = useCallback(async () => {
-    if (!renameDialog || !renameName.trim()) return;
+    if (!renameDialog || !renameName.trim()) {return;}
     const fromPath = renameDialog.item.path;
     const dir = fromPath.substring(0, fromPath.lastIndexOf("/"));
     const toPath = `${dir}/${renameName.trim()}`;
@@ -298,7 +298,7 @@ export default function FileExplorer({ initialPath, windowId, widgetType }) {
       const confirmed = window.confirm(
         `Delete "${item.name}"? This cannot be undone.`,
       );
-      if (!confirmed) return;
+      if (!confirmed) {return;}
       try {
         await fetch(`/api/fs/delete?path=${encodeURIComponent(item.path)}`, {
           method: "DELETE",
@@ -385,13 +385,13 @@ export default function FileExplorer({ initialPath, windowId, widgetType }) {
           .then((r) => r.json())
           .then((data) => {
             if (data.content)
-              setPreviewContent({
+              {setPreviewContent({
                 name: item.name,
                 type: "text",
                 content: data.content,
                 ext: item.extension,
-              });
-            else setPreviewContent(null);
+              });}
+            else {setPreviewContent(null);}
           })
           .catch(() => setPreviewContent(null))
           .finally(() => setPreviewLoading(false));
@@ -796,8 +796,8 @@ export default function FileExplorer({ initialPath, windowId, widgetType }) {
               value={createName}
               onChange={(e) => setCreateName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleCreateNew(createDialog.type);
-                if (e.key === "Escape") setCreateDialog(null);
+                if (e.key === "Enter") {handleCreateNew(createDialog.type);}
+                if (e.key === "Escape") {setCreateDialog(null);}
               }}
               autoFocus
             />
@@ -833,8 +833,8 @@ export default function FileExplorer({ initialPath, windowId, widgetType }) {
               value={renameName}
               onChange={(e) => setRenameName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleRename();
-                if (e.key === "Escape") setRenameDialog(null);
+                if (e.key === "Enter") {handleRename();}
+                if (e.key === "Escape") {setRenameDialog(null);}
               }}
               autoFocus
             />

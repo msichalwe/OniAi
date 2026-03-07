@@ -9,7 +9,7 @@ import { create } from 'zustand';
 import { storageService } from '../core/StorageService.js';
 
 function formatBytes(bytes) {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) {return '0 B';}
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -84,7 +84,7 @@ const useStorageStore = create((set, get) => ({
 
     getFilteredEntries: () => {
         const { entries, selectedCategory, selectedNamespace, searchQuery } = get();
-        if (!entries) return [];
+        if (!entries) {return [];}
 
         let items = [];
         if (selectedCategory === 'all') {

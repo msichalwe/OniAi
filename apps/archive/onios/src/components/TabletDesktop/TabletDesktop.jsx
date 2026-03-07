@@ -160,7 +160,7 @@ export default function TabletDesktop() {
   const handleOpenTile = useCallback(
     (type) => {
       const reg = WIDGET_REGISTRY[type];
-      if (!reg) return;
+      if (!reg) {return;}
       openWindow(
         type,
         {},
@@ -197,8 +197,8 @@ export default function TabletDesktop() {
     const openTypes = new Set(activeTiles.map((w) => w.widgetType));
     return QUICK_TILES.filter((t) => {
       const reg = WIDGET_REGISTRY[t.type];
-      if (!reg) return false;
-      if (reg.singleton && openTypes.has(t.type)) return false;
+      if (!reg) {return false;}
+      if (reg.singleton && openTypes.has(t.type)) {return false;}
       return true;
     });
   }, [activeTiles]);
@@ -272,7 +272,7 @@ export default function TabletDesktop() {
             <div className="tablet-active-grid">
               {activeTiles.map((win) => {
                 const reg = WIDGET_REGISTRY[win.widgetType];
-                if (!reg) return null;
+                if (!reg) {return null;}
                 const WidgetComponent = reg.component;
                 const IconComponent = reg.icon;
 
@@ -339,7 +339,7 @@ export default function TabletDesktop() {
 
 function getGreeting() {
   const h = new Date().getHours();
-  if (h < 12) return "morning";
-  if (h < 17) return "afternoon";
+  if (h < 12) {return "morning";}
+  if (h < 17) {return "afternoon";}
   return "evening";
 }

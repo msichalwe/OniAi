@@ -80,7 +80,7 @@ export default function Calculator({ expression: initialExpr }) {
   // Keyboard support
   useEffect(() => {
     const el = calcRef.current;
-    if (!el) return;
+    if (!el) {return;}
 
     const handleKeyDown = (e) => {
       e.preventDefault();

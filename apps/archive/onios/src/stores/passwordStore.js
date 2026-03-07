@@ -20,7 +20,7 @@ import { nanoid } from 'nanoid';
 const OBFUSCATION_KEY = 'oniOS-vault-k3y';
 
 function obfuscate(str) {
-    if (!str) return '';
+    if (!str) {return '';}
     return Array.from(str)
         .map((c, i) => String.fromCharCode(c.charCodeAt(0) ^ OBFUSCATION_KEY.charCodeAt(i % OBFUSCATION_KEY.length)))
         .join('');
@@ -42,11 +42,11 @@ function generatePassword(length = 16, options = {}) {
     } = options;
 
     let chars = '';
-    if (lowercase) chars += 'abcdefghijklmnopqrstuvwxyz';
-    if (uppercase) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    if (numbers) chars += '0123456789';
-    if (symbols) chars += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-    if (!chars) chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    if (lowercase) {chars += 'abcdefghijklmnopqrstuvwxyz';}
+    if (uppercase) {chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';}
+    if (numbers) {chars += '0123456789';}
+    if (symbols) {chars += '!@#$%^&*()_+-=[]{}|;:,.<>?';}
+    if (!chars) {chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';}
 
     const array = new Uint32Array(length);
     crypto.getRandomValues(array);
@@ -57,23 +57,23 @@ function generatePassword(length = 16, options = {}) {
  * Calculate password strength (0-100).
  */
 function calculateStrength(password) {
-    if (!password) return 0;
+    if (!password) {return 0;}
     let score = 0;
-    if (password.length >= 8) score += 20;
-    if (password.length >= 12) score += 10;
-    if (password.length >= 16) score += 10;
-    if (/[a-z]/.test(password)) score += 10;
-    if (/[A-Z]/.test(password)) score += 10;
-    if (/[0-9]/.test(password)) score += 10;
-    if (/[^a-zA-Z0-9]/.test(password)) score += 15;
-    if (new Set(password).size >= password.length * 0.7) score += 15;
+    if (password.length >= 8) {score += 20;}
+    if (password.length >= 12) {score += 10;}
+    if (password.length >= 16) {score += 10;}
+    if (/[a-z]/.test(password)) {score += 10;}
+    if (/[A-Z]/.test(password)) {score += 10;}
+    if (/[0-9]/.test(password)) {score += 10;}
+    if (/[^a-zA-Z0-9]/.test(password)) {score += 15;}
+    if (new Set(password).size >= password.length * 0.7) {score += 15;}
     return Math.min(100, score);
 }
 
 function strengthLabel(score) {
-    if (score >= 80) return 'Strong';
-    if (score >= 50) return 'Medium';
-    if (score >= 30) return 'Weak';
+    if (score >= 80) {return 'Strong';}
+    if (score >= 50) {return 'Medium';}
+    if (score >= 30) {return 'Weak';}
     return 'Very Weak';
 }
 
@@ -131,7 +131,7 @@ const usePasswordStore = create(
             updateEntry: (id, updates) => {
                 set((state) => ({
                     entries: state.entries.map((e) => {
-                        if (e.id !== id) return e;
+                        if (e.id !== id) {return e;}
                         const updated = { ...e, ...updates, updatedAt: Date.now() };
                         if (updates.password !== undefined) {
                             updated.password = obfuscate(updates.password);
@@ -159,7 +159,7 @@ const usePasswordStore = create(
 
             getEntry: (id) => {
                 const entry = get().entries.find((e) => e.id === id);
-                if (!entry) return null;
+                if (!entry) {return null;}
                 return { ...entry, password: deobfuscate(entry.password) };
             },
 

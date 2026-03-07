@@ -622,8 +622,8 @@ function resolveHeartbeatRunPrompt(params: {
     const memoryWork = resolveHeartbeatMemoryWork({ workspaceDir });
     const insightsPrompt = buildMemoryInsightsPrompt(memoryWork.insights);
     const parts = [basePrompt];
-    if (insightsPrompt) parts.push(insightsPrompt);
-    if (memoryWork.contextPrompt) parts.push(memoryWork.contextPrompt);
+    if (insightsPrompt) {parts.push(insightsPrompt);}
+    if (memoryWork.contextPrompt) {parts.push(memoryWork.contextPrompt);}
     if (memoryWork.nodeScanDue) {
       parts.push("[Node scan due] Check if any nodes are connected first (nodes action=status). Only run ambient context scan if at least one node is connected and responsive. If nodes tool fails or no nodes are available, skip the scan silently.");
     }

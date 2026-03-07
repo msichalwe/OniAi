@@ -57,7 +57,7 @@ const useTaskStore = create(
                     ),
                 }));
                 const task = get().tasks.find((t) => t.id === id);
-                if (task) eventBus.emit('task:updated', task);
+                if (task) {eventBus.emit('task:updated', task);}
                 return task;
             },
 
@@ -66,7 +66,7 @@ const useTaskStore = create(
                 set((state) => ({
                     tasks: state.tasks.filter((t) => t.id !== id),
                 }));
-                if (task) eventBus.emit('task:deleted', task);
+                if (task) {eventBus.emit('task:deleted', task);}
             },
 
             completeTask: (id) => {
@@ -78,7 +78,7 @@ const useTaskStore = create(
                     ),
                 }));
                 const task = get().tasks.find((t) => t.id === id);
-                if (task) eventBus.emit('task:completed', task);
+                if (task) {eventBus.emit('task:completed', task);}
             },
 
             reopenTask: (id) => {

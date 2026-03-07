@@ -20,7 +20,7 @@ export default function MediaPlayer({ src }) {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !src) return;
+    if (!video || !src) {return;}
 
     const onTimeUpdate = () => setCurrentTime(video.currentTime);
     const onLoadedMetadata = () => setDuration(video.duration);
@@ -39,7 +39,7 @@ export default function MediaPlayer({ src }) {
 
   const togglePlay = () => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video) {return;}
     if (isPlaying) {
       video.pause();
     } else {
@@ -50,7 +50,7 @@ export default function MediaPlayer({ src }) {
 
   const seek = (e) => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video) {return;}
     const rect = e.currentTarget.getBoundingClientRect();
     const pct = (e.clientX - rect.left) / rect.width;
     video.currentTime = pct * duration;
@@ -59,19 +59,19 @@ export default function MediaPlayer({ src }) {
   const changeVolume = (e) => {
     const v = parseFloat(e.target.value);
     setVolume(v);
-    if (videoRef.current) videoRef.current.volume = v;
+    if (videoRef.current) {videoRef.current.volume = v;}
     setIsMuted(v === 0);
   };
 
   const toggleMute = () => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video) {return;}
     video.muted = !isMuted;
     setIsMuted(!isMuted);
   };
 
   const formatTime = (t) => {
-    if (!t || isNaN(t)) return "0:00";
+    if (!t || isNaN(t)) {return "0:00";}
     const mins = Math.floor(t / 60);
     const secs = Math.floor(t % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -111,7 +111,7 @@ export default function MediaPlayer({ src }) {
           <button
             className="media-player-btn"
             onClick={() => {
-              if (videoRef.current) videoRef.current.currentTime -= 10;
+              if (videoRef.current) {videoRef.current.currentTime -= 10;}
             }}
           >
             <SkipBack />
@@ -122,7 +122,7 @@ export default function MediaPlayer({ src }) {
           <button
             className="media-player-btn"
             onClick={() => {
-              if (videoRef.current) videoRef.current.currentTime += 10;
+              if (videoRef.current) {videoRef.current.currentTime += 10;}
             }}
           >
             <SkipForward />

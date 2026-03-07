@@ -73,15 +73,15 @@ const REPO_WORKSPACE = path.resolve(path.dirname(new URL(import.meta.url).pathna
 
 function getWorkspaceDir() {
     // Prefer repo workspace first (self-contained), then external paths
-    if (fs.existsSync(REPO_WORKSPACE) && fs.readdirSync(REPO_WORKSPACE).some(f => f.endsWith('.md'))) return REPO_WORKSPACE;
-    if (fs.existsSync(OPENCLAW_WORKSPACE)) return OPENCLAW_WORKSPACE;
-    if (fs.existsSync(ONIOS_WORKSPACE)) return ONIOS_WORKSPACE;
+    if (fs.existsSync(REPO_WORKSPACE) && fs.readdirSync(REPO_WORKSPACE).some(f => f.endsWith('.md'))) {return REPO_WORKSPACE;}
+    if (fs.existsSync(OPENCLAW_WORKSPACE)) {return OPENCLAW_WORKSPACE;}
+    if (fs.existsSync(ONIOS_WORKSPACE)) {return ONIOS_WORKSPACE;}
     return null;
 }
 
 function readWorkspaceFiles() {
     const dir = getWorkspaceDir();
-    if (!dir) return {};
+    if (!dir) {return {};}
     const files = {};
     for (const name of WORKSPACE_FILES) {
         const filePath = path.join(dir, name);
@@ -217,17 +217,17 @@ You are NOT a chatbot. You are an AGENT that plans, executes, verifies, and iter
     // Live desktop context
     if (kernelState) {
         const kParts = ['\n## Live Desktop State'];
-        if (kernelState.windows) kParts.push(`Open windows: ${kernelState.windows}`);
-        if (kernelState.desktops) kParts.push(`Desktops: ${kernelState.desktops}`);
-        if (kernelState.tasks) kParts.push(`Tasks: ${kernelState.tasks}`);
-        if (kernelState.workflows) kParts.push(`Workflows: ${kernelState.workflows}`);
-        if (kernelState.theme) kParts.push(`Theme: ${kernelState.theme}`);
-        if (kernelState.time) kParts.push(`Current time: ${kernelState.time}`);
-        if (kernelState.focusedWindow) kParts.push(`Focused: ${kernelState.focusedWindow}`);
-        if (kernelState.notifications) kParts.push(`Recent notifications: ${kernelState.notifications}`);
-        if (kernelState.openWidgets) kParts.push(`\n${kernelState.openWidgets}`);
+        if (kernelState.windows) {kParts.push(`Open windows: ${kernelState.windows}`);}
+        if (kernelState.desktops) {kParts.push(`Desktops: ${kernelState.desktops}`);}
+        if (kernelState.tasks) {kParts.push(`Tasks: ${kernelState.tasks}`);}
+        if (kernelState.workflows) {kParts.push(`Workflows: ${kernelState.workflows}`);}
+        if (kernelState.theme) {kParts.push(`Theme: ${kernelState.theme}`);}
+        if (kernelState.time) {kParts.push(`Current time: ${kernelState.time}`);}
+        if (kernelState.focusedWindow) {kParts.push(`Focused: ${kernelState.focusedWindow}`);}
+        if (kernelState.notifications) {kParts.push(`Recent notifications: ${kernelState.notifications}`);}
+        if (kernelState.openWidgets) {kParts.push(`\n${kernelState.openWidgets}`);}
         // Live widget state — terminal output, browser URL, file explorer path, etc.
-        if (kernelState.liveWidgetState) kParts.push(`\n${kernelState.liveWidgetState}`);
+        if (kernelState.liveWidgetState) {kParts.push(`\n${kernelState.liveWidgetState}`);}
         parts.push(kParts.join('\n'));
     }
 
@@ -268,7 +268,7 @@ function generateState() {
 
 function parseJWT(token) {
     try {
-        if (!token || token.split('.').length !== 3) return null;
+        if (!token || token.split('.').length !== 3) {return null;}
         const [, payload] = token.split('.');
         const padded = payload + '='.repeat((4 - (payload.length % 4)) % 4);
         return JSON.parse(Buffer.from(padded, 'base64url').toString('utf-8'));
@@ -277,7 +277,7 @@ function parseJWT(token) {
 
 function extractAccountInfo(idToken) {
     const claims = parseJWT(idToken);
-    if (!claims) return {};
+    if (!claims) {return {};}
     const auth = claims['https://api.openai.com/auth'] || {};
     return {
         accountId: auth.chatgpt_account_id || '',
@@ -299,7 +299,7 @@ async function refreshOAuthTokens(refreshToken) {
                 refresh_token: refreshToken,
             }),
         });
-        if (!resp.ok) return null;
+        if (!resp.ok) {return null;}
         const data = await resp.json();
         const claims = parseJWT(data.access_token);
         const expires = claims?.exp ? claims.exp * 1000 : Date.now() + 3600000;
@@ -314,14 +314,14 @@ async function refreshOAuthTokens(refreshToken) {
 
 async function getValidAccessToken() {
     const auth = await readJSON(FILES.auth, null);
-    if (!auth || auth.type !== 'oauth') return null;
+    if (!auth || auth.type !== 'oauth') {return null;}
 
     // Refresh if expiring within 5 minutes
     const fiveMin = 5 * 60 * 1000;
     if (Date.now() + fiveMin >= (auth.expires || 0)) {
-        if (!auth.refreshToken) return null;
+        if (!auth.refreshToken) {return null;}
         const refreshed = await refreshOAuthTokens(auth.refreshToken);
-        if (!refreshed) return null;
+        if (!refreshed) {return null;}
         const updated = { ...auth, ...refreshed };
         if (refreshed.idToken) {
             updated.account = extractAccountInfo(refreshed.idToken);
@@ -335,13 +335,13 @@ async function getValidAccessToken() {
 // ─── File Helpers ────────────────────────────────────────
 
 function ensureDirs() {
-    if (!fs.existsSync(AI_DIR)) fs.mkdirSync(AI_DIR, { recursive: true });
-    if (!fs.existsSync(CONV_DIR)) fs.mkdirSync(CONV_DIR, { recursive: true });
+    if (!fs.existsSync(AI_DIR)) {fs.mkdirSync(AI_DIR, { recursive: true });}
+    if (!fs.existsSync(CONV_DIR)) {fs.mkdirSync(CONV_DIR, { recursive: true });}
 }
 
 async function readJSON(filePath, fallback = {}) {
     try {
-        if (!fs.existsSync(filePath)) return fallback;
+        if (!fs.existsSync(filePath)) {return fallback;}
         const raw = await asyncQueue.enqueue(filePath, () => fs.promises.readFile(filePath, 'utf-8'));
         return JSON.parse(raw);
     } catch { return fallback; }
@@ -356,7 +356,7 @@ async function writeJSON(filePath, data) {
 
 function parseBody(req) {
     // Support pre-parsed body from upstream middleware (e.g. OpenClaw proxy)
-    if (req._parsedBody) return Promise.resolve(req._parsedBody);
+    if (req._parsedBody) {return Promise.resolve(req._parsedBody);}
     return new Promise((resolve) => {
         let body = '';
         req.on('data', chunk => body += chunk);
@@ -375,14 +375,14 @@ function json(res, data, status = 200) {
 function nanoid(len = 10) {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let id = '';
-    for (let i = 0; i < len; i++) id += chars[Math.floor(Math.random() * chars.length)];
+    for (let i = 0; i < len; i++) {id += chars[Math.floor(Math.random() * chars.length)];}
     return id;
 }
 
 // ─── Vector Math (cosine similarity) ────────────────────
 
 function cosineSimilarity(a, b) {
-    if (!a || !b || a.length !== b.length) return 0;
+    if (!a || !b || a.length !== b.length) {return 0;}
     let dot = 0, magA = 0, magB = 0;
     for (let i = 0; i < a.length; i++) {
         dot += a[i] * b[i];
@@ -401,9 +401,9 @@ function keywordSimilarity(textA, textB) {
     const tokenize = (t) => (t || '').toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
     const wordsA = new Set(tokenize(textA));
     const wordsB = new Set(tokenize(textB));
-    if (wordsA.size === 0 || wordsB.size === 0) return 0;
+    if (wordsA.size === 0 || wordsB.size === 0) {return 0;}
     let intersection = 0;
-    for (const w of wordsA) { if (wordsB.has(w)) intersection++; }
+    for (const w of wordsA) { if (wordsB.has(w)) {intersection++;} }
     return intersection / Math.sqrt(wordsA.size * wordsB.size);
 }
 
@@ -414,7 +414,7 @@ async function getEmbedding(text, config) {
     const apiKey = config.embeddingApiKey || config.apiKey || '';
     const model = config.embeddingModel || 'text-embedding-3-small';
 
-    if (!apiUrl || !apiKey) return null; // No embedding API configured
+    if (!apiUrl || !apiKey) {return null;} // No embedding API configured
 
     try {
         const res = await fetch(apiUrl, {
@@ -429,7 +429,7 @@ async function getEmbedding(text, config) {
             }),
         });
         const data = await res.json();
-        if (data.data?.[0]?.embedding) return data.data[0].embedding;
+        if (data.data?.[0]?.embedding) {return data.data[0].embedding;}
         return null;
     } catch {
         return null;
@@ -482,11 +482,11 @@ export default function aiMemoryPlugin() {
             ensureDirs();
 
             // Initialize default files if they don't exist
-            if (!fs.existsSync(FILES.personality)) await writeJSON(FILES.personality, DEFAULT_PERSONALITY);
-            if (!fs.existsSync(FILES.memories)) await writeJSON(FILES.memories, { memories: [] });
-            if (!fs.existsSync(FILES.knowledge)) await writeJSON(FILES.knowledge, { entries: [] });
-            if (!fs.existsSync(FILES.config)) await writeJSON(FILES.config, DEFAULT_CONFIG);
-            if (!fs.existsSync(FILES.convIndex)) await writeJSON(FILES.convIndex, { conversations: [] });
+            if (!fs.existsSync(FILES.personality)) {await writeJSON(FILES.personality, DEFAULT_PERSONALITY);}
+            if (!fs.existsSync(FILES.memories)) {await writeJSON(FILES.memories, { memories: [] });}
+            if (!fs.existsSync(FILES.knowledge)) {await writeJSON(FILES.knowledge, { entries: [] });}
+            if (!fs.existsSync(FILES.config)) {await writeJSON(FILES.config, DEFAULT_CONFIG);}
+            if (!fs.existsSync(FILES.convIndex)) {await writeJSON(FILES.convIndex, { conversations: [] });}
 
             // ═══════════════════════════════════════════════
             // MEMORY endpoints
@@ -533,7 +533,7 @@ export default function aiMemoryPlugin() {
                 let stored = 0;
 
                 for (const item of items) {
-                    if (!item.content) continue;
+                    if (!item.content) {continue;}
                     const embedding = await getEmbedding(item.content, config);
                     store.memories.push({
                         id: `mem_${nanoid(8)}`,
@@ -583,7 +583,7 @@ export default function aiMemoryPlugin() {
                             ...m,
                             score: cosineSimilarity(queryEmbedding, m.embedding),
                         }))
-                        .sort((a, b) => b.score - a.score);
+                        .toSorted((a, b) => b.score - a.score);
 
                     // Also include memories without embeddings via keyword search
                     const noEmbed = memories
@@ -594,7 +594,7 @@ export default function aiMemoryPlugin() {
                         }))
                         .filter(m => m.score > 0.05);
 
-                    scored = [...scored, ...noEmbed].sort((a, b) => b.score - a.score);
+                    scored = [...scored, ...noEmbed].toSorted((a, b) => b.score - a.score);
                 } else {
                     // Keyword fallback
                     scored = memories
@@ -603,7 +603,7 @@ export default function aiMemoryPlugin() {
                             score: keywordSimilarity(q, m.content + ' ' + (m.tags || []).join(' ')),
                         }))
                         .filter(m => m.score > 0.05)
-                        .sort((a, b) => b.score - a.score);
+                        .toSorted((a, b) => b.score - a.score);
                 }
 
                 const results = scored.slice(0, k).map(m => ({
@@ -643,7 +643,7 @@ export default function aiMemoryPlugin() {
 
                 const store = await readJSON(FILES.memories, { memories: [] });
                 let memories = store.memories;
-                if (category) memories = memories.filter(m => m.category === category);
+                if (category) {memories = memories.filter(m => m.category === category);}
 
                 const categories = {};
                 store.memories.forEach(m => {
@@ -652,7 +652,7 @@ export default function aiMemoryPlugin() {
 
                 json(res, {
                     memories: memories
-                        .sort((a, b) => b.createdAt - a.createdAt)
+                        .toSorted((a, b) => b.createdAt - a.createdAt)
                         .slice(0, limit)
                         .map(m => ({
                             id: m.id,
@@ -741,7 +741,7 @@ export default function aiMemoryPlugin() {
                     // Auto-title from first user message
                     if (!entry.title || entry.title === 'New Conversation') {
                         const firstUser = conv.messages.find(m => m.role === 'user');
-                        if (firstUser) entry.title = firstUser.content.substring(0, 60);
+                        if (firstUser) {entry.title = firstUser.content.substring(0, 60);}
                     }
                 }
                 await writeJSON(FILES.convIndex, index);
@@ -777,7 +777,7 @@ export default function aiMemoryPlugin() {
                 if (!id) { json(res, { error: 'id required' }, 400); return; }
 
                 const convFile = path.join(CONV_DIR, `conv-${id}.json`);
-                if (fs.existsSync(convFile)) fs.unlinkSync(convFile);
+                if (fs.existsSync(convFile)) {fs.unlinkSync(convFile);}
 
                 const index = await readJSON(FILES.convIndex, { conversations: [] });
                 index.conversations = index.conversations.filter(c => c.id !== id);
@@ -790,7 +790,7 @@ export default function aiMemoryPlugin() {
                 if (req.method === 'GET') {
                     const index = await readJSON(FILES.convIndex, { conversations: [] });
                     json(res, {
-                        conversations: index.conversations.sort((a, b) => (b.lastMessageAt || b.createdAt) - (a.lastMessageAt || a.createdAt)),
+                        conversations: index.conversations.toSorted((a, b) => (b.lastMessageAt || b.createdAt) - (a.lastMessageAt || a.createdAt)),
                     });
                 } else if (req.method === 'POST') {
                     const body = await parseBody(req);
@@ -841,7 +841,7 @@ export default function aiMemoryPlugin() {
                     const url = new URL(req.url, 'http://localhost');
                     const category = url.searchParams.get('category') || '';
                     let entries = store.entries;
-                    if (category) entries = entries.filter(e => e.category === category);
+                    if (category) {entries = entries.filter(e => e.category === category);}
 
                     const categories = {};
                     store.entries.forEach(e => {
@@ -934,13 +934,13 @@ export default function aiMemoryPlugin() {
                         relevantMemories = memStore.memories
                             .filter(m => m.embedding)
                             .map(m => ({ ...m, score: cosineSimilarity(queryEmbed, m.embedding) }))
-                            .sort((a, b) => b.score - a.score)
+                            .toSorted((a, b) => b.score - a.score)
                             .slice(0, config.memorySearchTopK || 10);
                     } else {
                         relevantMemories = memStore.memories
                             .map(m => ({ ...m, score: keywordSimilarity(query, m.content) }))
                             .filter(m => m.score > 0.05)
-                            .sort((a, b) => b.score - a.score)
+                            .toSorted((a, b) => b.score - a.score)
                             .slice(0, config.memorySearchTopK || 10);
                     }
 
@@ -1198,7 +1198,7 @@ export default function aiMemoryPlugin() {
                                         m.id.startsWith('chatgpt-')
                                     ))
                                     .map(m => ({ id: m.id, owned_by: m.owned_by, created: m.created }))
-                                    .sort((a, b) => (b.created || 0) - (a.created || 0));
+                                    .toSorted((a, b) => (b.created || 0) - (a.created || 0));
 
                                 json(res, { models: chatModels, total: chatModels.length, source: 'live' });
                                 return;
@@ -1242,7 +1242,7 @@ export default function aiMemoryPlugin() {
 
                 // ─── DELETE /api/ai/auth ───
                 if ((sub === '/' || sub === '') && req.method === 'DELETE') {
-                    if (fs.existsSync(FILES.auth)) fs.unlinkSync(FILES.auth);
+                    if (fs.existsSync(FILES.auth)) {fs.unlinkSync(FILES.auth);}
                     _pkceStore = null;
                     console.log('[Auth] Auth cleared');
                     json(res, { ok: true, message: 'Auth cleared' });
@@ -1291,7 +1291,7 @@ export default function aiMemoryPlugin() {
                 let relevantMemories = memStore.memories
                     .map(m => ({ ...m, score: keywordSimilarity(userMessage, m.content) }))
                     .filter(m => m.score > 0.05)
-                    .sort((a, b) => b.score - a.score)
+                    .toSorted((a, b) => b.score - a.score)
                     .slice(0, config.memorySearchTopK || 10);
 
                 // Try vector search if embeddings available
@@ -1300,7 +1300,7 @@ export default function aiMemoryPlugin() {
                     const vectorResults = memStore.memories
                         .filter(m => m.embedding)
                         .map(m => ({ ...m, score: cosineSimilarity(queryEmbed, m.embedding) }))
-                        .sort((a, b) => b.score - a.score)
+                        .toSorted((a, b) => b.score - a.score)
                         .slice(0, config.memorySearchTopK || 10);
                     if (vectorResults.length > relevantMemories.length) {
                         relevantMemories = vectorResults;
@@ -1370,16 +1370,16 @@ export default function aiMemoryPlugin() {
 
                     if (kernelState) {
                         const kParts = ['\n## Live OS Context'];
-                        if (kernelState.windows) kParts.push(`Open windows: ${kernelState.windows}`);
-                        if (kernelState.desktops) kParts.push(`Desktops: ${kernelState.desktops}`);
-                        if (kernelState.tasks) kParts.push(`Tasks: ${kernelState.tasks}`);
-                        if (kernelState.workflows) kParts.push(`Workflows: ${kernelState.workflows}`);
-                        if (kernelState.theme) kParts.push(`Theme: ${kernelState.theme}`);
-                        if (kernelState.time) kParts.push(`Current time: ${kernelState.time}`);
-                        if (kernelState.focusedWindow) kParts.push(`Focused: ${kernelState.focusedWindow}`);
-                        if (kernelState.notifications) kParts.push(`Recent notifications: ${kernelState.notifications}`);
-                        if (kernelState.openWidgets) kParts.push(`\n${kernelState.openWidgets}`);
-                        if (kernelState.liveWidgetState) kParts.push(`\n${kernelState.liveWidgetState}`);
+                        if (kernelState.windows) {kParts.push(`Open windows: ${kernelState.windows}`);}
+                        if (kernelState.desktops) {kParts.push(`Desktops: ${kernelState.desktops}`);}
+                        if (kernelState.tasks) {kParts.push(`Tasks: ${kernelState.tasks}`);}
+                        if (kernelState.workflows) {kParts.push(`Workflows: ${kernelState.workflows}`);}
+                        if (kernelState.theme) {kParts.push(`Theme: ${kernelState.theme}`);}
+                        if (kernelState.time) {kParts.push(`Current time: ${kernelState.time}`);}
+                        if (kernelState.focusedWindow) {kParts.push(`Focused: ${kernelState.focusedWindow}`);}
+                        if (kernelState.notifications) {kParts.push(`Recent notifications: ${kernelState.notifications}`);}
+                        if (kernelState.openWidgets) {kParts.push(`\n${kernelState.openWidgets}`);}
+                        if (kernelState.liveWidgetState) {kParts.push(`\n${kernelState.liveWidgetState}`);}
                         systemParts.push(kParts.join('\n'));
                     }
 
@@ -1437,7 +1437,7 @@ export default function aiMemoryPlugin() {
                         // to pair with a function_call in the same request).
                         const input = [];
                         for (const msg of messages) {
-                            if (msg.role === 'system') continue; // handled by instructions
+                            if (msg.role === 'system') {continue;} // handled by instructions
                             if (msg.role === 'user') {
                                 input.push({ type: 'message', role: 'user', content: [{ type: 'input_text', text: msg.content }] });
                             } else if (msg.role === 'assistant' && msg.tool_calls?.length) {
@@ -1504,7 +1504,7 @@ export default function aiMemoryPlugin() {
 
                         while (true) {
                             const { done, value } = await reader.read();
-                            if (done) break;
+                            if (done) {break;}
 
                             buffer += decoder.decode(value, { stream: true });
                             const lines = buffer.split('\n');
@@ -1636,14 +1636,14 @@ export default function aiMemoryPlugin() {
 
                         while (true) {
                             const { done, value } = await reader.read();
-                            if (done) break;
+                            if (done) {break;}
 
                             buffer += decoder.decode(value, { stream: true });
                             const lines = buffer.split('\n');
                             buffer = lines.pop() || '';
 
                             for (const line of lines) {
-                                if (!line.startsWith('data: ')) continue;
+                                if (!line.startsWith('data: ')) {continue;}
                                 const data = line.slice(6);
                                 if (data === '[DONE]') { sendSSE('done', {}); continue; }
                                 try {
@@ -1656,8 +1656,8 @@ export default function aiMemoryPlugin() {
                                     if (delta?.tool_calls) {
                                         for (const tc of delta.tool_calls) {
                                             if (tc.index !== undefined) {
-                                                if (!toolCallsAccum[tc.index]) toolCallsAccum[tc.index] = { name: '', arguments: '', id: '' };
-                                                if (tc.id) toolCallsAccum[tc.index].id = tc.id;
+                                                if (!toolCallsAccum[tc.index]) {toolCallsAccum[tc.index] = { name: '', arguments: '', id: '' };}
+                                                if (tc.id) {toolCallsAccum[tc.index].id = tc.id;}
                                                 if (tc.function?.name) {
                                                     toolCallsAccum[tc.index].name = tc.function.name;
                                                     sendSSE('tool_delta', { index: tc.index, name: tc.function.name, callId: tc.id, arguments_delta: '' });
@@ -1896,7 +1896,7 @@ IMPORTANT: You may call more tools here. Do NOT stop early if there are remainin
 
                         while (true) {
                             const { done, value } = await reader.read();
-                            if (done) break;
+                            if (done) {break;}
 
                             buffer += decoder.decode(value, { stream: true });
                             const lines = buffer.split('\n');
@@ -2076,14 +2076,14 @@ IMPORTANT: You may call more tools here. Do NOT stop early if there are remainin
 
                         while (true) {
                             const { done, value } = await reader.read();
-                            if (done) break;
+                            if (done) {break;}
 
                             buffer += decoder.decode(value, { stream: true });
                             const lines = buffer.split('\n');
                             buffer = lines.pop() || '';
 
                             for (const line of lines) {
-                                if (!line.startsWith('data: ')) continue;
+                                if (!line.startsWith('data: ')) {continue;}
                                 const data = line.slice(6);
                                 if (data === '[DONE]') { sendSSE('done', {}); continue; }
                                 try {
@@ -2096,7 +2096,7 @@ IMPORTANT: You may call more tools here. Do NOT stop early if there are remainin
                                     if (delta?.tool_calls) {
                                         for (const tc of delta.tool_calls) {
                                             if (tc.index !== undefined) {
-                                                if (!toolCallsAccum[tc.index]) toolCallsAccum[tc.index] = { name: '', arguments: '' };
+                                                if (!toolCallsAccum[tc.index]) {toolCallsAccum[tc.index] = { name: '', arguments: '' };}
                                                 if (tc.function?.name) {
                                                     toolCallsAccum[tc.index].name = tc.function.name;
                                                     sendSSE('tool_delta', { index: tc.index, name: tc.function.name, arguments_delta: '' });
@@ -2195,8 +2195,8 @@ IMPORTANT: You may call more tools here. Do NOT stop early if there are remainin
                     const body = await parseBody(req);
                     const current = await readJSON(FILES.config, DEFAULT_CONFIG);
                     // Don't overwrite keys with masked values
-                    if (body.apiKey === '***' + current.apiKey?.slice(-4)) delete body.apiKey;
-                    if (body.embeddingApiKey === '***' + current.embeddingApiKey?.slice(-4)) delete body.embeddingApiKey;
+                    if (body.apiKey === '***' + current.apiKey?.slice(-4)) {delete body.apiKey;}
+                    if (body.embeddingApiKey === '***' + current.embeddingApiKey?.slice(-4)) {delete body.embeddingApiKey;}
                     const updated = { ...current, ...body };
                     await writeJSON(FILES.config, updated);
                     json(res, { ok: true });

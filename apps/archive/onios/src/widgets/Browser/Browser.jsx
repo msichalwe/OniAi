@@ -42,7 +42,7 @@ export default function BrowserWidget({ windowId, widgetType, initialUrl }) {
 
   const navigate = useCallback(
     (targetUrl) => {
-      if (!targetUrl) return;
+      if (!targetUrl) {return;}
 
       let finalUrl = targetUrl.trim();
       if (
@@ -73,7 +73,7 @@ export default function BrowserWidget({ windowId, widgetType, initialUrl }) {
   );
 
   const goBack = useCallback(() => {
-    if (historyIdx <= 0) return;
+    if (historyIdx <= 0) {return;}
     const newIdx = historyIdx - 1;
     setHistoryIdx(newIdx);
     const prevUrl = history[newIdx];
@@ -83,7 +83,7 @@ export default function BrowserWidget({ windowId, widgetType, initialUrl }) {
   }, [history, historyIdx]);
 
   const goForward = useCallback(() => {
-    if (historyIdx >= history.length - 1) return;
+    if (historyIdx >= history.length - 1) {return;}
     const newIdx = historyIdx + 1;
     setHistoryIdx(newIdx);
     const nextUrl = history[newIdx];
@@ -93,7 +93,7 @@ export default function BrowserWidget({ windowId, widgetType, initialUrl }) {
   }, [history, historyIdx]);
 
   const refresh = useCallback(() => {
-    if (!url) return;
+    if (!url) {return;}
     setLoading(true);
     const iframe = iframeRef.current;
     if (iframe) {
@@ -121,7 +121,7 @@ export default function BrowserWidget({ windowId, widgetType, initialUrl }) {
   // Listen for AI navigation commands
   useEffect(() => {
     const handleNavigate = (data) => {
-      if (data?.url) navigate(data.url);
+      if (data?.url) {navigate(data.url);}
     };
     eventBus.on("browser:navigate", handleNavigate);
     return () => eventBus.off("browser:navigate", handleNavigate);
@@ -129,7 +129,7 @@ export default function BrowserWidget({ windowId, widgetType, initialUrl }) {
 
   // Navigate on mount if initialUrl provided
   useEffect(() => {
-    if (initialUrl) navigate(initialUrl);
+    if (initialUrl) {navigate(initialUrl);}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isSecure = url.startsWith("https://");

@@ -12,7 +12,7 @@ let instanceCounter = 0;
 const _readyWaiters = [];
 
 export function getTerminalInstance(id) {
-  if (id) return terminalInstances.get(id);
+  if (id) {return terminalInstances.get(id);}
   // Return the most recent instance
   const entries = [...terminalInstances.values()];
   return entries[entries.length - 1] || null;
@@ -34,12 +34,12 @@ export function sendTerminalInput(data, id) {
 export function waitForTerminalReady(ms = 8000) {
   // Check if any instance is already ready
   for (const inst of terminalInstances.values()) {
-    if (inst?.ws?.readyState === WebSocket.OPEN) return Promise.resolve(true);
+    if (inst?.ws?.readyState === WebSocket.OPEN) {return Promise.resolve(true);}
   }
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
       const idx = _readyWaiters.indexOf(resolve);
-      if (idx >= 0) _readyWaiters.splice(idx, 1);
+      if (idx >= 0) {_readyWaiters.splice(idx, 1);}
       resolve(false); // timed out
     }, ms);
     _readyWaiters.push((ok) => {
@@ -70,7 +70,7 @@ export default function TerminalWidget({ windowId, widgetType }) {
   const [recentOutput, setRecentOutput] = useState([]);
 
   const connectWs = useCallback((term) => {
-    if (!mountedRef.current) return;
+    if (!mountedRef.current) {return;}
     setStatus("connecting");
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
@@ -107,7 +107,7 @@ export default function TerminalWidget({ windowId, widgetType }) {
     };
 
     ws.onmessage = (event) => {
-      if (!mountedRef.current) return;
+      if (!mountedRef.current) {return;}
       try {
         const msg = JSON.parse(event.data);
         if (msg.type === "output") {
@@ -122,7 +122,7 @@ export default function TerminalWidget({ windowId, widgetType }) {
                 .filter(Boolean),
             );
             if (buf.length > MAX_CONTEXT_LINES)
-              outputBufferRef.current = buf.slice(-MAX_CONTEXT_LINES);
+              {outputBufferRef.current = buf.slice(-MAX_CONTEXT_LINES);}
             setRecentOutput([...outputBufferRef.current]);
           }
         } else if (msg.type === "exit") {
@@ -137,14 +137,14 @@ export default function TerminalWidget({ windowId, widgetType }) {
 
     ws.onerror = () => {
       // Suppress errors from strict-mode cleanup (unmount before connect)
-      if (!mountedRef.current || ws._intentionalClose) return;
+      if (!mountedRef.current || ws._intentionalClose) {return;}
     };
 
     ws.onclose = () => {
       // If this was an intentional close (cleanup/unmount), don't reconnect
-      if (ws._intentionalClose || !mountedRef.current) return;
+      if (ws._intentionalClose || !mountedRef.current) {return;}
       setStatus((prev) => {
-        if (prev === "connected") return "error";
+        if (prev === "connected") {return "error";}
         return prev;
       });
       const delay = ws._wasConnected ? 2000 : 500;
@@ -179,7 +179,7 @@ export default function TerminalWidget({ windowId, widgetType }) {
   }, []);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {return;}
     mountedRef.current = true;
     instanceIdRef.current = ++instanceCounter;
 

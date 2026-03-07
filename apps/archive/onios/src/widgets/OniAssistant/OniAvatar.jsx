@@ -91,7 +91,7 @@ export default function OniAvatar({
 
   // Pupil follow mouse
   const handleMouseMove = useCallback((e) => {
-    if (!svgRef.current) return;
+    if (!svgRef.current) {return;}
     const rect = svgRef.current.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;

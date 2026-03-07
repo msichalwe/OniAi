@@ -112,8 +112,8 @@ export default function PasswordManager() {
     }
     // Favorites first, then by updatedAt
     list.sort((a, b) => {
-      if (a.favorite && !b.favorite) return -1;
-      if (!a.favorite && b.favorite) return 1;
+      if (a.favorite && !b.favorite) {return -1;}
+      if (!a.favorite && b.favorite) {return 1;}
       return b.updatedAt - a.updatedAt;
     });
     return list;
@@ -144,7 +144,7 @@ export default function PasswordManager() {
   // ─── CRUD ────────────────────────────────────────────
 
   const handleSave = () => {
-    if (!form.title.trim()) return;
+    if (!form.title.trim()) {return;}
     if (editingId) {
       updateEntry(editingId, form);
       setEditingId(null);
@@ -187,8 +187,8 @@ export default function PasswordManager() {
   const togglePasswordVisibility = (id) => {
     setVisiblePasswords((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {next.delete(id);}
+      else {next.add(id);}
       return next;
     });
   };

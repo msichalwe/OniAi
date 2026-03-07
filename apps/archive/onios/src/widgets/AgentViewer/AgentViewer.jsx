@@ -43,9 +43,9 @@ const STATUS_CONFIG = {
 };
 
 function formatDuration(ms) {
-  if (ms < 1000) return `${ms}ms`;
+  if (ms < 1000) {return `${ms}ms`;}
   const s = Math.floor(ms / 1000);
-  if (s < 60) return `${s}s`;
+  if (s < 60) {return `${s}s`;}
   return `${Math.floor(s / 60)}m ${s % 60}s`;
 }
 
@@ -71,22 +71,22 @@ export default function AgentViewer({ agentId, windowId, widgetType }) {
   useEffect(() => {
     const loadAgent = () => {
       const a = agentManager.get(agentId);
-      if (a) setAgent({ ...a });
+      if (a) {setAgent({ ...a });}
     };
 
     loadAgent();
 
     const onUpdate = (data) => {
-      if (data.agentId === agentId) loadAgent();
+      if (data.agentId === agentId) {loadAgent();}
     };
     const onLog = (data) => {
-      if (data.agentId === agentId) loadAgent();
+      if (data.agentId === agentId) {loadAgent();}
     };
     const onMessage = (data) => {
-      if (data.message?.to === agentId || data.message?.from === agentId) loadAgent();
+      if (data.message?.to === agentId || data.message?.from === agentId) {loadAgent();}
     };
     const onDone = (data) => {
-      if (data.agentId === agentId) loadAgent();
+      if (data.agentId === agentId) {loadAgent();}
     };
 
     eventBus.on("agent:update", onUpdate);
@@ -112,7 +112,7 @@ export default function AgentViewer({ agentId, windowId, widgetType }) {
   // Handle scroll to detect manual scroll-up
   const handleScroll = useCallback(() => {
     const el = logContainerRef.current;
-    if (!el) return;
+    if (!el) {return;}
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
     setAutoScroll(atBottom);
   }, []);
@@ -120,14 +120,14 @@ export default function AgentViewer({ agentId, windowId, widgetType }) {
   // Send message to agent
   const sendMessage = useCallback(() => {
     const text = messageInput.trim();
-    if (!text || !agentId) return;
+    if (!text || !agentId) {return;}
     agentManager.sendMessage(null, agentId, text); // null = from main
     setMessageInput("");
   }, [messageInput, agentId]);
 
   // Cancel agent
   const cancelAgent = useCallback(() => {
-    if (agentId) agentManager.cancel(agentId);
+    if (agentId) {agentManager.cancel(agentId);}
   }, [agentId]);
 
   if (!agent) {
@@ -247,7 +247,7 @@ export default function AgentViewer({ agentId, windowId, widgetType }) {
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") sendMessage();
+              if (e.key === "Enter") {sendMessage();}
             }}
           />
           <button onClick={sendMessage} disabled={!messageInput.trim()}>

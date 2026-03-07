@@ -66,12 +66,12 @@ export function computeContentSimilarity(a: string, b: string): number {
   const wordsA = extractWords(a);
   const wordsB = extractWords(b);
 
-  if (wordsA.size === 0 && wordsB.size === 0) return 1;
-  if (wordsA.size === 0 || wordsB.size === 0) return 0;
+  if (wordsA.size === 0 && wordsB.size === 0) {return 1;}
+  if (wordsA.size === 0 || wordsB.size === 0) {return 0;}
 
   let intersection = 0;
   for (const word of wordsA) {
-    if (wordsB.has(word)) intersection++;
+    if (wordsB.has(word)) {intersection++;}
   }
 
   const union = new Set([...wordsA, ...wordsB]).size;
@@ -96,13 +96,13 @@ export function findConflictingBubbles(params: {
     const sameCategory = bubble.category === category;
     const sharedEntities = hasOverlap(entityIds, bubble.entityIds);
 
-    if (!sameCategory || !sharedEntities) continue;
+    if (!sameCategory || !sharedEntities) {continue;}
 
     const similarity = computeContentSimilarity(content, bubble.content);
 
     // Only flag if there's meaningful keyword overlap (some topical relation)
     // but not zero (completely unrelated content in same category is not a conflict)
-    if (similarity < 0.05) continue;
+    if (similarity < 0.05) {continue;}
 
     const reason =
       similarity > 0.8

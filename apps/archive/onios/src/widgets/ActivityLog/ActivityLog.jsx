@@ -25,7 +25,7 @@ export default function ActivityLog() {
     filter === "all"
       ? activityLog
       : activityLog.filter((entry) => {
-          if (filter === "errors") return entry.type === "error";
+          if (filter === "errors") {return entry.type === "error";}
           return entry.source === filter;
         });
 
@@ -39,13 +39,13 @@ export default function ActivityLog() {
   };
 
   const getSourceEmoji = (entry) => {
-    if (entry.type === "error") return <AlertTriangle size={14} />;
-    if (entry.source === "ai") return <Bot size={14} />;
+    if (entry.type === "error") {return <AlertTriangle size={14} />;}
+    if (entry.source === "ai") {return <Bot size={14} />;}
     return <User size={14} />;
   };
 
   const getSourceClass = (entry) => {
-    if (entry.type === "error") return "system";
+    if (entry.type === "error") {return "system";}
     return entry.source || "human";
   };
 

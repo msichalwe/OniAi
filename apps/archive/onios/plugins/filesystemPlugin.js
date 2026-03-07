@@ -43,7 +43,7 @@ export default function filesystemPlugin() {
 
                     for (const entry of entries) {
                         // Skip hidden files by default (can be toggled)
-                        if (entry.name.startsWith('.')) continue;
+                        if (entry.name.startsWith('.')) {continue;}
 
                         try {
                             const fullPath = path.join(dirPath, entry.name);
@@ -73,8 +73,8 @@ export default function filesystemPlugin() {
 
                     // Sort: directories first, then by name
                     items.sort((a, b) => {
-                        if (a.isDirectory && !b.isDirectory) return -1;
-                        if (!a.isDirectory && b.isDirectory) return 1;
+                        if (a.isDirectory && !b.isDirectory) {return -1;}
+                        if (!a.isDirectory && b.isDirectory) {return 1;}
                         return a.name.localeCompare(b.name);
                     });
 
@@ -221,7 +221,7 @@ export default function filesystemPlugin() {
 
             // POST /api/fs/write-binary — write binary file from base64 data
             server.middlewares.use('/api/fs/write-binary', (req, res) => {
-                if (req.method !== 'POST') return res.writeHead(405).end();
+                if (req.method !== 'POST') {return res.writeHead(405).end();}
 
                 let body = '';
                 req.on('data', chunk => body += chunk.toString());
@@ -261,7 +261,7 @@ export default function filesystemPlugin() {
 
             // POST /api/fs/write — write text file contents
             server.middlewares.use('/api/fs/write', (req, res) => {
-                if (req.method !== 'POST') return res.writeHead(405).end();
+                if (req.method !== 'POST') {return res.writeHead(405).end();}
 
                 let body = '';
                 req.on('data', chunk => body += chunk.toString());
@@ -292,7 +292,7 @@ export default function filesystemPlugin() {
 
             // DELETE /api/fs/delete?path=/some/file
             server.middlewares.use('/api/fs/delete', (req, res) => {
-                if (req.method !== 'DELETE') return res.writeHead(405).end();
+                if (req.method !== 'DELETE') {return res.writeHead(405).end();}
                 try {
                     const url = new URL(req.url, 'http://localhost');
                     let targetPath = url.searchParams.get('path');
@@ -324,7 +324,7 @@ export default function filesystemPlugin() {
 
             // POST /api/fs/mkdir — create a directory
             server.middlewares.use('/api/fs/mkdir', (req, res) => {
-                if (req.method !== 'POST') return res.writeHead(405).end();
+                if (req.method !== 'POST') {return res.writeHead(405).end();}
 
                 let body = '';
                 req.on('data', chunk => body += chunk.toString());
@@ -357,7 +357,7 @@ export default function filesystemPlugin() {
 
             // POST /api/fs/move - move/rename a file or directory
             server.middlewares.use('/api/fs/move', (req, res) => {
-                if (req.method !== 'POST') return res.writeHead(405).end();
+                if (req.method !== 'POST') {return res.writeHead(405).end();}
 
                 let body = '';
                 req.on('data', chunk => body += chunk.toString());
@@ -372,8 +372,8 @@ export default function filesystemPlugin() {
                             return res.end(JSON.stringify({ error: 'Missing from or to parameters' }));
                         }
 
-                        if (fromPath.startsWith('~')) fromPath = path.join(os.homedir(), fromPath.slice(1));
-                        if (toPath.startsWith('~')) toPath = path.join(os.homedir(), toPath.slice(1));
+                        if (fromPath.startsWith('~')) {fromPath = path.join(os.homedir(), fromPath.slice(1));}
+                        if (toPath.startsWith('~')) {toPath = path.join(os.homedir(), toPath.slice(1));}
 
                         fromPath = path.resolve(fromPath);
                         toPath = path.resolve(toPath);
@@ -410,8 +410,8 @@ export default function filesystemPlugin() {
                     targetPath = path.resolve(targetPath);
 
                     let openCommand = 'open'; // macOS default
-                    if (os.platform() === 'win32') openCommand = 'start ""';
-                    else if (os.platform() === 'linux') openCommand = 'xdg-open';
+                    if (os.platform() === 'win32') {openCommand = 'start ""';}
+                    else if (os.platform() === 'linux') {openCommand = 'xdg-open';}
 
                     import('child_process').then(({ exec }) => {
                         exec(`${openCommand} "${targetPath}"`, (error) => {

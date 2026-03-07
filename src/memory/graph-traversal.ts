@@ -182,7 +182,7 @@ export function parseTraversalResults(
 export function buildRelationshipSummary(
   results: GraphTraversalResult[],
 ): string {
-  if (results.length === 0) return "No relationships found.";
+  if (results.length === 0) {return "No relationships found.";}
 
   const byDepth = new Map<number, GraphTraversalResult[]>();
   for (const r of results) {
@@ -192,18 +192,18 @@ export function buildRelationshipSummary(
   }
 
   const depthLabel = (d: number): string => {
-    if (d === 1) return "Direct";
+    if (d === 1) {return "Direct";}
     return `${d} hops`;
   };
 
   const strengthLabel = (s: number): string => {
-    if (s >= 0.8) return "strong";
-    if (s >= 0.5) return "moderate";
+    if (s >= 0.8) {return "strong";}
+    if (s >= 0.5) {return "moderate";}
     return "weak";
   };
 
   const lines: string[] = [];
-  const sortedDepths = [...byDepth.keys()].sort((a, b) => a - b);
+  const sortedDepths = [...byDepth.keys()].toSorted((a, b) => a - b);
 
   for (const depth of sortedDepths) {
     const group = byDepth.get(depth)!;

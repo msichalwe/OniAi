@@ -121,21 +121,21 @@ function SearchableSelect({
   const wrapRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {return;}
     const handler = (e) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target))
-        setOpen(false);
+        {setOpen(false);}
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
   useEffect(() => {
-    if (open && inputRef.current) inputRef.current.focus();
+    if (open && inputRef.current) {inputRef.current.focus();}
   }, [open]);
 
   const filtered = useMemo(() => {
-    if (!filter) return options;
+    if (!filter) {return options;}
     const q = filter.toLowerCase();
     return options.filter((o) => {
       const text = (o.label || o.value || "").toLowerCase();
@@ -145,11 +145,11 @@ function SearchableSelect({
   }, [options, filter]);
 
   const grouped = useMemo(() => {
-    if (!groupBy) return null;
+    if (!groupBy) {return null;}
     const g = {};
     filtered.forEach((o) => {
       const key = groupBy(o) || "Other";
-      if (!g[key]) g[key] = [];
+      if (!g[key]) {g[key] = [];}
       g[key].push(o);
     });
     return g;
@@ -261,10 +261,10 @@ function PathPicker({ value, onChange, nodeInput, commandName, placeholder }) {
   const wrapRef = useRef(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {return;}
     const handler = (e) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target))
-        setOpen(false);
+        {setOpen(false);}
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -321,7 +321,7 @@ function PathPicker({ value, onChange, nodeInput, commandName, placeholder }) {
   }, [nodeInput, commandName]);
 
   const filtered = useMemo(() => {
-    if (!filter) return paths;
+    if (!filter) {return paths;}
     const q = filter.toLowerCase();
     return paths.filter(
       (p) =>
@@ -417,11 +417,11 @@ function PathPicker({ value, onChange, nodeInput, commandName, placeholder }) {
 // ─── SVG Connection Lines ──────────────────────────────
 
 function ConnectionLines({ nodes, connections, onDeleteConnection, wfId }) {
-  if (!connections.length) return null;
+  if (!connections.length) {return null;}
 
   const getPort = (nodeId, port) => {
     const node = nodes.find((n) => n.id === nodeId);
-    if (!node) return { x: 0, y: 0 };
+    if (!node) {return { x: 0, y: 0 };}
     // Estimate real node height: header(26) + body(~32) + extras
     const hasCmd = node.config?.command;
     const hasOutput = node.status === "resolved" && node.output;
@@ -432,7 +432,7 @@ function ConnectionLines({ nodes, connections, onDeleteConnection, wfId }) {
       (hasOutput ? 12 : 0) +
       (hasError ? 12 : 0);
     const midY = node.y + h / 2;
-    if (port === "out") return { x: node.x + NODE_W, y: midY };
+    if (port === "out") {return { x: node.x + NODE_W, y: midY };}
     return { x: node.x, y: midY };
   };
 
@@ -516,7 +516,7 @@ function WorkflowNode({
 
   const handleMouseDown = useCallback(
     (e) => {
-      if (e.target.closest(".wf-port")) return;
+      if (e.target.closest(".wf-port")) {return;}
       onSelect(node.id);
       onDragStart(e, node.id);
     },
@@ -525,7 +525,7 @@ function WorkflowNode({
 
   const handleClick = useCallback(
     (e) => {
-      if (!e.target.closest(".wf-port")) onSelect(node.id);
+      if (!e.target.closest(".wf-port")) {onSelect(node.id);}
     },
     [node.id, onSelect],
   );
@@ -705,7 +705,7 @@ function NodeConfigPanel({ node, wfId, onClose }) {
     const groups = {};
     list.forEach((c) => {
       const ns = c.path.split(".").slice(0, -1).join(".");
-      if (!groups[ns]) groups[ns] = [];
+      if (!groups[ns]) {groups[ns] = [];}
       groups[ns].push(c);
     });
     return groups;
@@ -743,10 +743,10 @@ function NodeConfigPanel({ node, wfId, onClose }) {
 
   // Helper: format output for display
   const fmtOutput = (val) => {
-    if (val === null || val === undefined) return null;
-    if (typeof val === "string") return val;
+    if (val === null || val === undefined) {return null;}
+    if (typeof val === "string") {return val;}
     if (val?._condition)
-      return `${val.result ? "✅ TRUE" : "❌ FALSE"}: "${val.actual}" ${OPERATORS[val.operator]?.symbol || val.operator} "${val.expected}"`;
+      {return `${val.result ? "✅ TRUE" : "❌ FALSE"}: "${val.actual}" ${OPERATORS[val.operator]?.symbol || val.operator} "${val.expected}"`;}
     return JSON.stringify(val, null, 2);
   };
 
@@ -1011,9 +1011,9 @@ function NodeConfigPanel({ node, wfId, onClose }) {
                 // Find upstream command name for schema hints
                 const store = useWorkflowStore.getState();
                 const wf = store.getWorkflow(wfId);
-                if (!wf) return null;
+                if (!wf) {return null;}
                 const inConn = wf.connections.find((c) => c.to === node.id);
-                if (!inConn) return null;
+                if (!inConn) {return null;}
                 const upstream = wf.nodes.find((n) => n.id === inConn.from);
                 return upstream?.type === "command"
                   ? upstream.config?.command
@@ -1733,7 +1733,7 @@ function NodeConfigPanel({ node, wfId, onClose }) {
 
 function JsonViewPanel({ workflow }) {
   const jsonStr = useMemo(() => {
-    if (!workflow) return "null";
+    if (!workflow) {return "null";}
     const clean = {
       id: workflow.id,
       name: workflow.name,
@@ -1969,7 +1969,7 @@ export default function WorkflowBuilder({ windowId, widgetType }) {
 
   // Connection counts per node
   const connectionCounts = useMemo(() => {
-    if (!activeWf) return {};
+    if (!activeWf) {return {};}
     const counts = {};
     for (const conn of activeWf.connections) {
       counts[conn.from] = (counts[conn.from] || 0) + 1;
@@ -1983,10 +1983,10 @@ export default function WorkflowBuilder({ windowId, widgetType }) {
   const handleDragStart = useCallback(
     (e, nodeId) => {
       const canvas = canvasRef.current;
-      if (!canvas) return;
+      if (!canvas) {return;}
       const rect = canvas.getBoundingClientRect();
       const node = activeWf?.nodes.find((n) => n.id === nodeId);
-      if (!node) return;
+      if (!node) {return;}
 
       dragRef.current = {
         nodeId,
@@ -1995,7 +1995,7 @@ export default function WorkflowBuilder({ windowId, widgetType }) {
       };
 
       const handleMove = (ev) => {
-        if (!dragRef.current || !canvasRef.current) return;
+        if (!dragRef.current || !canvasRef.current) {return;}
         const c = canvasRef.current;
         const r = c.getBoundingClientRect();
         const x = Math.max(
@@ -2065,7 +2065,7 @@ export default function WorkflowBuilder({ windowId, widgetType }) {
 
   const handleAddNode = useCallback(
     (type) => {
-      if (!activeWorkflowId) return;
+      if (!activeWorkflowId) {return;}
       const label = NODE_TYPES[type]?.label || type;
       const configDefaults = {
         command: { command: "" },
@@ -2111,11 +2111,11 @@ export default function WorkflowBuilder({ windowId, widgetType }) {
 
   const handleCanvasDoubleClick = useCallback(
     (e) => {
-      if (!activeWorkflowId) return;
+      if (!activeWorkflowId) {return;}
       const target = e.target;
-      if (target.closest(".wf-node") || target.closest(".wf-add-menu")) return;
+      if (target.closest(".wf-node") || target.closest(".wf-add-menu")) {return;}
       const canvas = canvasRef.current;
-      if (!canvas) return;
+      if (!canvas) {return;}
       const rect = canvas.getBoundingClientRect();
       setAddMenuPos({
         x: (e.clientX - rect.left + canvas.scrollLeft) / zoom,
@@ -2129,7 +2129,7 @@ export default function WorkflowBuilder({ windowId, widgetType }) {
   // Scroll-wheel zoom (Ctrl/Cmd + scroll)
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {return;}
     const handler = (e) => {
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
@@ -2148,10 +2148,10 @@ export default function WorkflowBuilder({ windowId, widgetType }) {
   const handleCanvasClick = useCallback(
     (e) => {
       if (e.target.closest(".wf-port") || e.target.closest(".wf-add-menu"))
-        return;
-      if (connectingFrom) setConnectingFrom(null);
+        {return;}
+      if (connectingFrom) {setConnectingFrom(null);}
       if (showAddMenu && !e.target.closest(".wf-add-menu"))
-        setShowAddMenu(false);
+        {setShowAddMenu(false);}
     },
     [connectingFrom, showAddMenu],
   );
@@ -2159,7 +2159,7 @@ export default function WorkflowBuilder({ windowId, widgetType }) {
   // ─── Execute ───────────────────────────────────────
 
   const handleExecute = async () => {
-    if (!activeWorkflowId) return;
+    if (!activeWorkflowId) {return;}
     setIsRunning(true);
     try {
       await workflowEngine.execute(activeWorkflowId);
@@ -2169,7 +2169,7 @@ export default function WorkflowBuilder({ windowId, widgetType }) {
   };
 
   const handleAbort = () => {
-    if (activeWorkflowId) workflowEngine.abort(activeWorkflowId);
+    if (activeWorkflowId) {workflowEngine.abort(activeWorkflowId);}
     setIsRunning(false);
   };
 
@@ -2193,7 +2193,7 @@ export default function WorkflowBuilder({ windowId, widgetType }) {
           e.target.tagName === "TEXTAREA" ||
           e.target.tagName === "SELECT"
         )
-          return;
+          {return;}
         const store = useWorkflowStore.getState();
         store.deleteNode(activeWorkflowId, selectedNodeId);
         setSelectedNodeId(null);

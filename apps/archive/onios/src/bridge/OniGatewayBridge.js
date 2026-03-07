@@ -115,7 +115,7 @@ class OniGatewayBridge {
    * Push widget context to the gateway so the AI knows what's on screen.
    */
   pushWidgetContext(contexts) {
-    if (!this.isConnected()) return;
+    if (!this.isConnected()) {return;}
     this.ws.send(JSON.stringify({
       type: 'widget_context',
       contexts,
@@ -127,7 +127,7 @@ class OniGatewayBridge {
    * Push all registered skills to the gateway.
    */
   pushSkills(skills) {
-    if (!this.isConnected()) return;
+    if (!this.isConnected()) {return;}
     this.ws.send(JSON.stringify({
       type: 'register_skills',
       skills,
@@ -138,7 +138,7 @@ class OniGatewayBridge {
   // ─── Private ───────────────────────────────────────────
 
   _registerAsChannel() {
-    if (!this.isConnected()) return;
+    if (!this.isConnected()) {return;}
     // Register OniOS as a channel with its capabilities
     const commands = commandRegistry.list();
     this.ws.send(JSON.stringify({
@@ -156,7 +156,7 @@ class OniGatewayBridge {
   _startContextSync() {
     // Sync widget context to gateway every 5 seconds
     this.contextSyncInterval = setInterval(() => {
-      if (!this.isConnected()) return;
+      if (!this.isConnected()) {return;}
       // Collect context from all open widgets via the widgetContext provider
       try {
         const { widgetContext } = require('../core/WidgetContextProvider.js');
@@ -241,7 +241,7 @@ class OniGatewayBridge {
     try {
       const { skillsRegistry } = await import('../core/SkillsRegistry.js');
       const skill = skillsRegistry?.getSkill?.(data.skillId);
-      if (!skill) throw new Error(`Skill not found: ${data.skillId}`);
+      if (!skill) {throw new Error(`Skill not found: ${data.skillId}`);}
 
       const args = skill.buildArgs(data.params || {});
       const handle = commandRegistry.execute(
@@ -270,7 +270,7 @@ class OniGatewayBridge {
   }
 
   _scheduleReconnect() {
-    if (this.reconnectTimer) return;
+    if (this.reconnectTimer) {return;}
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       if (this._status === 'disconnected' && this.url) {

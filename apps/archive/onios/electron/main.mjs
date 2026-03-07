@@ -53,7 +53,7 @@ function createWindow() {
   mainWindow.once("ready-to-show", () => {
     mainWindow.show();
     mainWindow.focus();
-    if (isDev) mainWindow.webContents.openDevTools({ mode: "detach" });
+    if (isDev) {mainWindow.webContents.openDevTools({ mode: "detach" });}
   });
 
   // Prevent navigation away from the app
@@ -68,7 +68,7 @@ function createWindow() {
 
   // Open external links in system browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("http")) shell.openExternal(url);
+    if (url.startsWith("http")) {shell.openExternal(url);}
     return { action: "deny" };
   });
 
@@ -160,7 +160,7 @@ function startViteDev() {
       process.stdout.write(`[Vite] ${text}`);
       // Detect actual port from Vite output
       const portMatch = text.match(/localhost:(\d+)/);
-      if (portMatch) serverPort = parseInt(portMatch[1], 10);
+      if (portMatch) {serverPort = parseInt(portMatch[1], 10);}
       if (!resolved && (text.includes("localhost") || text.includes("ready in") || text.includes("Local:"))) {
         resolved = true;
         setTimeout(resolve, 1500);
@@ -173,12 +173,12 @@ function startViteDev() {
 
     viteProcess.on("error", (err) => {
       console.error("[Electron] Failed to start Vite:", err);
-      if (!resolved) reject(err);
+      if (!resolved) {reject(err);}
     });
 
     viteProcess.on("exit", (code) => {
       console.log(`[Vite] Process exited with code ${code}`);
-      if (!resolved) reject(new Error(`Vite exited with code ${code}`));
+      if (!resolved) {reject(new Error(`Vite exited with code ${code}`));}
     });
 
     // Timeout fallback
@@ -216,12 +216,12 @@ app.whenReady().then(async () => {
   createWindow();
 
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {createWindow();}
   });
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+  if (process.platform !== "darwin") {app.quit();}
 });
 
 app.on("before-quit", () => {

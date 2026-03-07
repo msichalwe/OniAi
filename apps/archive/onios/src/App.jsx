@@ -56,7 +56,7 @@ function registerAllCommands() {
 
   const openWidget = (type, props = {}, titleOverride) => {
     const reg = WIDGET_REGISTRY[type];
-    if (!reg) return `Unknown widget: ${type}`;
+    if (!reg) {return `Unknown widget: ${type}`;}
     const id = openWindow(type, props, {
       title: titleOverride || reg.title,
       icon: reg.icon,
@@ -96,7 +96,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.files.openFile",
     (filePath) => {
-      if (!filePath) return "No file path provided";
+      if (!filePath) {return "No file path provided";}
       const ext = filePath.split(".").pop().toLowerCase();
       const videoExts = ["mp4", "mov", "webm", "avi", "mkv", "wmv", "flv"];
       const audioExts = ["mp3", "wav", "ogg", "flac", "aac"];
@@ -133,7 +133,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "display.render",
     async (displayId) => {
-      if (!displayId) return "No display ID provided";
+      if (!displayId) {return "No display ID provided";}
       // Fetch actual title from stored data
       let title = "Display";
       try {
@@ -159,7 +159,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.media.playVideo",
     (src) => {
-      if (!src) return openWidget("media-player");
+      if (!src) {return openWidget("media-player");}
       const isOnline = /^https?:\/\//i.test(src);
       const isYoutube = /youtu\.?be/i.test(src);
       const isVimeo = /vimeo\.com/i.test(src);
@@ -173,7 +173,7 @@ function registerAllCommands() {
           try {
             const wins = useWindowStore.getState().windows || [];
             const displayWin = [...wins]
-              .reverse()
+              .toReversed()
               .find((w) => w.widgetType === "display");
             if (displayWin) {
               await fetch(
@@ -222,13 +222,13 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.media.openImage",
     (src, caption) => {
-      if (!src) return "Usage: system.media.openImage(url, caption?)";
+      if (!src) {return "Usage: system.media.openImage(url, caption?)";}
       openWidget("display", {}, { title: caption || "Image Viewer" });
       setTimeout(async () => {
         try {
           const wins = useWindowStore.getState().windows || [];
           const displayWin = [...wins]
-            .reverse()
+            .toReversed()
             .find((w) => w.widgetType === "display");
           if (displayWin) {
             await fetch(
@@ -386,7 +386,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "code.openFile",
     (filePath) => {
-      if (!filePath) return "No file path provided";
+      if (!filePath) {return "No file path provided";}
       // If editor is already open, use its instance API
       const editor = getEditorInstance();
       if (editor) {
@@ -403,7 +403,7 @@ function registerAllCommands() {
     "code.saveFile",
     async () => {
       const editor = getEditorInstance();
-      if (!editor) return "No code editor open";
+      if (!editor) {return "No code editor open";}
       await editor.saveFile();
       return `Saved ${editor.getActiveFile() || "file"}`;
     },
@@ -413,7 +413,7 @@ function registerAllCommands() {
     "code.saveAll",
     async () => {
       const editor = getEditorInstance();
-      if (!editor) return "No code editor open";
+      if (!editor) {return "No code editor open";}
       await editor.saveAll();
       return "All files saved";
     },
@@ -423,7 +423,7 @@ function registerAllCommands() {
     "code.getContent",
     (filePath) => {
       const editor = getEditorInstance();
-      if (!editor) return "No code editor open";
+      if (!editor) {return "No code editor open";}
       const content = editor.getContent(filePath);
       return content !== null ? content : "File not open or empty";
     },
@@ -433,7 +433,7 @@ function registerAllCommands() {
     "code.setContent",
     (filePath, content) => {
       const editor = getEditorInstance();
-      if (!editor) return "No code editor open";
+      if (!editor) {return "No code editor open";}
       if (!content && filePath) {
         // Single arg = set content of active file
         editor.setContent(null, filePath);
@@ -448,7 +448,7 @@ function registerAllCommands() {
     "code.getActiveFile",
     () => {
       const editor = getEditorInstance();
-      if (!editor) return "No code editor open";
+      if (!editor) {return "No code editor open";}
       return editor.getActiveFile() || "No file active";
     },
     { description: "Get the path of the active file in the editor" },
@@ -457,7 +457,7 @@ function registerAllCommands() {
     "code.getOpenFiles",
     () => {
       const editor = getEditorInstance();
-      if (!editor) return "No code editor open";
+      if (!editor) {return "No code editor open";}
       const files = editor.getOpenFiles();
       return files.length > 0 ? files.join(", ") : "No files open";
     },
@@ -467,7 +467,7 @@ function registerAllCommands() {
     "code.closeFile",
     (filePath) => {
       const editor = getEditorInstance();
-      if (!editor) return "No code editor open";
+      if (!editor) {return "No code editor open";}
       editor.closeFile(filePath);
       return `Closed ${filePath || "active file"}`;
     },
@@ -528,14 +528,14 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.files.createFolder",
     async (path) => {
-      if (!path) return "No path provided";
+      if (!path) {return "No path provided";}
       const res = await fetch("/api/fs/mkdir", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path }),
       });
       const data = await res.json();
-      if (data.error) return `Error: ${data.error}`;
+      if (data.error) {return `Error: ${data.error}`;}
       addNotification(`Folder created: ${path.split("/").pop()}`, "success");
       return `Created folder: ${data.path}`;
     },
@@ -545,14 +545,14 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.files.createFile",
     async (path, content) => {
-      if (!path) return "No path provided";
+      if (!path) {return "No path provided";}
       const res = await fetch("/api/fs/write", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path, content: content || "" }),
       });
       const data = await res.json();
-      if (data.error) return `Error: ${data.error}`;
+      if (data.error) {return `Error: ${data.error}`;}
       addNotification(`File created: ${path.split("/").pop()}`, "success");
       return `Created file: ${data.path}`;
     },
@@ -562,13 +562,13 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.files.delete",
     async (path) => {
-      if (!path) return "No path provided";
+      if (!path) {return "No path provided";}
       const res = await fetch(
         `/api/fs/delete?path=${encodeURIComponent(path)}`,
         { method: "DELETE" },
       );
       const data = await res.json();
-      if (data.error) return `Error: ${data.error}`;
+      if (data.error) {return `Error: ${data.error}`;}
       addNotification(`Deleted: ${path.split("/").pop()}`, "info");
       return `Deleted: ${path}`;
     },
@@ -578,14 +578,14 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.files.rename",
     async (from, to) => {
-      if (!from || !to) return "Missing from/to paths";
+      if (!from || !to) {return "Missing from/to paths";}
       const res = await fetch("/api/fs/move", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ from, to }),
       });
       const data = await res.json();
-      if (data.error) return `Error: ${data.error}`;
+      if (data.error) {return `Error: ${data.error}`;}
       return `Renamed: ${from} → ${to}`;
     },
     { description: "Rename or move a file/folder" },
@@ -594,10 +594,10 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.files.read",
     async (path) => {
-      if (!path) return "No path provided";
+      if (!path) {return "No path provided";}
       const res = await fetch(`/api/fs/read?path=${encodeURIComponent(path)}`);
       const data = await res.json();
-      if (data.error) return `Error: ${data.error}`;
+      if (data.error) {return `Error: ${data.error}`;}
       return data.content;
     },
     { description: "Read the contents of a text file" },
@@ -606,14 +606,14 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.files.write",
     async (path, content) => {
-      if (!path) return "No path provided";
+      if (!path) {return "No path provided";}
       const res = await fetch("/api/fs/write", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path, content: content || "" }),
       });
       const data = await res.json();
-      if (data.error) return `Error: ${data.error}`;
+      if (data.error) {return `Error: ${data.error}`;}
       return `Written to: ${data.path}`;
     },
     { description: "Write content to a file" },
@@ -633,7 +633,7 @@ function registerAllCommands() {
   const _termQueue = [];
   let _termQueueRunning = false;
   async function _drainTermQueue() {
-    if (_termQueueRunning) return;
+    if (_termQueueRunning) {return;}
     _termQueueRunning = true;
     while (_termQueue.length > 0) {
       const { command, resolve } = _termQueue.shift();
@@ -668,7 +668,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "terminal.exec",
     (command) => {
-      if (!command) return Promise.resolve("No command provided");
+      if (!command) {return Promise.resolve("No command provided");}
       return new Promise((resolve) => {
         _termQueue.push({ command, resolve });
         _drainTermQueue();
@@ -680,9 +680,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "terminal.sendInput",
     (data) => {
-      if (!data) return "No input provided";
+      if (!data) {return "No input provided";}
       const sent = sendTerminalInput(data);
-      if (!sent) return "No active terminal connection";
+      if (!sent) {return "No active terminal connection";}
       return "Input sent";
     },
     { description: "Send raw input to the active terminal" },
@@ -692,7 +692,7 @@ function registerAllCommands() {
     "terminal.sendCtrlC",
     () => {
       const sent = sendTerminalInput("\x03");
-      if (!sent) return "No active terminal connection";
+      if (!sent) {return "No active terminal connection";}
       return "Ctrl+C sent";
     },
     { description: "Send Ctrl+C (interrupt) to the terminal" },
@@ -721,7 +721,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.windows.focus",
     (windowId) => {
-      if (!windowId) return "No window ID provided";
+      if (!windowId) {return "No window ID provided";}
       focusWindow(windowId);
       return `Focused window: ${windowId}`;
     },
@@ -731,7 +731,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.windows.close",
     (windowId) => {
-      if (!windowId) return "No window ID provided";
+      if (!windowId) {return "No window ID provided";}
       closeWindow(windowId);
       return `Closed window: ${windowId}`;
     },
@@ -741,7 +741,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.windows.minimize",
     (windowId) => {
-      if (!windowId) return "No window ID provided";
+      if (!windowId) {return "No window ID provided";}
       minimizeWindow(windowId);
       return `Minimized window: ${windowId}`;
     },
@@ -751,7 +751,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.windows.maximize",
     (windowId) => {
-      if (!windowId) return "No window ID provided";
+      if (!windowId) {return "No window ID provided";}
       maximizeWindow(windowId);
       return `Maximized window: ${windowId}`;
     },
@@ -762,7 +762,7 @@ function registerAllCommands() {
     "system.windows.getFocused",
     () => {
       const focused = getFocusedWidget();
-      if (!focused) return "No window is focused";
+      if (!focused) {return "No window is focused";}
       return JSON.stringify(focused, null, 2);
     },
     { description: "Get info about the currently focused window" },
@@ -771,9 +771,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.windows.getCommands",
     (windowId) => {
-      if (!windowId) return "No window ID provided";
+      if (!windowId) {return "No window ID provided";}
       const info = getWidgetCommands(windowId);
-      if (!info) return `Window not found: ${windowId}`;
+      if (!info) {return `Window not found: ${windowId}`;}
       return JSON.stringify(info, null, 2);
     },
     { description: "Get available commands for a specific window instance" },
@@ -795,7 +795,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.windows.isOpen",
     (widgetType) => {
-      if (!widgetType) return "No widget type provided";
+      if (!widgetType) {return "No widget type provided";}
       return isWidgetOpen(widgetType)
         ? `${widgetType} is open`
         : `${widgetType} is not open`;
@@ -838,7 +838,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "document.find",
     async (needle, filePath) => {
-      if (!needle) return 'Usage: document.find("text", "/optional/path")';
+      if (!needle) {return 'Usage: document.find("text", "/optional/path")';}
       // Try the active viewer first
       const viewer = getDocViewerInstance();
       if (viewer && !filePath) {
@@ -862,7 +862,7 @@ function registerAllCommands() {
       // Search across all indexed docs (client-side)
       const results = indexService.findAll(needle);
       if (results.length === 0)
-        return `No matches for "${needle}" in any indexed document`;
+        {return `No matches for "${needle}" in any indexed document`;}
       return results.map((r) => `${r.name}: ${r.total} match(es)`).join("\n");
     },
     { description: "Find text in a document or all indexed documents" },
@@ -871,10 +871,10 @@ function registerAllCommands() {
   commandRegistry.register(
     "document.search",
     async (query) => {
-      if (!query) return 'Usage: document.search("query")';
+      if (!query) {return 'Usage: document.search("query")';}
       const results = await contextEngine.search(query, { backend: true });
       const docs = results.documents || [];
-      if (docs.length === 0) return `No results for "${query}"`;
+      if (docs.length === 0) {return `No results for "${query}"`;}
       return docs
         .map(
           (d) =>
@@ -888,14 +888,14 @@ function registerAllCommands() {
   commandRegistry.register(
     "document.index",
     async (path) => {
-      if (!path) return 'Usage: document.index("/path/to/folder")';
+      if (!path) {return 'Usage: document.index("/path/to/folder")';}
       const res = await fetch("/api/docs/index", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path, recursive: true }),
       });
       const data = await res.json();
-      if (data.error) return `Error: ${data.error}`;
+      if (data.error) {return `Error: ${data.error}`;}
       addNotification(`Indexed ${data.indexed} file(s)`, "success");
       return `Indexed ${data.indexed} files. Total in index: ${data.totalIndexed}`;
     },
@@ -905,14 +905,14 @@ function registerAllCommands() {
   commandRegistry.register(
     "document.create",
     async (path, content) => {
-      if (!path) return 'Usage: document.create("/path/to/file.md", "content")';
+      if (!path) {return 'Usage: document.create("/path/to/file.md", "content")';}
       const res = await fetch("/api/docs/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ path, content: content || "" }),
       });
       const data = await res.json();
-      if (data.error) return `Error: ${data.error}`;
+      if (data.error) {return `Error: ${data.error}`;}
       addNotification(`Created: ${path.split("/").pop()}`, "success");
       // Open it in the document viewer
       openWidget("document-viewer", { filePath: path }, path.split("/").pop());
@@ -944,7 +944,7 @@ function registerAllCommands() {
     () => {
       const docs = indexService.list();
       if (docs.length === 0)
-        return 'No documents indexed. Use document.index("/path") to index files.';
+        {return 'No documents indexed. Use document.index("/path") to index files.';}
       return docs.map((d) => `${d.name} (${d.wordCount} words)`).join("\n");
     },
     { description: "List all indexed documents" },
@@ -953,10 +953,10 @@ function registerAllCommands() {
   commandRegistry.register(
     "document.matchText",
     async (pattern) => {
-      if (!pattern) return 'Usage: document.matchText("regex or text")';
+      if (!pattern) {return 'Usage: document.matchText("regex or text")';}
       // Search client-side index
       const results = indexService.search(pattern, 15);
-      if (results.length === 0) return `No matches for "${pattern}"`;
+      if (results.length === 0) {return `No matches for "${pattern}"`;}
       return results
         .map(
           (r) =>
@@ -971,7 +971,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "search.all",
     async (query) => {
-      if (!query) return 'Usage: search.all("query")';
+      if (!query) {return 'Usage: search.all("query")';}
       const results = await contextEngine.search(query);
       const lines = [];
       if (results.commands.length > 0) {
@@ -1007,9 +1007,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "search.commands",
     (query) => {
-      if (!query) return 'Usage: search.commands("query")';
+      if (!query) {return 'Usage: search.commands("query")';}
       const cmds = commandRegistry.search(query);
-      if (cmds.length === 0) return `No commands matching "${query}"`;
+      if (cmds.length === 0) {return `No commands matching "${query}"`;}
       return cmds.map((c) => `${c.path} — ${c.description}`).join("\n");
     },
     { description: "Search registered commands" },
@@ -1018,9 +1018,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "search.documents",
     async (query) => {
-      if (!query) return 'Usage: search.documents("query")';
+      if (!query) {return 'Usage: search.documents("query")';}
       const results = indexService.search(query, 15);
-      if (results.length === 0) return `No document matches for "${query}"`;
+      if (results.length === 0) {return `No document matches for "${query}"`;}
       return results
         .map(
           (r) =>
@@ -1051,7 +1051,7 @@ function registerAllCommands() {
     "context.recentFiles",
     () => {
       const files = contextEngine.getRecentFiles();
-      if (files.length === 0) return "No recent files";
+      if (files.length === 0) {return "No recent files";}
       return files.map((f) => f.path).join("\n");
     },
     { description: "List recently accessed files" },
@@ -1061,7 +1061,7 @@ function registerAllCommands() {
     "context.openDocuments",
     () => {
       const docs = contextEngine.getOpenDocuments();
-      if (docs.length === 0) return "No documents currently open";
+      if (docs.length === 0) {return "No documents currently open";}
       return docs.map((d) => d.path).join("\n");
     },
     { description: "List all documents currently open in viewer" },
@@ -1081,7 +1081,7 @@ function registerAllCommands() {
     "task.add",
     (title, dueDate, dueTime, priority) => {
       if (!title)
-        return 'Usage: task.add("title", "2025-03-01", "14:00", "high")';
+        {return 'Usage: task.add("title", "2025-03-01", "14:00", "high")';}
       const task = useTaskStore.getState().addTask({
         title,
         dueDate: dueDate || null,
@@ -1101,8 +1101,8 @@ function registerAllCommands() {
     (status) => {
       const store = useTaskStore.getState();
       let list = store.tasks;
-      if (status) list = list.filter((t) => t.status === status);
-      if (list.length === 0) return status ? `No ${status} tasks` : "No tasks";
+      if (status) {list = list.filter((t) => t.status === status);}
+      if (list.length === 0) {return status ? `No ${status} tasks` : "No tasks";}
       return list
         .map((t) => {
           const due = t.dueDate
@@ -1121,9 +1121,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "task.complete",
     (id) => {
-      if (!id) return 'Usage: task.complete("taskId")';
+      if (!id) {return 'Usage: task.complete("taskId")';}
       const task = useTaskStore.getState().tasks.find((t) => t.id === id);
-      if (!task) return `Task not found: ${id}`;
+      if (!task) {return `Task not found: ${id}`;}
       useTaskStore.getState().completeTask(id);
       addNotification(`Completed: ${task.title}`, "success");
       return `Completed "${task.title}"`;
@@ -1134,9 +1134,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "task.delete",
     (id) => {
-      if (!id) return 'Usage: task.delete("taskId")';
+      if (!id) {return 'Usage: task.delete("taskId")';}
       const task = useTaskStore.getState().tasks.find((t) => t.id === id);
-      if (!task) return `Task not found: ${id}`;
+      if (!task) {return `Task not found: ${id}`;}
       useTaskStore.getState().deleteTask(id);
       return `Deleted "${task.title}"`;
     },
@@ -1147,7 +1147,7 @@ function registerAllCommands() {
     "task.overdue",
     () => {
       const overdue = useTaskStore.getState().getOverdueTasks();
-      if (overdue.length === 0) return "No overdue tasks 🎉";
+      if (overdue.length === 0) {return "No overdue tasks 🎉";}
       return overdue
         .map((t) => `⚠️ ${t.title} (due ${t.dueDate}) id=${t.id}`)
         .join("\n");
@@ -1162,7 +1162,7 @@ function registerAllCommands() {
         .getState()
         .getUpcomingTasks(Number(days) || 7);
       if (upcoming.length === 0)
-        return "No upcoming tasks in the next " + (days || 7) + " days";
+        {return "No upcoming tasks in the next " + (days || 7) + " days";}
       return upcoming
         .map((t) => {
           const time = t.dueTime ? ` ${t.dueTime}` : "";
@@ -1187,7 +1187,7 @@ function registerAllCommands() {
     "event.add",
     (title, date, startTime, endTime) => {
       if (!title || !date)
-        return 'Usage: event.add("Meeting", "2025-03-01", "14:00", "15:00")';
+        {return 'Usage: event.add("Meeting", "2025-03-01", "14:00", "15:00")';}
       const ev = useTaskStore.getState().addEvent({
         title,
         date,
@@ -1205,8 +1205,8 @@ function registerAllCommands() {
     (date) => {
       const store = useTaskStore.getState();
       let list = store.events;
-      if (date) list = list.filter((e) => e.date === date);
-      if (list.length === 0) return date ? `No events on ${date}` : "No events";
+      if (date) {list = list.filter((e) => e.date === date);}
+      if (list.length === 0) {return date ? `No events on ${date}` : "No events";}
       return list
         .map((e) => {
           const time = e.startTime
@@ -1222,7 +1222,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "event.delete",
     (id) => {
-      if (!id) return 'Usage: event.delete("eventId")';
+      if (!id) {return 'Usage: event.delete("eventId")';}
       useTaskStore.getState().deleteEvent(id);
       return `Deleted event ${id}`;
     },
@@ -1266,7 +1266,7 @@ function registerAllCommands() {
     "schedule.add",
     (name, command, interval, unit, at) => {
       if (!name || !command)
-        return 'Usage: schedule.add("Backup", "terminal.exec(ls)", 1, "hours")';
+        {return 'Usage: schedule.add("Backup", "terminal.exec(ls)", 1, "hours")';}
       const job = useTaskStore.getState().addScheduledJob({
         name,
         command,
@@ -1288,7 +1288,7 @@ function registerAllCommands() {
     "schedule.list",
     () => {
       const jobs = useTaskStore.getState().scheduledJobs;
-      if (jobs.length === 0) return "No scheduled jobs";
+      if (jobs.length === 0) {return "No scheduled jobs";}
       return jobs
         .map((j) => {
           const status = j.enabled ? "ON" : "OFF";
@@ -1303,7 +1303,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "schedule.delete",
     (id) => {
-      if (!id) return 'Usage: schedule.delete("jobId")';
+      if (!id) {return 'Usage: schedule.delete("jobId")';}
       useTaskStore.getState().deleteJob(id);
       return `Deleted job ${id}`;
     },
@@ -1313,11 +1313,11 @@ function registerAllCommands() {
   commandRegistry.register(
     "schedule.toggle",
     (id) => {
-      if (!id) return 'Usage: schedule.toggle("jobId")';
+      if (!id) {return 'Usage: schedule.toggle("jobId")';}
       const job = useTaskStore
         .getState()
         .scheduledJobs.find((j) => j.id === id);
-      if (!job) return `Job not found: ${id}`;
+      if (!job) {return `Job not found: ${id}`;}
       useTaskStore.getState().updateJob(id, { enabled: !job.enabled });
       return `Job "${job.name}" is now ${!job.enabled ? "enabled" : "disabled"}`;
     },
@@ -1357,10 +1357,10 @@ function registerAllCommands() {
     "password.add",
     (title, username, password, url, category) => {
       if (!title)
-        return 'Usage: password.add("GitHub", "user@email.com", "mypass", "github.com", "dev")';
+        {return 'Usage: password.add("GitHub", "user@email.com", "mypass", "github.com", "dev")';}
       const store = usePasswordStore.getState();
       if (store.vaultLocked)
-        return "Vault is locked. Open the Password Manager and unlock first.";
+        {return "Vault is locked. Open the Password Manager and unlock first.";}
       const entry = store.addEntry({
         title,
         username: username || "",
@@ -1378,9 +1378,9 @@ function registerAllCommands() {
     "password.get",
     (titleOrId) => {
       if (!titleOrId)
-        return 'Usage: password.get("GitHub") or password.get("id")';
+        {return 'Usage: password.get("GitHub") or password.get("id")';}
       const store = usePasswordStore.getState();
-      if (store.vaultLocked) return "Vault is locked.";
+      if (store.vaultLocked) {return "Vault is locked.";}
       // Try by ID
       let entry = store.getEntry(titleOrId);
       if (!entry) {
@@ -1388,9 +1388,9 @@ function registerAllCommands() {
         const match = store.entries.find(
           (e) => e.title.toLowerCase() === titleOrId.toLowerCase(),
         );
-        if (match) entry = store.getEntry(match.id);
+        if (match) {entry = store.getEntry(match.id);}
       }
-      if (!entry) return `Not found: ${titleOrId}`;
+      if (!entry) {return `Not found: ${titleOrId}`;}
       return `${entry.title}\n  User: ${entry.username}\n  Pass: ${entry.password}\n  URL: ${entry.url || "—"}\n  Category: ${entry.category}`;
     },
     {
@@ -1403,11 +1403,11 @@ function registerAllCommands() {
     "password.list",
     (category) => {
       const store = usePasswordStore.getState();
-      if (store.vaultLocked) return "Vault is locked.";
+      if (store.vaultLocked) {return "Vault is locked.";}
       let list = store.entries;
-      if (category) list = list.filter((e) => e.category === category);
+      if (category) {list = list.filter((e) => e.category === category);}
       if (list.length === 0)
-        return category ? `No entries in "${category}"` : "Vault is empty";
+        {return category ? `No entries in "${category}"` : "Vault is empty";}
       return list
         .map(
           (e) =>
@@ -1421,11 +1421,11 @@ function registerAllCommands() {
   commandRegistry.register(
     "password.delete",
     (id) => {
-      if (!id) return 'Usage: password.delete("entryId")';
+      if (!id) {return 'Usage: password.delete("entryId")';}
       const store = usePasswordStore.getState();
-      if (store.vaultLocked) return "Vault is locked.";
+      if (store.vaultLocked) {return "Vault is locked.";}
       const entry = store.entries.find((e) => e.id === id);
-      if (!entry) return `Not found: ${id}`;
+      if (!entry) {return `Not found: ${id}`;}
       store.deleteEntry(id);
       addNotification(`Deleted: ${entry.title}`, "info");
       return `Deleted "${entry.title}"`;
@@ -1449,11 +1449,11 @@ function registerAllCommands() {
   commandRegistry.register(
     "password.search",
     (query) => {
-      if (!query) return 'Usage: password.search("github")';
+      if (!query) {return 'Usage: password.search("github")';}
       const store = usePasswordStore.getState();
-      if (store.vaultLocked) return "Vault is locked.";
+      if (store.vaultLocked) {return "Vault is locked.";}
       const results = store.search(query);
-      if (results.length === 0) return `No matches for "${query}"`;
+      if (results.length === 0) {return `No matches for "${query}"`;}
       return results
         .map((e) => `${e.title} — ${e.username} [${e.category}] id=${e.id}`)
         .join("\n");
@@ -1474,9 +1474,9 @@ function registerAllCommands() {
     "password.categories",
     () => {
       const store = usePasswordStore.getState();
-      if (store.vaultLocked) return "Vault is locked.";
+      if (store.vaultLocked) {return "Vault is locked.";}
       const cats = store.getCategories();
-      if (cats.length === 0) return "No categories (vault empty)";
+      if (cats.length === 0) {return "No categories (vault empty)";}
       return cats.join(", ");
     },
     { description: "List all password categories" },
@@ -1496,7 +1496,7 @@ function registerAllCommands() {
     "storage.set",
     (namespace, key, value) => {
       if (!namespace || !key)
-        return 'Usage: storage.set("namespace", "key", "value")';
+        {return 'Usage: storage.set("namespace", "key", "value")';}
       let parsed;
       try {
         parsed = JSON.parse(value);
@@ -1515,9 +1515,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "storage.get",
     (namespace, key) => {
-      if (!namespace || !key) return 'Usage: storage.get("namespace", "key")';
+      if (!namespace || !key) {return 'Usage: storage.get("namespace", "key")';}
       const value = storageService.get(namespace, key);
-      if (value === null) return `Not found: ${namespace}:${key}`;
+      if (value === null) {return `Not found: ${namespace}:${key}`;}
       return typeof value === "object"
         ? JSON.stringify(value, null, 2)
         : String(value);
@@ -1532,7 +1532,7 @@ function registerAllCommands() {
     "storage.delete",
     (namespace, key) => {
       if (!namespace)
-        return 'Usage: storage.delete("namespace", "key") or storage.delete("namespace") to clear all';
+        {return 'Usage: storage.delete("namespace", "key") or storage.delete("namespace") to clear all';}
       if (!key) {
         const count = storageService.clearNamespace(namespace);
         return `Cleared namespace "${namespace}" (${count} keys)`;
@@ -1553,13 +1553,13 @@ function registerAllCommands() {
     (namespace) => {
       if (namespace) {
         const keys = storageService.getNamespaceKeys(namespace);
-        if (keys.length === 0) return `No keys in "${namespace}"`;
+        if (keys.length === 0) {return `No keys in "${namespace}"`;}
         return keys
           .map((k) => `${k.key} (${storageService._formatBytes(k.size)})`)
           .join("\n");
       }
       const namespaces = storageService.getNamespaces();
-      if (namespaces.length === 0) return "No app storage namespaces";
+      if (namespaces.length === 0) {return "No app storage namespaces";}
       return namespaces
         .map((ns) => {
           const keys = storageService.getNamespaceKeys(ns);
@@ -1602,9 +1602,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "storage.search",
     (query) => {
-      if (!query) return 'Usage: storage.search("query")';
+      if (!query) {return 'Usage: storage.search("query")';}
       const results = storageService.search(query);
-      if (results.length === 0) return `No keys matching "${query}"`;
+      if (results.length === 0) {return `No keys matching "${query}"`;}
       return results
         .map(
           (r) =>
@@ -1618,7 +1618,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "storage.has",
     (namespace, key) => {
-      if (!namespace || !key) return 'Usage: storage.has("namespace", "key")';
+      if (!namespace || !key) {return 'Usage: storage.has("namespace", "key")';}
       return storageService.has(namespace, key) ? "true" : "false";
     },
     {
@@ -1661,14 +1661,14 @@ function registerAllCommands() {
         const res = await fetch(
           `/api/fs/list?path=${encodeURIComponent("/Pictures/OniOS")}`,
         );
-        if (!res.ok) return "No photos found. Take one first!";
+        if (!res.ok) {return "No photos found. Take one first!";}
         const data = await res.json();
         const photos = (data.items || [])
           .filter(
             (f) => !f.isDirectory && /\.(jpg|jpeg|png|webp|gif)$/i.test(f.name),
           )
-          .sort((a, b) => (b.modified || 0) - (a.modified || 0));
-        if (photos.length === 0) return "No photos found. Take one first!";
+          .toSorted((a, b) => (b.modified || 0) - (a.modified || 0));
+        if (photos.length === 0) {return "No photos found. Take one first!";}
         return photos.map((p) => `${p.name} (${p.size} bytes)`).join("\n");
       } catch {
         return "No photos found. Take one first!";
@@ -1753,7 +1753,7 @@ function registerAllCommands() {
       }
       // Queue commands — widget may not be mounted yet
       // Store on eventBus so Drawing widget can pick up queued commands on mount
-      if (!eventBus._drawingQueue) eventBus._drawingQueue = [];
+      if (!eventBus._drawingQueue) {eventBus._drawingQueue = [];}
       eventBus._drawingQueue.push(commands);
       setTimeout(() => {
         eventBus.emit("drawing:command", commands);
@@ -1809,7 +1809,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "browser.navigate",
     (url) => {
-      if (!url) return "Usage: browser.navigate(url)";
+      if (!url) {return "Usage: browser.navigate(url)";}
       const wins = useWindowStore.getState().windows || [];
       const browserWin = wins.find((w) => w.widgetType === "browser");
       if (!browserWin) {
@@ -1830,7 +1830,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "agent.spawn",
     (name, task) => {
-      if (!task) return "Usage: agent.spawn(name, task)";
+      if (!task) {return "Usage: agent.spawn(name, task)";}
       const agent = agentManager.spawn({ name: name || "Sub-Agent", task });
       // Open an AgentViewer widget for this agent
       openWidget(
@@ -1852,7 +1852,7 @@ function registerAllCommands() {
     "agent.list",
     () => {
       const agents = agentManager.getAll();
-      if (agents.length === 0) return "No sub-agents running.";
+      if (agents.length === 0) {return "No sub-agents running.";}
       return agents
         .map(
           (a) =>
@@ -1866,9 +1866,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "agent.get",
     (agentId) => {
-      if (!agentId) return "Usage: agent.get(agentId)";
+      if (!agentId) {return "Usage: agent.get(agentId)";}
       const agent = agentManager.get(agentId);
-      if (!agent) return `Agent ${agentId} not found`;
+      if (!agent) {return `Agent ${agentId} not found`;}
       return JSON.stringify(
         {
           id: agent.id,
@@ -1892,9 +1892,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "agent.cancel",
     (agentId) => {
-      if (!agentId) return "Usage: agent.cancel(agentId)";
+      if (!agentId) {return "Usage: agent.cancel(agentId)";}
       const agent = agentManager.cancel(agentId);
-      if (!agent) return `Agent ${agentId} not found`;
+      if (!agent) {return `Agent ${agentId} not found`;}
       return `Agent "${agent.name}" cancelled.`;
     },
     { description: "Cancel a running sub-agent", args: ["agentId"] },
@@ -1903,9 +1903,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "agent.message",
     (agentId, message) => {
-      if (!agentId || !message) return "Usage: agent.message(agentId, message)";
+      if (!agentId || !message) {return "Usage: agent.message(agentId, message)";}
       const msg = agentManager.sendMessage(null, agentId, message);
-      if (msg.error) return msg.error;
+      if (msg.error) {return msg.error;}
       return `Message sent to agent ${agentId}: "${message.substring(0, 60)}"`;
     },
     {
@@ -1917,9 +1917,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "agent.view",
     (agentId) => {
-      if (!agentId) return "Usage: agent.view(agentId)";
+      if (!agentId) {return "Usage: agent.view(agentId)";}
       const agent = agentManager.get(agentId);
-      if (!agent) return `Agent ${agentId} not found`;
+      if (!agent) {return `Agent ${agentId} not found`;}
       openWidget(
         "agent-viewer",
         { agentId },
@@ -1939,9 +1939,9 @@ function registerAllCommands() {
     "agent.updateStatus",
     (agentId, status) => {
       if (!agentId || !status)
-        return "Usage: agent.updateStatus(agentId, status)";
+        {return "Usage: agent.updateStatus(agentId, status)";}
       const agent = agentManager.updateStatus(agentId, status);
-      if (!agent) return `Agent ${agentId} not found`;
+      if (!agent) {return `Agent ${agentId} not found`;}
       return `Agent "${agent.name}" status → ${status}`;
     },
     {
@@ -1955,7 +1955,7 @@ function registerAllCommands() {
     "agent.log",
     (agentId, type, content) => {
       if (!agentId || !content)
-        return "Usage: agent.log(agentId, type, content)";
+        {return "Usage: agent.log(agentId, type, content)";}
       agentManager.addLog(agentId, type || "system", content);
       return `Logged to agent ${agentId}`;
     },
@@ -1968,7 +1968,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "agent.setResult",
     (agentId, result) => {
-      if (!agentId || !result) return "Usage: agent.setResult(agentId, result)";
+      if (!agentId || !result) {return "Usage: agent.setResult(agentId, result)";}
       agentManager.setResult(agentId, result);
       return `Agent ${agentId} marked as completed with result.`;
     },
@@ -2006,11 +2006,11 @@ function registerAllCommands() {
     (widgetType) => {
       if (!widgetType) {
         const types = widgetContext.getActiveTypes();
-        if (types.length === 0) return "No widgets reporting context.";
+        if (types.length === 0) {return "No widgets reporting context.";}
         return `Active widget types: ${types.join(", ")}\n\nUsage: context.widget("file-explorer")`;
       }
       const state = widgetContext.getWidgetState(widgetType);
-      if (!state) return `No context for widget type: ${widgetType}`;
+      if (!state) {return `No context for widget type: ${widgetType}`;}
       return JSON.stringify(state, null, 2);
     },
     {
@@ -2043,7 +2043,7 @@ function registerAllCommands() {
     "context.focused",
     () => {
       const focused = contextEngine.getFocusedWindow();
-      if (!focused) return "No window is focused.";
+      if (!focused) {return "No window is focused.";}
       const ctx = widgetContext.get(focused.id);
       return JSON.stringify(
         {
@@ -2076,7 +2076,7 @@ function registerAllCommands() {
     "window.autoCloseOldest",
     () => {
       const closed = useWindowStore.getState().autoCloseOldest();
-      if (closed) return `Auto-closed: ${closed.title} (${closed.widgetType})`;
+      if (closed) {return `Auto-closed: ${closed.title} (${closed.widgetType})`;}
       return "No windows to close.";
     },
     {
@@ -2088,9 +2088,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "run.get",
     (runId) => {
-      if (!runId) return 'Usage: run.get("run_xxx")';
+      if (!runId) {return 'Usage: run.get("run_xxx")';}
       const run = commandRunTracker.getRun(runId);
-      if (!run) return `Run not found: ${runId}`;
+      if (!run) {return `Run not found: ${runId}`;}
       const dur = run.duration != null ? `${run.duration}ms` : "pending";
       return [
         `Run: ${run.id}`,
@@ -2116,13 +2116,13 @@ function registerAllCommands() {
   commandRegistry.register(
     "run.output",
     (runId) => {
-      if (!runId) return 'Usage: run.output("run_xxx")';
+      if (!runId) {return 'Usage: run.output("run_xxx")';}
       const output = commandRunTracker.getOutput(runId);
       if (output === null) {
         const run = commandRunTracker.getRun(runId);
-        if (!run) return `Run not found: ${runId}`;
+        if (!run) {return `Run not found: ${runId}`;}
         if (run.status === "running" || run.status === "pending")
-          return `Run ${runId} is still ${run.status}...`;
+          {return `Run ${runId} is still ${run.status}...`;}
         return `Run ${runId} has no output (${run.status})`;
       }
       return typeof output === "object"
@@ -2135,9 +2135,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "run.await",
     async (runId) => {
-      if (!runId) return 'Usage: run.await("run_xxx")';
+      if (!runId) {return 'Usage: run.await("run_xxx")';}
       const run = await commandRunTracker.awaitRun(runId);
-      if (!run) return `Run not found: ${runId}`;
+      if (!run) {return `Run not found: ${runId}`;}
       return `[${run.status}] ${run.path} → ${typeof run.output === "object" ? JSON.stringify(run.output) : (run.output ?? run.error)}`;
     },
     { description: "Await a command run's completion and return its result" },
@@ -2147,7 +2147,7 @@ function registerAllCommands() {
     "run.list",
     (limit) => {
       const runs = commandRunTracker.getHistory(Number(limit) || 20);
-      if (runs.length === 0) return "No command runs recorded";
+      if (runs.length === 0) {return "No command runs recorded";}
       return runs
         .map((r) => {
           const dur = r.duration != null ? `${r.duration}ms` : "...";
@@ -2173,9 +2173,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "run.chain",
     (chainId) => {
-      if (!chainId) return 'Usage: run.chain("chain_xxx")';
+      if (!chainId) {return 'Usage: run.chain("chain_xxx")';}
       const runs = commandRunTracker.getChain(chainId);
-      if (runs.length === 0) return `Chain not found: ${chainId}`;
+      if (runs.length === 0) {return `Chain not found: ${chainId}`;}
       return runs
         .map((r, i) => {
           const out =
@@ -2203,9 +2203,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "run.search",
     (query) => {
-      if (!query) return 'Usage: run.search("query")';
+      if (!query) {return 'Usage: run.search("query")';}
       const runs = commandRunTracker.search(query);
-      if (runs.length === 0) return `No runs matching "${query}"`;
+      if (runs.length === 0) {return `No runs matching "${query}"`;}
       return runs
         .slice(0, 20)
         .map(
@@ -2220,7 +2220,7 @@ function registerAllCommands() {
     "run.running",
     () => {
       const runs = commandRunTracker.getByStatus("running");
-      if (runs.length === 0) return "No commands currently running";
+      if (runs.length === 0) {return "No commands currently running";}
       return runs
         .map(
           (r) =>
@@ -2235,7 +2235,7 @@ function registerAllCommands() {
     "run.failed",
     () => {
       const runs = commandRunTracker.getByStatus("rejected").slice(-20);
-      if (runs.length === 0) return "No failed runs";
+      if (runs.length === 0) {return "No failed runs";}
       return runs.map((r) => `${r.id} ${r.path} → ${r.error}`).join("\n");
     },
     { description: "List recently failed command runs" },
@@ -2267,7 +2267,7 @@ function registerAllCommands() {
     "workflow.run",
     async (idOrName) => {
       if (!idOrName)
-        return 'Usage: workflow.run("workflowId") or workflow.run("name")';
+        {return 'Usage: workflow.run("workflowId") or workflow.run("name")';}
       const store = useWorkflowStore.getState();
       let wf = store.getWorkflow(idOrName);
       if (!wf) {
@@ -2275,7 +2275,7 @@ function registerAllCommands() {
           (w) => w.name.toLowerCase() === idOrName.toLowerCase(),
         );
       }
-      if (!wf) return `Workflow not found: ${idOrName}`;
+      if (!wf) {return `Workflow not found: ${idOrName}`;}
       addNotification(`Running workflow: ${wf.name}`, "info");
       const result = await workflowEngine.execute(wf.id);
       if (result.success) {
@@ -2296,7 +2296,7 @@ function registerAllCommands() {
     "workflow.list",
     () => {
       const wfs = useWorkflowStore.getState().workflows;
-      if (wfs.length === 0) return "No workflows";
+      if (wfs.length === 0) {return "No workflows";}
       return wfs
         .map((w) => {
           const status = w.lastRunStatus ? ` [${w.lastRunStatus}]` : "";
@@ -2318,14 +2318,14 @@ function registerAllCommands() {
   commandRegistry.register(
     "workflow.enable",
     (idOrName) => {
-      if (!idOrName) return 'Usage: workflow.enable("id or name")';
+      if (!idOrName) {return 'Usage: workflow.enable("id or name")';}
       const store = useWorkflowStore.getState();
       let wf = store.getWorkflow(idOrName);
       if (!wf)
-        wf = store.workflows.find(
+        {wf = store.workflows.find(
           (w) => w.name.toLowerCase() === idOrName.toLowerCase(),
-        );
-      if (!wf) return `Not found: ${idOrName}`;
+        );}
+      if (!wf) {return `Not found: ${idOrName}`;}
       store.updateWorkflow(wf.id, { enabled: true });
       workflowEngine.initListeners();
       return `✅ Enabled workflow "${wf.name}" — event triggers are now active`;
@@ -2336,14 +2336,14 @@ function registerAllCommands() {
   commandRegistry.register(
     "workflow.disable",
     (idOrName) => {
-      if (!idOrName) return 'Usage: workflow.disable("id or name")';
+      if (!idOrName) {return 'Usage: workflow.disable("id or name")';}
       const store = useWorkflowStore.getState();
       let wf = store.getWorkflow(idOrName);
       if (!wf)
-        wf = store.workflows.find(
+        {wf = store.workflows.find(
           (w) => w.name.toLowerCase() === idOrName.toLowerCase(),
-        );
-      if (!wf) return `Not found: ${idOrName}`;
+        );}
+      if (!wf) {return `Not found: ${idOrName}`;}
       store.updateWorkflow(wf.id, { enabled: false });
       workflowEngine.initListeners();
       return `⏸ Disabled workflow "${wf.name}" — event triggers are now inactive`;
@@ -2356,14 +2356,14 @@ function registerAllCommands() {
   commandRegistry.register(
     "workflow.get",
     (idOrName) => {
-      if (!idOrName) return 'Usage: workflow.get("id")';
+      if (!idOrName) {return 'Usage: workflow.get("id")';}
       const store = useWorkflowStore.getState();
       let wf = store.getWorkflow(idOrName);
       if (!wf)
-        wf = store.workflows.find(
+        {wf = store.workflows.find(
           (w) => w.name.toLowerCase() === idOrName.toLowerCase(),
-        );
-      if (!wf) return `Not found: ${idOrName}`;
+        );}
+      if (!wf) {return `Not found: ${idOrName}`;}
       const lines = [
         `Workflow: ${wf.name} (${wf.id})`,
         `  Nodes: ${wf.nodes.length}`,
@@ -2383,9 +2383,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "workflow.delete",
     (id) => {
-      if (!id) return 'Usage: workflow.delete("id")';
+      if (!id) {return 'Usage: workflow.delete("id")';}
       const wf = useWorkflowStore.getState().getWorkflow(id);
-      if (!wf) return `Not found: ${id}`;
+      if (!wf) {return `Not found: ${id}`;}
       useWorkflowStore.getState().deleteWorkflow(id);
       return `Deleted workflow "${wf.name}"`;
     },
@@ -2395,7 +2395,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "workflow.abort",
     (id) => {
-      if (!id) return 'Usage: workflow.abort("id")';
+      if (!id) {return 'Usage: workflow.abort("id")';}
       workflowEngine.abort(id);
       return `Aborted workflow ${id}`;
     },
@@ -2405,9 +2405,9 @@ function registerAllCommands() {
   commandRegistry.register(
     "workflow.duplicate",
     (id) => {
-      if (!id) return 'Usage: workflow.duplicate("id")';
+      if (!id) {return 'Usage: workflow.duplicate("id")';}
       const copy = useWorkflowStore.getState().duplicateWorkflow(id);
-      if (!copy) return `Not found: ${id}`;
+      if (!copy) {return `Not found: ${id}`;}
       return `Duplicated → "${copy.name}" (${copy.id})`;
     },
     { description: "Duplicate a workflow" },
@@ -2418,10 +2418,10 @@ function registerAllCommands() {
     "workflow.addNode",
     (workflowId, type, label, config) => {
       if (!workflowId)
-        return "Usage: workflow.addNode(workflowId, type, label, config)";
+        {return "Usage: workflow.addNode(workflowId, type, label, config)";}
       const store = useWorkflowStore.getState();
       const wf = store.getWorkflow(workflowId);
-      if (!wf) return `Workflow not found: ${workflowId}`;
+      if (!wf) {return `Workflow not found: ${workflowId}`;}
       const node = store.addNode(workflowId, {
         type: type || "command",
         label: label || type || "New Node",
@@ -2438,10 +2438,10 @@ function registerAllCommands() {
     "workflow.updateNode",
     (workflowId, nodeId, updatesJson) => {
       if (!workflowId || !nodeId)
-        return "Usage: workflow.updateNode(workflowId, nodeId, updatesJson)";
+        {return "Usage: workflow.updateNode(workflowId, nodeId, updatesJson)";}
       const store = useWorkflowStore.getState();
       const wf = store.getWorkflow(workflowId);
-      if (!wf) return `Workflow not found: ${workflowId}`;
+      if (!wf) {return `Workflow not found: ${workflowId}`;}
       const updates =
         typeof updatesJson === "string"
           ? JSON.parse(updatesJson)
@@ -2456,10 +2456,10 @@ function registerAllCommands() {
     "workflow.deleteNode",
     (workflowId, nodeId) => {
       if (!workflowId || !nodeId)
-        return "Usage: workflow.deleteNode(workflowId, nodeId)";
+        {return "Usage: workflow.deleteNode(workflowId, nodeId)";}
       const store = useWorkflowStore.getState();
       const wf = store.getWorkflow(workflowId);
-      if (!wf) return `Workflow not found: ${workflowId}`;
+      if (!wf) {return `Workflow not found: ${workflowId}`;}
       store.deleteNode(workflowId, nodeId);
       return `Deleted node ${nodeId} from workflow "${wf.name}"`;
     },
@@ -2470,12 +2470,12 @@ function registerAllCommands() {
     "workflow.addConnection",
     (workflowId, fromNodeId, toNodeId) => {
       if (!workflowId || !fromNodeId || !toNodeId)
-        return "Usage: workflow.addConnection(workflowId, fromNodeId, toNodeId)";
+        {return "Usage: workflow.addConnection(workflowId, fromNodeId, toNodeId)";}
       const store = useWorkflowStore.getState();
       const wf = store.getWorkflow(workflowId);
-      if (!wf) return `Workflow not found: ${workflowId}`;
+      if (!wf) {return `Workflow not found: ${workflowId}`;}
       const conn = store.addConnection(workflowId, fromNodeId, toNodeId);
-      if (!conn) return "Connection already exists or invalid node IDs";
+      if (!conn) {return "Connection already exists or invalid node IDs";}
       return `Connected ${fromNodeId} → ${toNodeId} in workflow "${wf.name}"`;
     },
     { description: "Connect two nodes in a workflow" },
@@ -2485,7 +2485,7 @@ function registerAllCommands() {
     "workflow.removeConnection",
     (workflowId, connectionId) => {
       if (!workflowId || !connectionId)
-        return "Usage: workflow.removeConnection(workflowId, connectionId)";
+        {return "Usage: workflow.removeConnection(workflowId, connectionId)";}
       const store = useWorkflowStore.getState();
       store.removeConnection(workflowId, connectionId);
       return `Removed connection ${connectionId}`;
@@ -2497,7 +2497,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "task.update",
     (id, updatesJson) => {
-      if (!id) return "Usage: task.update(taskId, updatesJson)";
+      if (!id) {return "Usage: task.update(taskId, updatesJson)";}
       const updates =
         typeof updatesJson === "string"
           ? JSON.parse(updatesJson)
@@ -2515,7 +2515,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "event.update",
     (id, updatesJson) => {
-      if (!id) return "Usage: event.update(eventId, updatesJson)";
+      if (!id) {return "Usage: event.update(eventId, updatesJson)";}
       const updates =
         typeof updatesJson === "string"
           ? JSON.parse(updatesJson)
@@ -2892,7 +2892,7 @@ function registerAllCommands() {
   commandRegistry.register(
     "system.test.run",
     async (num) => {
-      if (!num) return "Provide a test number 1-5";
+      if (!num) {return "Provide a test number 1-5";}
       addNotification(`Running test ${num}...`, "info");
       const result = await runTest(Number(num));
       addNotification(
@@ -2952,9 +2952,9 @@ export default function App() {
     const notifPollInterval = setInterval(async () => {
       try {
         const res = await fetch("/api/scheduler/notifications");
-        if (!res.ok) return;
+        if (!res.ok) {return;}
         const { notifications: notifs } = await res.json();
-        if (!notifs || notifs.length === 0) return;
+        if (!notifs || notifs.length === 0) {return;}
         const { addNotification } = useNotificationStore.getState();
         const { executeCommand: execCmd } = useCommandStore.getState();
         for (const n of notifs) {

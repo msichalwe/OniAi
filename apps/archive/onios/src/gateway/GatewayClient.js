@@ -119,7 +119,7 @@ class GatewayClient {
     _handleActionEvent(data) {
         // Store in history for chat display
         this._actionHistory.push(data);
-        if (this._actionHistory.length > 100) this._actionHistory.shift();
+        if (this._actionHistory.length > 100) {this._actionHistory.shift();}
 
         // Notify all action listeners (chat widget uses this)
         for (const listener of this._actionListeners) {
@@ -240,7 +240,7 @@ class GatewayClient {
     }
 
     _scheduleReconnect() {
-        if (this._reconnectTimer) return;
+        if (this._reconnectTimer) {return;}
         this._reconnectTimer = setTimeout(() => {
             this._reconnectTimer = null;
             if (this._status !== 'connected') {

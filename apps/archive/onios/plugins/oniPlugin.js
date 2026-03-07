@@ -65,7 +65,7 @@ const ACTION_EVENT_BUS = {
         const payload = { ...event, timestamp: Date.now() };
         this._queue.push(payload);
         // Keep only last 50 events
-        if (this._queue.length > 50) this._queue.shift();
+        if (this._queue.length > 50) {this._queue.shift();}
         // Send to all SSE clients
         for (const client of this._clients) {
             try {
@@ -90,12 +90,12 @@ const ACTION_EVENT_BUS = {
 // ─── Helpers ──────────────────────────────────────────
 
 function ensureDir(dir) {
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(dir)) {fs.mkdirSync(dir, { recursive: true });}
 }
 
 function readJSON(filePath, fallback) {
     try {
-        if (fs.existsSync(filePath)) return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        if (fs.existsSync(filePath)) {return JSON.parse(fs.readFileSync(filePath, 'utf-8'));}
     } catch { /* corrupt */ }
     return fallback;
 }
@@ -152,7 +152,7 @@ function runOniAgent(message, sessionId, timeoutSec = 120) {
         const config = getConfig();
         const agentId = config.agentId || 'main';
         const args = ['agent', '--agent', agentId, '-m', message, '--json', '--timeout', String(timeoutSec)];
-        if (sessionId) args.push('--session-id', sessionId);
+        if (sessionId) {args.push('--session-id', sessionId);}
 
         const child = spawn('oni', args, {
             env: CLI_ENV,
@@ -678,8 +678,8 @@ export default function oniPlugin() {
                 }
                 if (req.method !== 'POST') { json(res, { error: 'GET/POST only' }, 405); return; }
                 const body = await parseBody(req);
-                if (body.widgetContext) _latestWidgetContext = body.widgetContext;
-                if (body.windows) _latestWindowData = { windows: body.windows, timestamp: Date.now() };
+                if (body.widgetContext) {_latestWidgetContext = body.widgetContext;}
+                if (body.windows) {_latestWindowData = { windows: body.windows, timestamp: Date.now() };}
                 json(res, { success: true });
             });
 
@@ -817,11 +817,11 @@ export default function oniPlugin() {
                 let enrichedMessage = systemPrompt;
                 if (context) {
                     const ctxParts = [];
-                    if (context.windows) ctxParts.push(`Open windows: ${context.windows}`);
-                    if (context.desktops) ctxParts.push(`Desktops: ${context.desktops}`);
-                    if (context.theme) ctxParts.push(`Theme: ${context.theme}`);
-                    if (context.time) ctxParts.push(`Time: ${context.time}`);
-                    if (context.focusedWindow) ctxParts.push(`Focused window: ${context.focusedWindow}`);
+                    if (context.windows) {ctxParts.push(`Open windows: ${context.windows}`);}
+                    if (context.desktops) {ctxParts.push(`Desktops: ${context.desktops}`);}
+                    if (context.theme) {ctxParts.push(`Theme: ${context.theme}`);}
+                    if (context.time) {ctxParts.push(`Time: ${context.time}`);}
+                    if (context.focusedWindow) {ctxParts.push(`Focused window: ${context.focusedWindow}`);}
                     if (ctxParts.length > 0) {
                         enrichedMessage += `\n[Desktop State: ${ctxParts.join(' | ')}]\n`;
                     }
@@ -1034,80 +1034,80 @@ function mapActionToCommand(actionType, body, result) {
     const esc = (s) => (s || '').replace(/"/g, '\\"');
     switch (actionType) {
         case 'task':
-            if (action === 'create') return `task.add("${esc(body.title)}", "${esc(body.dueDate)}", "${esc(body.dueTime)}", "${esc(body.priority || 'medium')}")`;
-            if (action === 'list') return 'task.list()';
-            if (action === 'complete') return `task.complete("${esc(body.id)}")`;
+            if (action === 'create') {return `task.add("${esc(body.title)}", "${esc(body.dueDate)}", "${esc(body.dueTime)}", "${esc(body.priority || 'medium')}")`;}
+            if (action === 'list') {return 'task.list()';}
+            if (action === 'complete') {return `task.complete("${esc(body.id)}")`;}
             return 'taskManager.open()';
         case 'window': {
             if (action === 'open' && body.widgetType) {
                 const cmd = WIDGET_OPEN_COMMANDS[body.widgetType];
                 return cmd ? `${cmd}()` : null;
             }
-            if (action === 'close' && body.windowId) return `system.windows.close("${esc(body.windowId)}")`;
-            if (action === 'close_all') return 'system.windows.closeAll()';
-            if (action === 'focus' && body.windowId) return `system.windows.focus("${esc(body.windowId)}")`;
-            if (action === 'minimize' && body.windowId) return `system.windows.minimize("${esc(body.windowId)}")`;
-            if (action === 'maximize' && body.windowId) return `system.windows.maximize("${esc(body.windowId)}")`;
-            if (action === 'list') return 'system.windows.list()';
+            if (action === 'close' && body.windowId) {return `system.windows.close("${esc(body.windowId)}")`;}
+            if (action === 'close_all') {return 'system.windows.closeAll()';}
+            if (action === 'focus' && body.windowId) {return `system.windows.focus("${esc(body.windowId)}")`;}
+            if (action === 'minimize' && body.windowId) {return `system.windows.minimize("${esc(body.windowId)}")`;}
+            if (action === 'maximize' && body.windowId) {return `system.windows.maximize("${esc(body.windowId)}")`;}
+            if (action === 'list') {return 'system.windows.list()';}
             return null;
         }
         case 'note':
-            if (action === 'create') return `document.create("${esc(body.path || `~/Documents/${(body.title || 'note').replace(/[^a-zA-Z0-9-_ ]/g, '')}.md`)}", ${JSON.stringify(body.content || `# ${body.title || 'Note'}\n`)})`;
-            if (action === 'list') return 'document.list()';
+            if (action === 'create') {return `document.create("${esc(body.path || `~/Documents/${(body.title || 'note').replace(/[^a-zA-Z0-9-_ ]/g, '')}.md`)}", ${JSON.stringify(body.content || `# ${body.title || 'Note'}\n`)})`;}
+            if (action === 'list') {return 'document.list()';}
             return 'document.open()';
         case 'terminal':
-            if (action === 'open') return 'terminal.open()';
-            if (action === 'run' && body.command) return `terminal.exec("${esc(body.command)}")`;
+            if (action === 'open') {return 'terminal.open()';}
+            if (action === 'run' && body.command) {return `terminal.exec("${esc(body.command)}")`;}
             return 'terminal.open()';
         case 'file':
-            if (action === 'list') return `system.files.list("${esc(body.path || '~')}")`;
-            if (action === 'read') return `system.files.read("${esc(body.path)}")`;
-            if (action === 'write') return `system.files.write("${esc(body.path)}", ${JSON.stringify(body.content || '')})`;
+            if (action === 'list') {return `system.files.list("${esc(body.path || '~')}")`;}
+            if (action === 'read') {return `system.files.read("${esc(body.path)}")`;}
+            if (action === 'write') {return `system.files.write("${esc(body.path)}", ${JSON.stringify(body.content || '')})`;}
             return 'system.files.openExplorer()';
         case 'notification':
             return `system.notify("${esc(body.message || body.title)}")`;
         case 'search':
             return `web.search("${esc(body.query)}")`;
         case 'calendar':
-            if (action === 'add' || body.title) return `event.add("${esc(body.title)}", "${esc(body.date)}", "${esc(body.startTime)}", "${esc(body.endTime)}")`;
+            if (action === 'add' || body.title) {return `event.add("${esc(body.title)}", "${esc(body.date)}", "${esc(body.startTime)}", "${esc(body.endTime)}")`;}
             return 'calendar.open()';
         case 'storage':
             return null;
         case 'system':
             return null;
         case 'scheduler':
-            if (action === 'create_job') return `schedule.add("${esc(body.name)}", "${esc(body.jobAction)}")`;
+            if (action === 'create_job') {return `schedule.add("${esc(body.name)}", "${esc(body.jobAction)}")`;}
             return null;
         case 'workflow':
-            if (action === 'list') return 'workflow.list()';
+            if (action === 'list') {return 'workflow.list()';}
             return 'workflow.open()';
         case 'screen':
-            if (action === 'screenshot') return 'screen.screenshot()';
-            if (action === 'record_start') return 'screen.record.start()';
-            if (action === 'record_stop') return 'screen.record.stop()';
+            if (action === 'screenshot') {return 'screen.screenshot()';}
+            if (action === 'record_start') {return 'screen.record.start()';}
+            if (action === 'record_stop') {return 'screen.record.stop()';}
             return 'screen.open()';
         case 'display':
             // Special: use the result.id that was just created
-            if (result?.id) return `display.render("${result.id}")`;
+            if (result?.id) {return `display.render("${result.id}")`;}
             return null;
         case 'drawing': {
             const da = body.action || 'draw';
-            if (da === 'open') return 'board.open()';
-            if (da === 'clear') return 'board.clear()';
+            if (da === 'open') {return 'board.open()';}
+            if (da === 'clear') {return 'board.clear()';}
             const cmds = body.commands || body.steps || [body];
             return `board.draw(${JSON.stringify(cmds)})`;
         }
         case 'spacelens': {
             const sa = body.action || 'scan';
-            if (sa === 'open' || sa === 'scan') return body.path ? `spacelens.scan("${esc(body.path)}")` : 'spacelens.open()';
-            if (sa === 'drill' && body.path) return `spacelens.scan("${esc(body.path)}")`;
-            if (sa === 'delete' && body.path) return `spacelens.delete("${esc(body.path)}")`;
+            if (sa === 'open' || sa === 'scan') {return body.path ? `spacelens.scan("${esc(body.path)}")` : 'spacelens.open()';}
+            if (sa === 'drill' && body.path) {return `spacelens.scan("${esc(body.path)}")`;}
+            if (sa === 'delete' && body.path) {return `spacelens.delete("${esc(body.path)}")`;}
             return 'spacelens.open()';
         }
         case 'project': {
             const pa = body.action || 'create';
-            if (pa === 'create' && result?.path) return `code.openProject("${esc(result.path)}")`;
-            if (pa === 'open' && body.path) return `code.openProject("${esc(body.path)}")`;
+            if (pa === 'create' && result?.path) {return `code.openProject("${esc(result.path)}")`;}
+            if (pa === 'open' && body.path) {return `code.openProject("${esc(body.path)}")`;}
             return null;
         }
         case 'device':
@@ -1200,7 +1200,7 @@ async function handleNoteAction(body) {
         }
         case 'read': {
             const filePath = body.path || body.id;
-            if (!filePath || !fs.existsSync(filePath)) return { error: 'Note not found' };
+            if (!filePath || !fs.existsSync(filePath)) {return { error: 'Note not found' };}
             return { success: true, content: fs.readFileSync(filePath, 'utf-8') };
         }
         default:
@@ -1214,7 +1214,7 @@ async function handleTerminalAction(body) {
         case 'open':
             return { success: true, message: 'Terminal opened (dispatched to client)' };
         case 'run': {
-            if (!body.command) return { error: 'command required' };
+            if (!body.command) {return { error: 'command required' };}
             try {
                 const output = execSync(body.command, {
                     timeout: body.timeout || 30000,
@@ -1244,7 +1244,7 @@ async function handleFileAction(body) {
     switch (action) {
         case 'list': {
             const dirPath = resolvePath(body.path || '~');
-            if (!fs.existsSync(dirPath)) return { error: `Path not found: ${dirPath}` };
+            if (!fs.existsSync(dirPath)) {return { error: `Path not found: ${dirPath}` };}
             const entries = fs.readdirSync(dirPath, { withFileTypes: true }).slice(0, 100);
             return {
                 success: true,
@@ -1258,9 +1258,9 @@ async function handleFileAction(body) {
         }
         case 'read': {
             const filePath = resolvePath(body.path);
-            if (!fs.existsSync(filePath)) return { error: `File not found: ${filePath}` };
+            if (!fs.existsSync(filePath)) {return { error: `File not found: ${filePath}` };}
             const stat = fs.statSync(filePath);
-            if (stat.size > 1024 * 1024) return { error: 'File too large (>1MB)' };
+            if (stat.size > 1024 * 1024) {return { error: 'File too large (>1MB)' };}
             return { success: true, content: fs.readFileSync(filePath, 'utf-8'), path: filePath };
         }
         case 'write': {
@@ -1275,7 +1275,7 @@ async function handleFileAction(body) {
 }
 
 async function handleSearchAction(body) {
-    if (!body.query) return { error: 'query required' };
+    if (!body.query) {return { error: 'query required' };}
     return { success: true, query: body.query, results: [], message: 'Web search (use Oni Chat for search results)' };
 }
 
@@ -1385,7 +1385,7 @@ async function handleSchedulerAction(body) {
         }
         case 'delete_job': {
             const id = body.id || body.jobId;
-            if (!id) return { error: 'Missing job id' };
+            if (!id) {return { error: 'Missing job id' };}
             state.scheduledJobs = (state.scheduledJobs || []).filter(j => j.id !== id);
             writeJSON(SCHEDULER_FILE, state);
             return { success: true, deleted: id };
@@ -1416,7 +1416,7 @@ async function handleProjectAction(body) {
                 for (const [filePath, content] of Object.entries(body.files)) {
                     const fullPath = path.join(projectDir, filePath);
                     const dir = path.dirname(fullPath);
-                    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+                    if (!fs.existsSync(dir)) {fs.mkdirSync(dir, { recursive: true });}
                     fs.writeFileSync(fullPath, content, 'utf-8');
                     filesWritten.push(filePath);
                 }
@@ -1440,13 +1440,13 @@ async function handleProjectAction(body) {
         }
         case 'open': {
             const projectPath = body.path;
-            if (!projectPath) return { error: 'Project path required' };
-            if (!fs.existsSync(projectPath)) return { error: `Path not found: ${projectPath}` };
+            if (!projectPath) {return { error: 'Project path required' };}
+            if (!fs.existsSync(projectPath)) {return { error: `Path not found: ${projectPath}` };}
             return { success: true, path: projectPath, message: `Opening project: ${projectPath}` };
         }
         case 'list': {
             const baseDir = body.path || PROJECTS_DIR;
-            if (!fs.existsSync(baseDir)) return { success: true, projects: [] };
+            if (!fs.existsSync(baseDir)) {return { success: true, projects: [] };}
             const dirs = fs.readdirSync(baseDir, { withFileTypes: true })
                 .filter(d => d.isDirectory() && !d.name.startsWith('.'))
                 .map(d => {
@@ -1456,7 +1456,7 @@ async function handleProjectAction(body) {
                     if (fs.existsSync(ctxPath)) {
                         const ctx = fs.readFileSync(ctxPath, 'utf-8');
                         const descMatch = ctx.match(/## Description\n(.*?)(\n##|\n$)/s);
-                        if (descMatch) description = descMatch[1].trim();
+                        if (descMatch) {description = descMatch[1].trim();}
                     }
                     return { name: d.name, path: pPath, description };
                 });
@@ -1464,27 +1464,27 @@ async function handleProjectAction(body) {
         }
         case 'write_file': {
             const projectPath = body.path || body.projectPath;
-            if (!projectPath) return { error: 'Project path required' };
-            if (!body.filePath) return { error: 'filePath required' };
-            if (body.content === undefined) return { error: 'content required' };
+            if (!projectPath) {return { error: 'Project path required' };}
+            if (!body.filePath) {return { error: 'filePath required' };}
+            if (body.content === undefined) {return { error: 'content required' };}
             const fullPath = path.join(projectPath, body.filePath);
             const dir = path.dirname(fullPath);
-            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            if (!fs.existsSync(dir)) {fs.mkdirSync(dir, { recursive: true });}
             fs.writeFileSync(fullPath, body.content, 'utf-8');
             return { success: true, path: fullPath, message: `Wrote ${body.filePath}` };
         }
         case 'read_context': {
             const projectPath = body.path;
-            if (!projectPath) return { error: 'Project path required' };
+            if (!projectPath) {return { error: 'Project path required' };}
             const ctxPath = path.join(projectPath, 'context.md');
-            if (!fs.existsSync(ctxPath)) return { success: true, context: null, message: 'No context.md found' };
+            if (!fs.existsSync(ctxPath)) {return { success: true, context: null, message: 'No context.md found' };}
             return { success: true, context: fs.readFileSync(ctxPath, 'utf-8') };
         }
         case 'update_context': {
             const projectPath = body.path;
-            if (!projectPath) return { error: 'Project path required' };
+            if (!projectPath) {return { error: 'Project path required' };}
             const ctxPath = path.join(projectPath, 'context.md');
-            if (!body.content) return { error: 'content required' };
+            if (!body.content) {return { error: 'content required' };}
             fs.writeFileSync(ctxPath, body.content, 'utf-8');
             return { success: true, message: 'context.md updated' };
         }
@@ -1498,7 +1498,7 @@ async function handleWorkflowAction(body) {
     const WORKFLOWS_DIR = path.join(os.homedir(), '.onios', 'workflows');
     switch (action) {
         case 'list': {
-            if (!fs.existsSync(WORKFLOWS_DIR)) return { success: true, workflows: [] };
+            if (!fs.existsSync(WORKFLOWS_DIR)) {return { success: true, workflows: [] };}
             const files = fs.readdirSync(WORKFLOWS_DIR).filter(f => f.endsWith('.json'));
             const workflows = files.map(f => {
                 const data = readJSON(path.join(WORKFLOWS_DIR, f), {});
@@ -1507,9 +1507,9 @@ async function handleWorkflowAction(body) {
             return { success: true, workflows };
         }
         case 'get': {
-            if (!body.id) return { error: 'workflow id required' };
+            if (!body.id) {return { error: 'workflow id required' };}
             const wfPath = path.join(WORKFLOWS_DIR, `${body.id}.json`);
-            if (!fs.existsSync(wfPath)) return { error: 'Workflow not found' };
+            if (!fs.existsSync(wfPath)) {return { error: 'Workflow not found' };}
             return { success: true, workflow: readJSON(wfPath, {}) };
         }
         case 'sync_to_oni': {
@@ -1533,7 +1533,7 @@ function getDiskUsage() {
     try {
         const raw = execSync('df -k / 2>/dev/null', { encoding: 'utf-8' });
         const lines = raw.trim().split('\n');
-        if (lines.length < 2) return null;
+        if (lines.length < 2) {return null;}
         const parts = lines[1].split(/\s+/);
         const total = parseInt(parts[1]) * 1024;
         const used = parseInt(parts[2]) * 1024;
@@ -1547,7 +1547,7 @@ function scanDirectory(dirPath, depth = 1, maxItems = 80) {
     try {
         const entries = fs.readdirSync(dirPath, { withFileTypes: true });
         for (const entry of entries) {
-            if (entry.name.startsWith('.') && entry.name !== '.Trash') continue;
+            if (entry.name.startsWith('.') && entry.name !== '.Trash') {continue;}
             const fullPath = path.join(dirPath, entry.name);
             try {
                 const stats = fs.lstatSync(fullPath);
@@ -1600,7 +1600,7 @@ async function handleSpaceLensAction(body) {
             };
         }
         case 'drill': {
-            if (!body.path) return { error: 'path required' };
+            if (!body.path) {return { error: 'path required' };}
             const scan = scanDirectory(body.path);
             return {
                 success: true,
@@ -1610,7 +1610,7 @@ async function handleSpaceLensAction(body) {
             };
         }
         case 'info': {
-            if (!body.path) return { error: 'path required' };
+            if (!body.path) {return { error: 'path required' };}
             try {
                 const stats = fs.statSync(body.path);
                 const isDir = stats.isDirectory();
@@ -1639,7 +1639,7 @@ async function handleSpaceLensAction(body) {
             }
         }
         case 'delete': {
-            if (!body.path) return { error: 'path required' };
+            if (!body.path) {return { error: 'path required' };}
             const target = body.path;
             // Safety: never delete critical system paths
             const blocked = ['/', '/System', '/Library', '/usr', '/bin', '/sbin', '/var', '/private', '/etc', '/tmp', '/cores', os.homedir()];
@@ -1660,7 +1660,7 @@ async function handleSpaceLensAction(body) {
             }
         }
         case 'reveal': {
-            if (!body.path) return { error: 'path required' };
+            if (!body.path) {return { error: 'path required' };}
             try {
                 execSync(`open -R "${body.path}" 2>/dev/null`, { timeout: 5000 });
                 return { success: true, message: `Revealed in Finder: ${path.basename(body.path)}` };
@@ -1779,7 +1779,7 @@ async function handleDeviceAction(body) {
         // ═══ PHASE 2: APP CONTROL ═══════════════════════
 
         case 'open_app': {
-            if (!body.app) return { error: 'app name required' };
+            if (!body.app) {return { error: 'app name required' };}
             try {
                 if (platform === 'darwin') {
                     // Use AppleScript activate to properly bring to front on all monitors
@@ -1793,7 +1793,7 @@ async function handleDeviceAction(body) {
             } catch (err) {
                 // Fallback to open -a if activate fails (app not installed yet)
                 try {
-                    if (platform === 'darwin') execSync(`open -a "${body.app}"`, { timeout: 10000 });
+                    if (platform === 'darwin') {execSync(`open -a "${body.app}"`, { timeout: 10000 });}
                     return { success: true, message: `Opened ${body.app}` };
                 } catch (err2) {
                     return { error: `Failed to open ${body.app}: ${err2.message}` };
@@ -1802,7 +1802,7 @@ async function handleDeviceAction(body) {
         }
 
         case 'focus_app': {
-            if (!body.app) return { error: 'app name required' };
+            if (!body.app) {return { error: 'app name required' };}
             try {
                 if (platform === 'darwin') {
                     // Activate brings the app and ALL its windows to front across all monitors
@@ -1821,7 +1821,7 @@ async function handleDeviceAction(body) {
         }
 
         case 'automate': {
-            if (!body.script) return { error: 'script required' };
+            if (!body.script) {return { error: 'script required' };}
             try {
                 let output;
                 if (platform === 'darwin') {
@@ -1853,8 +1853,8 @@ async function handleDeviceAction(body) {
                         execSync(`powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('${body.text}')"`, { timeout: 5000 });
                     }
                 } else {
-                    if (body.text) execSync(`xdotool type -- "${body.text}"`, { timeout: 5000 });
-                    if (body.keys) execSync(`xdotool key ${body.keys.replace(/\+/g, '+')}`, { timeout: 5000 });
+                    if (body.text) {execSync(`xdotool type -- "${body.text}"`, { timeout: 5000 });}
+                    if (body.keys) {execSync(`xdotool key ${body.keys.replace(/\+/g, '+')}`, { timeout: 5000 });}
                 }
                 return { success: true, message: `Keystrokes sent` };
             } catch (err) {
@@ -1902,7 +1902,7 @@ function _getRunningApps() {
             const seen = new Set();
             return raw.trim().split('\n').map(line => {
                 const name = line.split(',')[0]?.replace(/"/g, '').trim();
-                if (!name || seen.has(name)) return null;
+                if (!name || seen.has(name)) {return null;}
                 seen.add(name);
                 return { name };
             }).filter(Boolean).slice(0, 50);
@@ -1953,17 +1953,17 @@ function _getInstalledApps() {
 
 function _getClipboard() {
     try {
-        if (platform === 'darwin') return execSync('pbpaste 2>/dev/null', { encoding: 'utf-8', timeout: 3000, maxBuffer: 1024 * 100 }).substring(0, 5000);
-        if (platform === 'win32') return execSync('powershell -Command "Get-Clipboard"', { encoding: 'utf-8', timeout: 3000 }).substring(0, 5000);
+        if (platform === 'darwin') {return execSync('pbpaste 2>/dev/null', { encoding: 'utf-8', timeout: 3000, maxBuffer: 1024 * 100 }).substring(0, 5000);}
+        if (platform === 'win32') {return execSync('powershell -Command "Get-Clipboard"', { encoding: 'utf-8', timeout: 3000 }).substring(0, 5000);}
         return execSync('xclip -selection clipboard -o 2>/dev/null || xsel --clipboard --output 2>/dev/null', { encoding: 'utf-8', timeout: 3000 }).substring(0, 5000);
     } catch { return ''; }
 }
 
 function _setClipboard(text) {
     try {
-        if (platform === 'darwin') execSync(`echo "${text.replace(/"/g, '\\"')}" | pbcopy`, { timeout: 3000 });
-        else if (platform === 'win32') execSync(`powershell -Command "Set-Clipboard -Value '${text.replace(/'/g, "''")}'"`  , { timeout: 3000 });
-        else execSync(`echo "${text.replace(/"/g, '\\"')}" | xclip -selection clipboard`, { timeout: 3000 });
+        if (platform === 'darwin') {execSync(`echo "${text.replace(/"/g, '\\"')}" | pbcopy`, { timeout: 3000 });}
+        else if (platform === 'win32') {execSync(`powershell -Command "Set-Clipboard -Value '${text.replace(/'/g, "''")}'"`  , { timeout: 3000 });}
+        else {execSync(`echo "${text.replace(/"/g, '\\"')}" | xclip -selection clipboard`, { timeout: 3000 });}
     } catch { /* ignore */ }
 }
 
@@ -1984,10 +1984,10 @@ function _buildKeystrokeScript(keys) {
     const parts = keys.toLowerCase().split('+').map(k => k.trim());
     const key = parts.pop();
     const modifiers = [];
-    if (parts.includes('cmd') || parts.includes('command')) modifiers.push('command down');
-    if (parts.includes('shift')) modifiers.push('shift down');
-    if (parts.includes('alt') || parts.includes('option')) modifiers.push('option down');
-    if (parts.includes('ctrl') || parts.includes('control')) modifiers.push('control down');
+    if (parts.includes('cmd') || parts.includes('command')) {modifiers.push('command down');}
+    if (parts.includes('shift')) {modifiers.push('shift down');}
+    if (parts.includes('alt') || parts.includes('option')) {modifiers.push('option down');}
+    if (parts.includes('ctrl') || parts.includes('control')) {modifiers.push('control down');}
     const using = modifiers.length > 0 ? ` using {${modifiers.join(', ')}}` : '';
     return `tell application "System Events" to keystroke "${key}"${using}`;
 }
@@ -1996,7 +1996,7 @@ function _buildKeystrokeScript(keys) {
 
 async function _handleEmail(body) {
     const emailAction = body.subaction || 'inbox';
-    if (platform !== 'darwin') return { error: 'Email automation currently macOS only (AppleScript)' };
+    if (platform !== 'darwin') {return { error: 'Email automation currently macOS only (AppleScript)' };}
     try {
         switch (emailAction) {
             case 'inbox': {
@@ -2013,7 +2013,7 @@ async function _handleEmail(body) {
                 return { success: true, emails: output.trim(), message: 'Inbox retrieved' };
             }
             case 'send': {
-                if (!body.to || !body.subject || !body.body) return { error: 'to, subject, body required' };
+                if (!body.to || !body.subject || !body.body) {return { error: 'to, subject, body required' };}
                 const script = `
                     tell application "Mail"
                         set newMsg to make new outgoing message with properties {subject:"${body.subject}", content:"${body.body}", visible:true}
@@ -2038,7 +2038,7 @@ async function _handleEmail(body) {
 
 async function _handleBrowser(body) {
     const browserAction = body.subaction || 'tabs';
-    if (platform !== 'darwin') return { error: 'Browser automation currently macOS only (AppleScript)' };
+    if (platform !== 'darwin') {return { error: 'Browser automation currently macOS only (AppleScript)' };}
     try {
         const app = body.browser || 'Safari';
         switch (browserAction) {
@@ -2057,7 +2057,7 @@ async function _handleBrowser(body) {
                 return { success: true, url: output.trim() };
             }
             case 'navigate': {
-                if (!body.url) return { error: 'url required' };
+                if (!body.url) {return { error: 'url required' };}
                 const script = app === 'Safari'
                     ? `tell application "Safari" to set URL of front document to "${body.url}"`
                     : `tell application "Google Chrome" to set URL of active tab of front window to "${body.url}"`;
@@ -2081,7 +2081,7 @@ async function _handleBrowser(body) {
 
 async function _handleDocument(body) {
     const docAction = body.subaction || 'create';
-    if (platform !== 'darwin') return { error: 'Document automation currently macOS only (AppleScript)' };
+    if (platform !== 'darwin') {return { error: 'Document automation currently macOS only (AppleScript)' };}
     try {
         switch (docAction) {
             case 'create': {
@@ -2093,7 +2093,7 @@ async function _handleDocument(body) {
                 return { success: true, path: filePath, message: `Document created and opened: ${path.basename(filePath)}` };
             }
             case 'open': {
-                if (!body.path) return { error: 'path required' };
+                if (!body.path) {return { error: 'path required' };}
                 execSync(`open "${body.path}"`, { timeout: 5000 });
                 return { success: true, message: `Opened ${path.basename(body.path)}` };
             }

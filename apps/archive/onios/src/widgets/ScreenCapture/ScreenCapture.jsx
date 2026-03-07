@@ -71,8 +71,8 @@ export default function ScreenCapture({ windowId, widgetType }) {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
       }
-      if (countdownRef.current) clearInterval(countdownRef.current);
-      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (countdownRef.current) {clearInterval(countdownRef.current);}
+      if (recordingTimerRef.current) {clearInterval(recordingTimerRef.current);}
     };
   }, []);
 
@@ -142,7 +142,7 @@ export default function ScreenCapture({ windowId, widgetType }) {
   const takeScreenshot = useCallback(async () => {
     setStatus("Requesting screen access...");
     const stream = await getScreenStream();
-    if (!stream) return;
+    if (!stream) {return;}
 
     const video = document.createElement("video");
     video.srcObject = stream;
@@ -231,7 +231,7 @@ export default function ScreenCapture({ windowId, widgetType }) {
   const startRecording = useCallback(async () => {
     setStatus("Requesting screen access...");
     const stream = await getScreenStream();
-    if (!stream) return;
+    if (!stream) {return;}
 
     recordedChunksRef.current = [];
 
@@ -392,7 +392,7 @@ export default function ScreenCapture({ windowId, widgetType }) {
 
   // Get thumbnail URL for a capture
   const getThumbnailUrl = (capture) => {
-    if (capture.dataUrl) return capture.dataUrl;
+    if (capture.dataUrl) {return capture.dataUrl;}
     const dir =
       capture.type === "screenshot" ? SCREENSHOT_DIR : RECORDING_DIR;
     return `/api/fs/read?path=${encodeURIComponent(`${dir}/${capture.name}`.replace("~", ""))}`;
