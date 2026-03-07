@@ -213,10 +213,15 @@ async function checkCamera(tmpDir: string): Promise<PreflightInputResult> {
     if (cameraTool === "imagesnap") {
       await execAsync("imagesnap", ["-w", "0.5", testFile], 10_000);
     } else {
-      // ffmpeg: capture one frame from default camera
+      // ffmpeg: capture one frame from default camera (macOS avfoundation)
       await execAsync("ffmpeg", [
-        "-f", "avfoundation", "-i", "0",
-        "-frames:v", "1", "-y", testFile,
+        "-f", "avfoundation",
+        "-framerate", "30",
+        "-video_size", "640x480",
+        "-i", "0:none",
+        "-frames:v", "1",
+        "-update", "1",
+        "-y", testFile,
       ], 10_000);
     }
 

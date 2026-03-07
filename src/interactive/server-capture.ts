@@ -316,8 +316,13 @@ export class ServerCaptureLoop {
         await execFileAsync("imagesnap", ["-w", "0.5", filePath]);
       } else if (this.cameraTool === "ffmpeg") {
         await execFileAsync("ffmpeg", [
-          "-f", "avfoundation", "-i", "0",
-          "-frames:v", "1", "-y", filePath,
+          "-f", "avfoundation",
+          "-framerate", "30",
+          "-video_size", "640x480",
+          "-i", "0:none",
+          "-frames:v", "1",
+          "-update", "1",
+          "-y", filePath,
         ]);
       }
 
