@@ -244,6 +244,7 @@ export function createCommandHandlers(context: CommandHandlerContext) {
         }>("interactive.start", {
           agentId: state.currentAgentId,
           sessionKey: state.currentSessionKey,
+          inputs: ["mic", "screen", "camera"],
         });
         chatLog.addSystem(
           `Interactive mode started. Mode: ${result.mode}, Inputs: ${result.enabledInputs.join(", ")}`,
